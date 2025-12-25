@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
+#include <memory>
 #include "shape/IShape.h"
 #include "shape/Circle.h"
 #include "shape/BezierCurve.h"
-#include <memory>
 
 class Scene
 {

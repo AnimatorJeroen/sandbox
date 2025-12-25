@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../renderer/DrawCommandRecorder.h"
+#include "renderer/DrawCommandRecorder.h"
 
 
 class IShape

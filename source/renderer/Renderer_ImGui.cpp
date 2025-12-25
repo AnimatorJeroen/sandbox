@@ -1,6 +1,6 @@
 
 #include "Renderer_ImGui.h"
-#include "../../vendor/include/imgui/imgui.h"
+#include "imgui/imgui.h"
 
 static ImDrawList* draw_list = nullptr;
 
