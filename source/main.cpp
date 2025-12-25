@@ -6,8 +6,7 @@
 #include <iostream>
 #include "renderer/Renderer_ImGui.h"
 #include "renderer/DrawCommandRecorder.h"
-#include "shape/Circle.h"
-#include "shape/BezierCurve.h"
+#include "tests/TestScene1.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -31,6 +30,8 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSwapInterval(1); // Enable vsync
+    
 
     if (glewInit() != GLEW_OK) {
         std::cerr << "Failed to initialize GLEW" << std::endl;
@@ -39,18 +40,11 @@ int main() {
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-	Renderer_ImGui renderer;
-
-    auto rec = DrawCommandRecorder();
-	float pingpong = 0.0f;
-	float incr = 0.5f;
 
     float deltaTime = 0.0f;
     float lastFrameTime = 0.0f;
@@ -58,19 +52,8 @@ int main() {
 
 	int wWidth, wHeight;
 
-	Circle circle{
-        {100.0f, 100.0f},  // center
-        50.0f,                        // radius
-        true,                         // filled
-        { 0.0f, 0.0f, 1.0f, 1.0f },  // color
-        32,                           // num_segments
-        1.0f                          // thickness
-    };
-
-    BezierCurve bezierCurve;
-	bezierCurve.AddPoint({ 300.0f, 300.0f }, { -50.0f, 0.0f }, { 50.0f, 0.0f });
-	bezierCurve.AddPoint({ 400.0f, 400.0f }, { -50.0f, 0.0f }, { 50.0f, 0.0f });
-	bezierCurve.AddPoint({ 500.0f, 300.0f }, { -50.0f, 0.0f }, { 0.0f, 0.0f });
+	auto testScene = TestScene1();
+	testScene.Setup();
 
     //application mainloop
     while (!glfwWindowShouldClose(window)) {
@@ -79,22 +62,6 @@ int main() {
         currentFrameTime = static_cast<float>(glfwGetTime());
         deltaTime = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
-
-        pingpong += incr * deltaTime;
-		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
-
-        rec.Clear();
-		rec.Line({ 100 * pingpong, 100 }, { 200, 200 }, 5.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
-		rec.Line({ 200, 100 }, { 100, 200 }, 3.0f, { 0.0f, 1.0f, 0.0f, 1.0f });
-		
-		circle.center.x = 100 + 100.0f * pingpong;
-		circle.center.y = 100 + 100.0f * pingpong;
-        circle.radius = 50.0f * pingpong;
-		bezierCurve.GetPoint(1).pos.x = 400.0f + 100.0f * pingpong;
-
-		circle.Draw(rec);
-		bezierCurve.Draw(rec);
-
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -106,9 +73,8 @@ int main() {
         ImGui::End();
 
         glfwGetWindowSize(window, &wWidth, &wHeight);
-		renderer.BeginFrame({ (unsigned int)wWidth, (unsigned int)wHeight });
-        renderer.Submit(rec.GetCommandBuffer());
-		renderer.EndFrame();
+
+		testScene.Update(deltaTime);
 
         ImGui::Render();
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
@@ -118,6 +84,7 @@ int main() {
         glfwSwapBuffers(window);
     }
 
+	testScene.Teardown();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

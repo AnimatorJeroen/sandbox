@@ -3,7 +3,7 @@
 #include "IShape.h"
 #include "glm/glm.hpp"
 
-class BezierCurve : IShape
+class BezierCurve : public IShape
 {
 public:
 	struct Point
@@ -17,7 +17,7 @@ private:
 	std::vector<Point> _points;
 
 public:
-	const void Draw(DrawCommandRecorder& recorder) override;
+	const virtual void Draw(DrawCommandRecorder& recorder) override;
 
 	void AddPoint(const glm::vec2& pos, const glm::vec2& hIn, const glm::vec2& hOut);
 

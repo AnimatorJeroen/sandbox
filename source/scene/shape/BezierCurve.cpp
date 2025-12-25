@@ -1,7 +1,5 @@
 #include "BezierCurve.h"
 
-#include "../renderer/IRenderer.h"
-
 const void BezierCurve::Draw(DrawCommandRecorder& recorder)
 {
 	if (_points.size() < 2)
