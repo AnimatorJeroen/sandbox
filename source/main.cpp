@@ -4,8 +4,6 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <iostream>
-#include "renderer/Renderer_ImGui.h"
-#include "renderer/DrawCommandRecorder.h"
 #include "tests/TestScene1.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {

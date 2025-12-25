@@ -1,6 +1,7 @@
 #pragma once
 #include "ITestScene.h"
 #include "../scene/Scene.h"
+#include "renderer/Renderer_ImGui.h"
 
 class TestScene1 : public ITestScene
 {
