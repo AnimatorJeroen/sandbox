@@ -1,6 +1,6 @@
 #include "BezierCurve.h"
 
-#include "renderer.h"
+#include "../renderer/IRenderer.h"
 
 const void Beziercurve::Draw()
 {
