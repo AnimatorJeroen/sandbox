@@ -21,7 +21,7 @@ project "Sandbox"
     }
 
     includedirs {
-        "../vendor/include/"
+        "../vendor/include/",
         "../source/"
     }
 
