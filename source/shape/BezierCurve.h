@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Shape.h"
+#include "IShape.h"
 #include "glm/glm.hpp"
 
-class Beziercurve : Shape
+class Beziercurve : IShape
 {
 public:
 	struct Point

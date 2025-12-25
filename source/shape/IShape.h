@@ -4,7 +4,7 @@
 #include <vector>
 
 
-class Shape
+class IShape
 {
 
 public:

@@ -4,6 +4,8 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <iostream>
+#include "renderer/Renderer_ImGui.h"
+#include "renderer/DrawCommandRecorder.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -42,10 +44,33 @@ int main() {
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+	Renderer_ImGui renderer;
+
+    auto rec = DrawCommandRecorder();
+	float pingpong = 0.0f;
+	float incr = 0.5f;
+
+    float deltaTime = 0.0f;
+    float lastFrameTime = 0.0f;
+    float currentFrameTime = 0.0f;
+
+	int wWidth, wHeight;
 
     //application mainloop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        currentFrameTime = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrameTime - lastFrameTime;
+        lastFrameTime = currentFrameTime;
+
+        pingpong += incr * deltaTime;
+		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
+
+        rec.Clear();
+		rec.Line({ 100 * pingpong, 100 }, { 200, 200 }, 5.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
+		rec.Line({ 200, 100 }, { 100, 200 }, 3.0f, { 0.0f, 1.0f, 0.0f, 1.0f });
+		rec.Circle({ 100 * pingpong, 100 }, 10.0f, true, { 0.0f, 0.0f, 1.0f, 1.0f });
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -56,7 +81,10 @@ int main() {
         ImGui::ColorEdit3("Background Color", (float*)&clear_color);
         ImGui::End();
 
-        ImGui::GetBackgroundDrawList()->AddCircleFilled(ImVec2(100, 100), 50, IM_COL32(255, 0, 0, 255), 32);
+        glfwGetWindowSize(window, &wWidth, &wHeight);
+		renderer.BeginFrame({ (unsigned int)wWidth, (unsigned int)wHeight });
+        renderer.Submit(rec.GetCommandBuffer());
+		renderer.EndFrame();
 
         ImGui::Render();
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);

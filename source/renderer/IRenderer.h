@@ -1,9 +1,22 @@
 #pragma once
 
-#include "BezierRenderPath.h"
+#include "DrawCommandBuffer.h"
+
+
 
 class IRenderer
 {
-	virtual void DrawPath(const BezierRenderPath* path) = 0;
+protected:
+    struct RenderTargetSpecs {
+        uint32_t width;
+        uint32_t height;
+    };
+
+public:
+    virtual void BeginFrame(const RenderTargetSpecs& target) = 0;
+
+    virtual void Submit(const DrawCommandBuffer& cmdBuf) = 0;
+
+    virtual void EndFrame() = 0;
 
 };
