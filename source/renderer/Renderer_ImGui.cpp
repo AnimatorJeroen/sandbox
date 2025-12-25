@@ -68,7 +68,19 @@ void Renderer_ImGui::Submit(const DrawCommandBuffer& cmdBuf)
 			// Implement quadratic bezier rendering if needed
 			break;
 		case CommandType::CubicBezier:
-			// Implement cubic bezier rendering if needed
+			draw_list->AddBezierCurve(
+				ImVec2(cmd.cbez.p0.x, cmd.cbez.p0.y),
+				ImVec2(cmd.cbez.p1.x, cmd.cbez.p1.y),
+				ImVec2(cmd.cbez.p2.x, cmd.cbez.p2.y),
+				ImVec2(cmd.cbez.p3.x, cmd.cbez.p3.y),
+				IM_COL32(
+					static_cast<uint8_t>(cmd.cbez.color.r * 255),
+					static_cast<uint8_t>(cmd.cbez.color.g * 255),
+					static_cast<uint8_t>(cmd.cbez.color.b * 255),
+					static_cast<uint8_t>(cmd.cbez.color.a * 255)
+				),
+				cmd.cbez.thickness
+			);
 			break;
 		default:
 			break;

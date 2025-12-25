@@ -6,6 +6,8 @@
 #include <iostream>
 #include "renderer/Renderer_ImGui.h"
 #include "renderer/DrawCommandRecorder.h"
+#include "shape/Circle.h"
+#include "shape/BezierCurve.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -56,6 +58,20 @@ int main() {
 
 	int wWidth, wHeight;
 
+	Circle circle{
+        {100.0f, 100.0f},  // center
+        50.0f,                        // radius
+        true,                         // filled
+        { 0.0f, 0.0f, 1.0f, 1.0f },  // color
+        32,                           // num_segments
+        1.0f                          // thickness
+    };
+
+    BezierCurve bezierCurve;
+	bezierCurve.AddPoint({ 300.0f, 300.0f }, { -50.0f, 0.0f }, { 50.0f, 0.0f });
+	bezierCurve.AddPoint({ 400.0f, 400.0f }, { -50.0f, 0.0f }, { 50.0f, 0.0f });
+	bezierCurve.AddPoint({ 500.0f, 300.0f }, { -50.0f, 0.0f }, { 0.0f, 0.0f });
+
     //application mainloop
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -70,7 +86,15 @@ int main() {
         rec.Clear();
 		rec.Line({ 100 * pingpong, 100 }, { 200, 200 }, 5.0f, { 1.0f, 0.0f, 0.0f, 1.0f });
 		rec.Line({ 200, 100 }, { 100, 200 }, 3.0f, { 0.0f, 1.0f, 0.0f, 1.0f });
-		rec.Circle({ 100 * pingpong, 100 }, 10.0f, true, { 0.0f, 0.0f, 1.0f, 1.0f });
+		
+		circle.center.x = 100 + 100.0f * pingpong;
+		circle.center.y = 100 + 100.0f * pingpong;
+        circle.radius = 50.0f * pingpong;
+		bezierCurve.GetPoint(1).pos.x = 400.0f + 100.0f * pingpong;
+
+		circle.Draw(rec);
+		bezierCurve.Draw(rec);
+
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();

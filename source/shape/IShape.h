@@ -1,13 +1,12 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <vector>
+#include "../renderer/DrawCommandRecorder.h"
 
 
 class IShape
 {
 
 public:
-	const virtual void Draw() = 0;
+	const virtual void Draw(DrawCommandRecorder& recorder) = 0;
 
 };
