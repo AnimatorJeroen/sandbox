@@ -1,7 +1,5 @@
 #pragma once
-
-#include "renderer/DrawCommandRecorder.h"
-
+#include "core/renderer/DrawCommandRecorder.h"
 
 class IShape
 {

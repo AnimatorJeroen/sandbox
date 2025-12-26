@@ -11,6 +11,7 @@ namespace Core
 		~Window();
 		bool ShouldClose() const;
 		void SwapBuffers() const;
+		void GetFramebufferSize(int& width, int& height) const;
 		void PollEvents() const;
 		inline void* GetHandle() const { return _glfwWindow; }
 	private:

@@ -20,6 +20,7 @@ namespace Core
 			~Application() = default;
 			void Run();
 			void Stop();
+			void GetFrameBufferSize(int& width, int& height) const;
 			template<typename TLayer>
 			inline void PushLayer()
 			{

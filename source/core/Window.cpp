@@ -38,4 +38,10 @@ namespace Core
     {
         glfwSwapBuffers((GLFWwindow*)_glfwWindow);
 	}
+
+    void Window::GetFramebufferSize(int& width, int& height) const
+    {
+        glfwGetFramebufferSize((GLFWwindow*)_glfwWindow, &width, &height);
+	}
+
 }

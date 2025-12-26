@@ -79,4 +79,9 @@ namespace Core
 
 		glfwTerminate();
 	}
+
+	void Application::GetFrameBufferSize(int& width, int& height) const
+	{
+		_window->GetFramebufferSize(width, height);
+	}
 }
