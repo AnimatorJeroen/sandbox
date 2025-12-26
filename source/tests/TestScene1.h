@@ -6,7 +6,7 @@
 class TestScene1 : public ITestScene
 {
 private:
-	Scene _scene;
+	Scene& _scene;
 	Core::DrawCommandRecorder _recorder;
 	Core::Renderer_ImGui renderer;
 
@@ -26,6 +26,12 @@ private:
 	std::shared_ptr<BezierCurve> bezierCurve = std::make_shared<BezierCurve>();
 
 public:
+
+	inline explicit TestScene1(Scene& context) : _scene(context)
+	{
+
+	}
+
 	inline void Setup() override
 	{
 		bezierCurve->AddPoint({ 300.0f, 300.0f }, { -50.0f, 0.0f }, { 50.0f, 0.0f });

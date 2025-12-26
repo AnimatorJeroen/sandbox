@@ -1,7 +1,7 @@
 #include "UIApplicationLayer.h"
 #include <imgui/imgui.h>
 
-UIApplicationLayer::UIApplicationLayer()
+UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), m_sceneHierarchyPanel(*ctx.Get<Scene>().get())
 {
 }
 
@@ -18,4 +18,6 @@ void UIApplicationLayer::OnRender()
     ImGui::Text("Adjust clear color:");
     ImGui::ColorEdit3("Background Color", (float*)&clear_color);
     ImGui::End();
+
+	m_sceneHierarchyPanel.OnRender();
 }

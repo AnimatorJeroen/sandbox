@@ -1,10 +1,6 @@
 #include "SceneApplicationLayer.h"
-#include <tests/TestScene1.h>
 
-
-static TestScene1 testScene;
-
-SceneApplicationLayer::SceneApplicationLayer()
+SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), testScene(*ctx.Get<Scene>().get())
 {
 	testScene.Setup();
 }
