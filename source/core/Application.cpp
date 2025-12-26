@@ -29,13 +29,12 @@ namespace Core
 
 	}
 
-
-	static float deltaTime = 0.0f;
-	static float lastFrameTime = 0.0f;
-	static float currentFrameTime = 0.0f;
-
 	void Application::Run()
 	{
+		float deltaTime = 0.0f;
+		float lastFrameTime = 0.0f;
+		float currentFrameTime = 0.0f;
+
 		while (!_window->ShouldClose())
 		{
 			_window->PollEvents();
