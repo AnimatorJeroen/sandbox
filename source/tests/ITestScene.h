@@ -1,5 +1,4 @@
 #pragma once
-#include "scene/Scene.h"
 
 class ITestScene
 {

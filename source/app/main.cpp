@@ -1,8 +1,7 @@
 
 #include "core/Application.h"
-#include "app/applicationLayers/SceneApplicationLayer.h"
-#include "app/applicationLayers/UIApplicationLayer.h"
-#include <scene/Scene.h>
+#include "app/sceneLayer/SceneApplicationLayer.h"
+#include "app/UILayer/UIApplicationLayer.h"
 
 int main() {
 

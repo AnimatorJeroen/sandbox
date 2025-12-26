@@ -1,6 +1,6 @@
 #pragma once
 #include "core/IApplicationLayer.h"
-#include "Panel_SceneHierarchy.h"
+#include "panels/Panel_SceneHierarchy.h"
 
 class UIApplicationLayer : public Core::IApplicationLayer
 {
