@@ -1,6 +1,6 @@
 #include "Circle.h"
 
-const void Circle::Draw(DrawCommandRecorder& recorder)
+const void Circle::Draw(Core::DrawCommandRecorder& recorder)
 {
 	recorder.Circle(
 		{ center.x, center.y },

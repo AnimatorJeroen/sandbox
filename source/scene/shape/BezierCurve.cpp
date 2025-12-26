@@ -1,6 +1,6 @@
 #include "BezierCurve.h"
 
-const void BezierCurve::Draw(DrawCommandRecorder& recorder)
+const void BezierCurve::Draw(Core::DrawCommandRecorder& recorder)
 {
 	if (_points.size() < 2)
 		return;

@@ -7,6 +7,6 @@ class IShape
 {
 
 public:
-	const virtual void Draw(DrawCommandRecorder& recorder) = 0;
+	const virtual void Draw(Core::DrawCommandRecorder& recorder) = 0;
 
 };

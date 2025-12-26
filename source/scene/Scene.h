@@ -10,7 +10,7 @@ class Scene
 	public:
 		Scene() = default;
 		std::vector<std::shared_ptr<IShape>> shapes;
-		inline void Draw(DrawCommandRecorder& recorder) {
+		inline void Draw(Core::DrawCommandRecorder& recorder) {
 			for (const auto& shape : shapes) {
 				shape->Draw(recorder);
 			}

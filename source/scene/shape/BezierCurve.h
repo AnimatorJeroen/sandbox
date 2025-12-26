@@ -17,7 +17,7 @@ private:
 	std::vector<Point> _points;
 
 public:
-	const virtual void Draw(DrawCommandRecorder& recorder) override;
+	const virtual void Draw(Core::DrawCommandRecorder& recorder) override;
 
 	void AddPoint(const glm::vec2& pos, const glm::vec2& hIn, const glm::vec2& hOut);
 

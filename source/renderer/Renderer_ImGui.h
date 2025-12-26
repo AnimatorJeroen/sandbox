@@ -2,13 +2,16 @@
 
 #include "IRenderer.h"
 
-class Renderer_ImGui : public IRenderer
-{
-public:
-    void BeginFrame(const IRenderer::RenderTargetSpecs& target);
+namespace Core {
 
-    void Submit(const DrawCommandBuffer& cmdBuf);
+    class Renderer_ImGui : public IRenderer
+    {
+    public:
+        void BeginFrame(const IRenderer::RenderTargetSpecs& target);
 
-    void EndFrame();
+        void Submit(const DrawCommandBuffer& cmdBuf);
 
-};
+        void EndFrame();
+
+    };
+}

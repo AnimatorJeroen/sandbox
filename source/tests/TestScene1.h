@@ -7,8 +7,8 @@ class TestScene1 : public ITestScene
 {
 private:
 	Scene _scene;
-	DrawCommandRecorder _recorder;
-	Renderer_ImGui renderer;
+	Core::DrawCommandRecorder _recorder;
+	Core::Renderer_ImGui renderer;
 
 	float pingpong = 0.0f;
 	float incr = 0.5f;
@@ -18,7 +18,7 @@ private:
 		glm::vec2{100.0f, 100.0f},  // center
 		50.0f,                        // radius
 		true,                         // filled
-		ColorRGBA{ 0.0f, 0.0f, 1.0f, 1.0f },  // color
+		Core::ColorRGBA{ 0.0f, 0.0f, 1.0f, 1.0f },  // color
 		32,                           // num_segments
 		1.0f                          // thickness
 	);
@@ -41,8 +41,6 @@ public:
 	}
 	inline void Update(float deltaTime) override
 	{
-		_recorder.Clear();
-
 		pingpong += incr * deltaTime;
 		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
 
@@ -50,7 +48,11 @@ public:
 		circle->center.y = 100 + 100.0f * pingpong;
 		circle->radius = 50.0f * pingpong;
 		bezierCurve->GetPoint(1).pos.x = 400.0f + 100.0f * pingpong;
+	}
 
+	inline void Render() override
+	{
+		_recorder.Clear();
 		_scene.Draw(_recorder);
 
 		int wWidth = 800;
