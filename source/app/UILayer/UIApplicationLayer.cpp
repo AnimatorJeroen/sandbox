@@ -9,6 +9,10 @@ UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplica
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseScrollEvent, OnMouseScrollEvent);
+
+	REGISTER_CALLBACK(_eventBus, Core::KeyDownEvent, OnKeyDownEvent);
+	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
+	REGISTER_CALLBACK(_eventBus, Core::KeyCharacterEvent, OnKeyCharacterEvent);
 }
 
 void UIApplicationLayer::OnUpdate(const float deltaTime)
@@ -53,5 +57,31 @@ bool UIApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 		return false;
 
 	std::cout << "Mouse scroll event in UI: " << e.scrollX << ", " << e.scrollY << std::endl;
+	return true;
+}
+
+bool UIApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
+{
+	if (!ImGui::GetIO().WantCaptureKeyboard)
+		return false;
+
+	std::cout << "Key down event in UI: " << e.key << ", repeated: " << e.repeated << std::endl;
+	return true;
+}
+
+bool UIApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
+{
+	if (!ImGui::GetIO().WantCaptureKeyboard)
+		return false;
+
+	std::cout << "Key up event in UI: " << e.key << std::endl;
+	return true;
+}
+
+bool UIApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& e)
+{
+	if (!ImGui::GetIO().WantCaptureKeyboard)
+		return false;
+	std::cout << "Key character event in UI: " << e.character << std::endl;
 	return true;
 }

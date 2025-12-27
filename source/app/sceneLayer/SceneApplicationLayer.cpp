@@ -7,6 +7,9 @@ SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IA
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseScrollEvent, OnMouseScrollEvent);
+
+	REGISTER_CALLBACK(_eventBus, Core::KeyDownEvent, OnKeyDownEvent);
+	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
 	testScene.Setup();
 }
 
@@ -41,5 +44,17 @@ bool SceneApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 bool SceneApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 {
 	std::cout << "Mouse scroll event in Scene: " << e.scrollX << ", " << e.scrollY << std::endl;
+	return true;
+}
+
+bool SceneApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
+{
+	std::cout << "Key down event in Scene: " << e.key << ", repeated: " << e.repeated << std::endl;
+	return true;
+}
+
+bool SceneApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
+{
+	std::cout << "Key up event in Scene: " << e.key << std::endl;
 	return true;
 }

@@ -22,10 +22,8 @@ namespace Core
 			void Run();
 			void Stop();
 			void GetFrameBufferSize(int& width, int& height) const;
-			bool OnMouseDownEvent(const MouseDownEvent& e);
-			bool OnMouseUpEvent(const MouseUpEvent& e);
-			bool OnMouseMoveEvent(const MouseMoveEvent& e);
-			bool OnMouseScrollEvent(const MouseScrollEvent& e);
+			bool OnWindowResizeEvent(const WindowResizeEvent& e);
+			bool OnWindowCloseEvent(const WindowCloseEvent& e);
 			template<typename TLayer>
 			inline void PushLayer()
 			{

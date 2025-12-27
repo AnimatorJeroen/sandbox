@@ -2,7 +2,8 @@
 #include "core/IApplicationLayer.h"
 #include "tests/TestScene1.h"
 #include "core/event/eventBus.h"
-#include <core/event/ApplicationEvent.h>
+#include <core/event/MouseEvent.h>
+#include <core/event/KeyEvent.h>
 
 
 class SceneApplicationLayer : public Core::IApplicationLayer
@@ -17,6 +18,9 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 	bool OnMouseUpEvent(const Core::MouseUpEvent& e);
 	bool OnMouseMoveEvent(const Core::MouseMoveEvent& e);
 	bool OnMouseScrollEvent(const Core::MouseScrollEvent& e);
+
+	bool OnKeyDownEvent(const Core::KeyDownEvent& e);
+	bool OnKeyUpEvent(const Core::KeyUpEvent& e);
 
 	private:
 	Core::EventBus& _eventBus;

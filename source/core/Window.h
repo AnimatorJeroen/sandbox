@@ -10,6 +10,7 @@ namespace Core
 		int Height;
 		Window(int width, int height, const char* title, EventBus& eventBus);
 		~Window();
+		void SetCallBacks() const;
 		bool ShouldClose() const;
 		void SwapBuffers() const;
 		void GetFramebufferSize(int& width, int& height) const;

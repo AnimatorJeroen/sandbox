@@ -5,17 +5,10 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
-#include "event/ApplicationEvent.h"
 
 
 namespace Core
 {
-	static bool OnWindowResizeEvent(const WindowResizeEvent& e)
-	{
-		std::cout << "Window resized to: " << e.Width << "x" << e.Height << std::endl;
-		return true;
-	}
-
 	Application::Application(const ApplicationSpecs& specs) : _applicationSpecs(specs)
 	{
 		if (!glfwInit()) {
@@ -36,10 +29,10 @@ namespace Core
 		ImGui_ImplOpenGL3_Init("#version 330");
 
 
-		//register callbacks
-		//manual callback example without the macro
-		_eventBus->RegisterEventCallback<WindowResizeEvent>([](const IEvent& e) {return OnWindowResizeEvent(static_cast<const WindowResizeEvent&>(e));});
 		_layerContext.Register<EventBus>(_eventBus);
+		//register callbacks
+		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);
+		REGISTER_CALLBACK((*_eventBus), WindowCloseEvent, OnWindowCloseEvent);
 	}
 
 	void Application::Run()
@@ -97,4 +90,18 @@ namespace Core
 	{
 		_window->GetFramebufferSize(width, height);
 	}
+
+	bool Application::OnWindowResizeEvent(const WindowResizeEvent& e)
+	{
+		std::cout << "Window resized to: " << e.Width << "x" << e.Height << std::endl;
+		return true;
+	}
+
+	bool Application::OnWindowCloseEvent(const WindowCloseEvent& e)
+	{
+		std::cout << "Window close event received." << std::endl;
+		return true;
+	}
+
+
 }
