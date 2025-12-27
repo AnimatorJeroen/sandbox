@@ -1,4 +1,5 @@
 #pragma once
+#include "event/EventBus.h"
 
 namespace Core
 {
@@ -7,7 +8,7 @@ namespace Core
 	public:
 		int Width;
 		int Height;
-		Window(int width, int height, const char* title);
+		Window(int width, int height, const char* title, EventBus& eventBus);
 		~Window();
 		bool ShouldClose() const;
 		void SwapBuffers() const;
@@ -16,5 +17,6 @@ namespace Core
 		inline void* GetHandle() const { return _glfwWindow; }
 	private:
 		void* _glfwWindow;
+		EventBus& _eventBus;
 	};
 }

@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include "IApplicationLayer.h"
+#include "event/ApplicationEvent.h"
 
 namespace Core
 {
@@ -21,6 +22,10 @@ namespace Core
 			void Run();
 			void Stop();
 			void GetFrameBufferSize(int& width, int& height) const;
+			void OnMouseDownEvent(const MouseDownEvent& e);
+			void OnMouseUpEvent(const MouseUpEvent& e);
+			void OnMouseMoveEvent(const MouseMoveEvent& e);
+			void OnMouseScrollEvent(const MouseScrollEvent& e);
 			template<typename TLayer>
 			inline void PushLayer()
 			{
@@ -33,6 +38,7 @@ namespace Core
 			LayerContext _layerContext;
 			std::shared_ptr<Window> _window;
 			std::vector<std::unique_ptr<IApplicationLayer>> _applicationLayers;
+			EventBus _eventBus;
 
 
 	};

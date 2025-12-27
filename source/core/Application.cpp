@@ -5,16 +5,42 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
+#include "event/ApplicationEvent.h"
+
 
 namespace Core
 {
+	static void OnWindowResizeEvent(const WindowResizeEvent& e)
+	{
+		std::cout << "Window resized to: " << e.Width << "x" << e.Height << std::endl;
+	}
+	void Application::OnMouseDownEvent(const MouseDownEvent& e)
+	{
+		std::cout << "Mouse button down event: " << e.identifier << std::endl;
+	}
+
+	void Application::OnMouseUpEvent(const MouseUpEvent& e)
+	{
+		std::cout << "Mouse button up event: " << e.identifier << std::endl;
+	}
+
+	void Application::OnMouseMoveEvent(const MouseMoveEvent& e)
+	{
+		std::cout << "Mouse move event: " << e.posX << ", " << e.posY << std::endl;
+	}
+
+	void Application::OnMouseScrollEvent(const MouseScrollEvent& e)
+	{
+		std::cout << "Mouse scroll event: " << e.scrollX << ", " << e.scrollY << std::endl;
+	}
+
 	Application::Application(const ApplicationSpecs& specs) : _applicationSpecs(specs)
 	{
 		if (!glfwInit()) {
 			std::cerr << "Failed to initialize GLFW" << std::endl;
 			return;
 		}
-		_window = std::make_shared<Window>(_applicationSpecs.windowWidth, _applicationSpecs.windowHeight, _applicationSpecs.windowTitle);
+		_window = std::make_shared<Window>(_applicationSpecs.windowWidth, _applicationSpecs.windowHeight, _applicationSpecs.windowTitle, _eventBus);
 
 		if (glewInit() != GLEW_OK) {
 			std::cerr << "Failed to initialize GLEW" << std::endl;
@@ -27,6 +53,19 @@ namespace Core
 		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)_window->GetHandle(), true);
 		ImGui_ImplOpenGL3_Init("#version 330");
 
+
+		//register callbacks
+		//manual callback example without the macro
+		_eventBus.RegisterEventCallback<WindowResizeEvent>([](const Core::IEvent& e) {
+			OnWindowResizeEvent((const WindowResizeEvent&)(e));
+			});
+
+		//or by using the MACRO
+		REGISTER_CALLBACK(_eventBus, MouseDownEvent, OnMouseDownEvent);
+		REGISTER_CALLBACK(_eventBus, MouseUpEvent, OnMouseUpEvent);
+		REGISTER_CALLBACK(_eventBus, MouseMoveEvent, OnMouseMoveEvent);
+		REGISTER_CALLBACK(_eventBus, MouseScrollEvent, OnMouseScrollEvent);
+
 	}
 
 	void Application::Run()
@@ -38,6 +77,7 @@ namespace Core
 		while (!_window->ShouldClose())
 		{
 			_window->PollEvents();
+			_eventBus.HandleEvents();
 
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
