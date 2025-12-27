@@ -12,7 +12,12 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 	~SceneApplicationLayer() = default;
 	void OnUpdate(const float deltaTime) override;
 	void OnRender() override;
-	void OnMouseDownEvent(const Core::MouseDownEvent& e);
+
+	bool OnMouseDownEvent(const Core::MouseDownEvent& e);
+	bool OnMouseUpEvent(const Core::MouseUpEvent& e);
+	bool OnMouseMoveEvent(const Core::MouseMoveEvent& e);
+	bool OnMouseScrollEvent(const Core::MouseScrollEvent& e);
+
 	private:
 	Core::EventBus& _eventBus;
 	TestScene1 testScene;

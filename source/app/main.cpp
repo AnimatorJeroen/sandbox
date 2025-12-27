@@ -12,8 +12,8 @@ int main() {
 	};
 	Core::Application app(specs);   
 	app.GetContext().Register<Scene>(std::make_shared<Scene>());
-	app.PushLayer<SceneApplicationLayer>();
 	app.PushLayer<UIApplicationLayer>();
+	app.PushLayer<SceneApplicationLayer>();
     app.Run();
 
     return 0;

@@ -1,8 +1,14 @@
 #include "UIApplicationLayer.h"
 #include <imgui/imgui.h>
+#include <core/event/ApplicationEvent.h>
+#include <iostream>
 
-UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), m_sceneHierarchyPanel(*ctx.Get<Scene>().get())
+UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _sceneHierarchyPanel(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get())
 {
+	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
+	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
+	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
+	REGISTER_CALLBACK(_eventBus, Core::MouseScrollEvent, OnMouseScrollEvent);
 }
 
 void UIApplicationLayer::OnUpdate(const float deltaTime)
@@ -11,5 +17,41 @@ void UIApplicationLayer::OnUpdate(const float deltaTime)
 
 void UIApplicationLayer::OnRender()
 {
-	m_sceneHierarchyPanel.OnRender();
+	_sceneHierarchyPanel.OnRender();
+}
+
+bool UIApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
+{
+	if(!ImGui::GetIO().WantCaptureMouse)
+		return false;
+
+	std::cout << "Mouse Button Down Event captured by UI Layer: " << e.identifier << std::endl;
+	return true;
+}
+
+bool UIApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
+{
+	if (!ImGui::GetIO().WantCaptureMouse)
+		return false;
+
+	std::cout << "Mouse button up event in UI: " << e.identifier << std::endl;
+	return true;
+}
+
+bool UIApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
+{
+	if (!ImGui::GetIO().WantCaptureMouse)
+		return false;
+
+	std::cout << "Mouse move event in UI: " << e.posX << ", " << e.posY << std::endl;
+	return true;
+}
+
+bool UIApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
+{
+	if (!ImGui::GetIO().WantCaptureMouse)
+		return false;
+
+	std::cout << "Mouse scroll event in UI: " << e.scrollX << ", " << e.scrollY << std::endl;
+	return true;
 }

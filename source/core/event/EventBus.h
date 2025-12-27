@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 
-#define REGISTER_CALLBACK(eventBus, T, func) eventBus.RegisterEventCallback<T>([this](const auto& e) { this->func((const T&)e); })
+#define REGISTER_CALLBACK(eventBus, T, func) eventBus.RegisterEventCallback<T>([this](const auto& e) { return this->func((const T&)e); })
 
 namespace Core
 {
@@ -38,12 +38,12 @@ namespace Core
         };
 
         std::queue<QueueEvent> m_eventQueue;
-        std::map<std::type_index, std::vector<std::function<void(const IEvent&)>>> m_eventCallbacks;
+        std::map<std::type_index, std::vector<std::function<bool(const IEvent&)>>> m_eventCallbacks;
 
     public:
 
         template<typename TDerivedEvent>
-        inline void RegisterEventCallback(const std::function<void(const IEvent&)>& callback)
+        inline void RegisterEventCallback(const std::function<bool(const IEvent&)>& callback)
         {
             std::type_index type = typeid(TDerivedEvent);
             auto elem = m_eventCallbacks.find(type);
@@ -67,7 +67,10 @@ namespace Core
 
                 if (auto elem = m_eventCallbacks.find(e.typeIndex); elem != m_eventCallbacks.end())
                     for (const auto& callback : elem->second)
-                        callback(*(const IEvent*)e.data);
+                    {
+                        if(callback(*(const IEvent*)e.data) == true) //returns true if handled
+                            break;
+                    }
 
                 m_eventQueue.pop();
             }

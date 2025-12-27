@@ -10,28 +10,10 @@
 
 namespace Core
 {
-	static void OnWindowResizeEvent(const WindowResizeEvent& e)
+	static bool OnWindowResizeEvent(const WindowResizeEvent& e)
 	{
 		std::cout << "Window resized to: " << e.Width << "x" << e.Height << std::endl;
-	}
-	void Application::OnMouseDownEvent(const MouseDownEvent& e)
-	{
-		std::cout << "Mouse button down event: " << e.identifier << std::endl;
-	}
-
-	void Application::OnMouseUpEvent(const MouseUpEvent& e)
-	{
-		std::cout << "Mouse button up event: " << e.identifier << std::endl;
-	}
-
-	void Application::OnMouseMoveEvent(const MouseMoveEvent& e)
-	{
-		std::cout << "Mouse move event: " << e.posX << ", " << e.posY << std::endl;
-	}
-
-	void Application::OnMouseScrollEvent(const MouseScrollEvent& e)
-	{
-		std::cout << "Mouse scroll event: " << e.scrollX << ", " << e.scrollY << std::endl;
+		return true;
 	}
 
 	Application::Application(const ApplicationSpecs& specs) : _applicationSpecs(specs)
@@ -56,16 +38,7 @@ namespace Core
 
 		//register callbacks
 		//manual callback example without the macro
-		_eventBus->RegisterEventCallback<WindowResizeEvent>([](const Core::IEvent& e) {
-			OnWindowResizeEvent((const WindowResizeEvent&)(e));
-			});
-
-		//or by using the MACRO
-		REGISTER_CALLBACK((*_eventBus), MouseDownEvent, OnMouseDownEvent);
-		REGISTER_CALLBACK((*_eventBus), MouseUpEvent, OnMouseUpEvent);
-		REGISTER_CALLBACK((*_eventBus), MouseMoveEvent, OnMouseMoveEvent);
-		REGISTER_CALLBACK((*_eventBus), MouseScrollEvent, OnMouseScrollEvent);
-
+		_eventBus->RegisterEventCallback<WindowResizeEvent>([](const IEvent& e) {return OnWindowResizeEvent(static_cast<const WindowResizeEvent&>(e));});
 		_layerContext.Register<EventBus>(_eventBus);
 	}
 
@@ -88,14 +61,14 @@ namespace Core
 			deltaTime = currentFrameTime - lastFrameTime;
 			lastFrameTime = currentFrameTime;
 
-			for(const auto& layer : _applicationLayers)
-			{
-				layer->OnUpdate(deltaTime);
-			}
+            for(auto it = _applicationLayers.rbegin(); it != _applicationLayers.rend(); ++it)
+            {
+                (*it)->OnUpdate(deltaTime);
+            }
 
-			for (const auto& layer : _applicationLayers)
+			for (auto it = _applicationLayers.rbegin(); it != _applicationLayers.rend(); ++it)
 			{
-				layer->OnRender();
+				(*it)->OnRender();
 			}
 
 			ImGui::Render();
