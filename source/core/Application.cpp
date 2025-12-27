@@ -94,13 +94,13 @@ namespace Core
 	bool Application::OnWindowResizeEvent(const WindowResizeEvent& e)
 	{
 		std::cout << "Window resized to: " << e.Width << "x" << e.Height << std::endl;
-		return true;
+		return false;
 	}
 
 	bool Application::OnWindowCloseEvent(const WindowCloseEvent& e)
 	{
 		std::cout << "Window close event received." << std::endl;
-		return true;
+		return false;
 	}
 
 
