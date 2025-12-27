@@ -30,7 +30,6 @@ namespace Core
 			inline void PushLayer()
 			{
 				_applicationLayers.emplace_back(std::make_unique<TLayer>(_layerContext));
-				//_applicationLayers.back()->OnAttach(_layerContext);
 			}
 			inline LayerContext& GetContext() { return _layerContext; }
 		private:
@@ -38,7 +37,7 @@ namespace Core
 			LayerContext _layerContext;
 			std::shared_ptr<Window> _window;
 			std::vector<std::unique_ptr<IApplicationLayer>> _applicationLayers;
-			EventBus _eventBus;
+			std::shared_ptr<EventBus> _eventBus = std::make_shared<EventBus>();
 
 
 	};

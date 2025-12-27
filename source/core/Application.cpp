@@ -40,7 +40,7 @@ namespace Core
 			std::cerr << "Failed to initialize GLFW" << std::endl;
 			return;
 		}
-		_window = std::make_shared<Window>(_applicationSpecs.windowWidth, _applicationSpecs.windowHeight, _applicationSpecs.windowTitle, _eventBus);
+		_window = std::make_shared<Window>(_applicationSpecs.windowWidth, _applicationSpecs.windowHeight, _applicationSpecs.windowTitle, *_eventBus);
 
 		if (glewInit() != GLEW_OK) {
 			std::cerr << "Failed to initialize GLEW" << std::endl;
@@ -56,16 +56,17 @@ namespace Core
 
 		//register callbacks
 		//manual callback example without the macro
-		_eventBus.RegisterEventCallback<WindowResizeEvent>([](const Core::IEvent& e) {
+		_eventBus->RegisterEventCallback<WindowResizeEvent>([](const Core::IEvent& e) {
 			OnWindowResizeEvent((const WindowResizeEvent&)(e));
 			});
 
 		//or by using the MACRO
-		REGISTER_CALLBACK(_eventBus, MouseDownEvent, OnMouseDownEvent);
-		REGISTER_CALLBACK(_eventBus, MouseUpEvent, OnMouseUpEvent);
-		REGISTER_CALLBACK(_eventBus, MouseMoveEvent, OnMouseMoveEvent);
-		REGISTER_CALLBACK(_eventBus, MouseScrollEvent, OnMouseScrollEvent);
+		REGISTER_CALLBACK((*_eventBus), MouseDownEvent, OnMouseDownEvent);
+		REGISTER_CALLBACK((*_eventBus), MouseUpEvent, OnMouseUpEvent);
+		REGISTER_CALLBACK((*_eventBus), MouseMoveEvent, OnMouseMoveEvent);
+		REGISTER_CALLBACK((*_eventBus), MouseScrollEvent, OnMouseScrollEvent);
 
+		_layerContext.Register<EventBus>(_eventBus);
 	}
 
 	void Application::Run()
@@ -77,7 +78,7 @@ namespace Core
 		while (!_window->ShouldClose())
 		{
 			_window->PollEvents();
-			_eventBus.HandleEvents();
+			_eventBus->HandleEvents();
 
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
