@@ -4,6 +4,7 @@
 #include "core/event/eventBus.h"
 #include <core/event/MouseEvent.h>
 #include <core/event/KeyEvent.h>
+#include <core/event/ApplicationEvent.h>
 
 
 class SceneApplicationLayer : public Core::IApplicationLayer
@@ -21,8 +22,9 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 
 	bool OnKeyDownEvent(const Core::KeyDownEvent& e);
 	bool OnKeyUpEvent(const Core::KeyUpEvent& e);
+	bool OnWindowResizedEvent(const Core::WindowResizeEvent& e);
 
 	private:
 	Core::EventBus& _eventBus;
-	TestScene1 testScene;
+	TestScene1 _testScene;
 };

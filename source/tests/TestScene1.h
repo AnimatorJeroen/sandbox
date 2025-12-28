@@ -8,7 +8,8 @@ class TestScene1 : public ITestScene
 private:
 	Scene& _scene;
 	Core::DrawCommandRecorder _recorder;
-	Core::Renderer_ImGui renderer;
+	Core::Renderer_ImGui _renderer;
+	Core::Renderer_ImGui::RenderTargetSpecs _renderSpecs;
 
 	float pingpong = 0.0f;
 	float incr = 0.5f;
@@ -47,8 +48,8 @@ public:
 	}
 	inline void Update(float deltaTime) override
 	{
-		pingpong += incr * deltaTime;
 		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
+		pingpong = std::min(1.0f, std::max(0.0f, pingpong + incr * deltaTime));
 
 		circle->center.x = 100 + 100.0f * pingpong;
 		circle->center.y = 100 + 100.0f * pingpong;
@@ -60,12 +61,19 @@ public:
 	{
 		_recorder.Clear();
 		_scene.Draw(_recorder);
+		_renderer.BeginFrame(_renderSpecs);
+		_renderer.Submit(_recorder.GetCommandBuffer());
+		_renderer.EndFrame();
 
-		int wWidth = 800;
-		int wHeight = 600;
-		renderer.BeginFrame({ (unsigned int)wWidth, (unsigned int)wHeight });
-		renderer.Submit(_recorder.GetCommandBuffer());
-		renderer.EndFrame();
+	}
 
+	inline void SetRenderSpecs(const Core::IRenderer::RenderTargetSpecs& specs) override
+	{
+		_renderSpecs = specs;
+	}
+
+	inline const  Core::IRenderer::RenderTargetSpecs& GetRenderSpecs() const override
+	{
+		return _renderSpecs;
 	}
 };

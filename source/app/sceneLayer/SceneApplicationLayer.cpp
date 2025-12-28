@@ -1,7 +1,7 @@
 #include "SceneApplicationLayer.h"
 #include <iostream>
 
-SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), testScene(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get())
+SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _testScene(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get())
 {
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
@@ -10,17 +10,19 @@ SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IA
 
 	REGISTER_CALLBACK(_eventBus, Core::KeyDownEvent, OnKeyDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
-	testScene.Setup();
+
+	REGISTER_CALLBACK(_eventBus, Core::WindowResizeEvent, OnWindowResizedEvent);
+	_testScene.Setup();
 }
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)
 {
-	testScene.Update(deltaTime);
+	_testScene.Update(deltaTime);
 }
 
 void SceneApplicationLayer::OnRender()
 {
-	testScene.Render();
+	_testScene.Render();
 }
 
 bool SceneApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
@@ -57,4 +59,14 @@ bool SceneApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 {
 	std::cout << "Key up event in Scene: " << e.key << std::endl;
 	return true;
+}
+
+bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& e)
+{
+	std::cout << "Window resized in Scene Layer to: " << e.Width << "x" << e.Height << std::endl;
+	auto specs = _testScene.GetRenderSpecs();
+	specs.height = e.Height;
+	specs.width = e.Width;
+	_testScene.SetRenderSpecs(specs);
+	return false;
 }
