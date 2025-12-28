@@ -8,7 +8,7 @@ int main() {
 	Core::ApplicationSpecs specs {
 		800,
 		600,
-		"Sandbox Application"
+		"Application Skeleton"
 	};
 	Core::Application app(specs);   
 	app.GetContext().Register<Scene>(std::make_shared<Scene>());
