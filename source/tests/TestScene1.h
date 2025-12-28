@@ -39,8 +39,8 @@ public:
 		bezierCurve->AddPoint({ 400.0f, 400.0f }, { -50.0f, 0.0f }, { 50.0f, 0.0f });
 		bezierCurve->AddPoint({ 500.0f, 300.0f }, { -50.0f, 0.0f }, { 0.0f, 0.0f });
 
-		_scene.shapes.push_back(circle);
-		_scene.shapes.push_back(bezierCurve);
+		_scene.GetShapes().push_back(circle);
+		_scene.GetShapes().push_back(bezierCurve);
 	}
 	inline void Teardown() override
 	{

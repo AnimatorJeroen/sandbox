@@ -8,8 +8,25 @@ Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& context) : _scene(context)
 void Panel_SceneHierarchy::OnRender()
 {
 	static char inputTextbuffer[128];
+	static bool initialized = false;
+	
+	// Initialize buffer with scene name on first run
+	if (!initialized)
+	{
+		const std::string& sceneName = _scene.GetName();
+		strncpy_s(inputTextbuffer, sceneName.c_str(), sizeof(inputTextbuffer) - 1);
+		inputTextbuffer[sizeof(inputTextbuffer) - 1] = '\0';
+		initialized = true;
+	}
+	
     ImGui::Begin("Scene Hierarchy");
-	ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer));
+	
+	// Update scene name when input changes
+	if (ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer)))
+	{
+		_scene.SetName(std::string(inputTextbuffer));
+	}
+	
     if (ImGui::Button("Add Circle"))
     {
 
@@ -22,11 +39,11 @@ void Panel_SceneHierarchy::OnRender()
             32,                           // num_segments
             1.0f                          // thickness
         );
-        _scene.shapes.push_back(newCircle);
+        _scene.GetShapes().push_back(newCircle);
         posIncr += 20;
     }
 
-    for(const auto& entity : _scene.shapes)
+    for(const auto& entity : _scene.GetShapes())
     {
         ImGui::Text("Entity ID: %d");
 	}
