@@ -7,7 +7,7 @@
 #include <core/event/ApplicationEvent.h>
 #include "app/event/EditorEvent.h"
 
-
+class SceneManager;
 
 class SceneApplicationLayer : public Core::IApplicationLayer
 {
@@ -28,9 +28,10 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 
 	bool OnEditorRequestSaveSceneEvent(const EditorRequestSaveSceneEvent& e);
 	bool OnEditorRequestLoadSceneEvent(const EditorRequestLoadSceneEvent& e);
+	bool OnEditorSceneReloadedEvent(const EditorSceneReloadedEvent& e);
 
 	private:
 	Core::EventBus& _eventBus;
+	std::shared_ptr<SceneManager> _sceneManager;
 	TestScene1 _testScene;
-	std::shared_ptr<Scene> _scene;
 };

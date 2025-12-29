@@ -1,6 +1,7 @@
 #include "core/Application.h"
 #include "app/sceneLayer/SceneApplicationLayer.h"
 #include "app/UILayer/UIApplicationLayer.h"
+#include "app/sceneLayer/SceneManager.h"
 
 int main() {
 
@@ -10,9 +11,10 @@ int main() {
 		"Application Skeleton"
 	};
 	Core::Application app(specs);
+
+	auto sceneManager = std::make_shared<SceneManager>();
+	app.GetContext().Register<SceneManager>(sceneManager);
 	
-	auto scene = std::make_shared<Scene>();
-	app.GetContext().Register<Scene>(scene);
 	app.PushLayer<UIApplicationLayer>();
 	app.PushLayer<SceneApplicationLayer>();
     app.Run();

@@ -17,3 +17,10 @@ class EditorRequestLoadSceneEvent : public Core::IEvent
 		SET_EVENT_TYPE_FUNCTIONS(EditorRequestLoadSceneEvent)
 		EditorRequestLoadSceneEvent(const std::string& filepath) : filepath(filepath) {}
 };
+
+class EditorSceneReloadedEvent : public Core::IEvent
+{
+	public:
+		SET_EVENT_TYPE_FUNCTIONS(EditorSceneReloadedEvent)
+		EditorSceneReloadedEvent() = default;
+};

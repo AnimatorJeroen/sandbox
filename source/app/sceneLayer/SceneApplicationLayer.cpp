@@ -1,13 +1,15 @@
 #include "SceneApplicationLayer.h"
+#include "SceneManager.h"
 #include <iostream>
 #include <core/serializer/Serializer.h>
 
-SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), 
-_scene(ctx.Get<Scene>()), 
-_testScene(*ctx.Get<Scene>().get()), 
+SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
+_sceneManager(ctx.Get<SceneManager>()),
+_testScene(ctx.Get<SceneManager>()),
 _eventBus(*ctx.Get<Core::EventBus>().get())
 {
 	_testScene.Setup();
+	
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
@@ -20,6 +22,7 @@ _eventBus(*ctx.Get<Core::EventBus>().get())
 
 	REGISTER_CALLBACK(_eventBus, EditorRequestSaveSceneEvent, OnEditorRequestSaveSceneEvent);
 	REGISTER_CALLBACK(_eventBus, EditorRequestLoadSceneEvent, OnEditorRequestLoadSceneEvent);
+	REGISTER_CALLBACK(_eventBus, EditorSceneReloadedEvent, OnEditorSceneReloadedEvent);
 }
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)
@@ -83,7 +86,8 @@ bool SceneApplicationLayer::OnEditorRequestSaveSceneEvent(const EditorRequestSav
 	std::cout << "save scene received in scene layer." << std::endl;
 
 	const std::string sceneFilePath = "saved files/scene.dat";
-	bool success = Core::Serializer::Serialize<Scene>(_scene, sceneFilePath);
+	bool success = _sceneManager->SaveActiveScene(sceneFilePath);
+	
 	return true;
 }
 
@@ -91,6 +95,24 @@ bool SceneApplicationLayer::OnEditorRequestLoadSceneEvent(const EditorRequestLoa
 {
 	std::cout << "load scene received in scene layer." << std::endl;
 	const std::string sceneFilePath = "saved files/scene.dat";
-	_scene = Core::Serializer::Deserialize<Scene>(sceneFilePath);
+	
+	// Use SceneManager to load - it handles everything and switches the active scene
+	auto newScene = _sceneManager->LoadScene(sceneFilePath, true);
+	
+	if (newScene) {
+		// Notify other layers that scene has been reloaded
+		_eventBus.PushEvent<EditorSceneReloadedEvent>(EditorSceneReloadedEvent());
+	}
+	
 	return true;
+}
+
+bool SceneApplicationLayer::OnEditorSceneReloadedEvent(const EditorSceneReloadedEvent& e)
+{
+	std::cout << "Scene reloaded event received in scene layer." << std::endl;
+	
+	// No need to update anything - we always get scene from SceneManager
+	// Just acknowledge the event
+	
+	return false; // Let other layers handle it too
 }

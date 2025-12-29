@@ -3,8 +3,13 @@
 #include <core/event/ApplicationEvent.h>
 #include <iostream>
 #include <core/serializer/Serializer.h>
+#include "app/sceneLayer/SceneManager.h"
 
-UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _sceneHierarchyPanel(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get()), _mainMenu(*ctx.Get<Core::EventBus>().get())
+UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
+_sceneManager(ctx.Get<SceneManager>()),
+_sceneHierarchyPanel(*(ctx.Get<SceneManager>())),
+_eventBus(*ctx.Get<Core::EventBus>().get()), 
+_mainMenu(*ctx.Get<Core::EventBus>().get())
 {
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
@@ -17,6 +22,7 @@ UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplica
 
 	REGISTER_CALLBACK(_eventBus, EditorRequestSaveSceneEvent, OnEditorRequestSaveSceneEvent);
 	REGISTER_CALLBACK(_eventBus, EditorRequestLoadSceneEvent, OnEditorRequestLoadSceneEvent);
+	REGISTER_CALLBACK(_eventBus, EditorSceneReloadedEvent, OnEditorSceneReloadedEvent);
 }
 
 void UIApplicationLayer::OnUpdate(const float deltaTime)
@@ -101,4 +107,14 @@ bool UIApplicationLayer::OnEditorRequestLoadSceneEvent(const EditorRequestLoadSc
 {
 	std::cout << "Editor request to load scene received." << std::endl;
 	return false;
+}
+
+bool UIApplicationLayer::OnEditorSceneReloadedEvent(const EditorSceneReloadedEvent& e)
+{
+	std::cout << "Scene reloaded event received in UI layer." << std::endl;
+	
+	// No need to update anything - Panel gets scene from SceneManager each render
+	// Just acknowledge the event
+	
+	return false; // Let other layers handle it too
 }

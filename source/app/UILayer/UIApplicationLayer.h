@@ -7,6 +7,8 @@
 #include "core/event/KeyEvent.h"
 #include "app/event/EditorEvent.h"
 
+class SceneManager;
+
 class UIApplicationLayer : public Core::IApplicationLayer
 {
 public:
@@ -25,8 +27,10 @@ public:
 
 	bool OnEditorRequestSaveSceneEvent(const EditorRequestSaveSceneEvent& e);
 	bool OnEditorRequestLoadSceneEvent(const EditorRequestLoadSceneEvent& e);
+	bool OnEditorSceneReloadedEvent(const EditorSceneReloadedEvent& e);
 
 private:
+	std::shared_ptr<SceneManager> _sceneManager;
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
 	Core::EventBus& _eventBus;
