@@ -1,6 +1,6 @@
 #include "core/Application.h"
 #include "app/sceneLayer/SceneApplicationLayer.h"
-#include "app/EditorLayer/EditorApplicationLayer.h"
+#include "app/editorLayer/EditorApplicationLayer.h"
 #include "app/sceneLayer/SceneManager.h"
 
 int main() {
