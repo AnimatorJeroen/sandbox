@@ -38,8 +38,8 @@ public:
     size_t GetSceneCount() const;
 
 private:
-    std::vector<std::shared_ptr<Scene>> _scenes{ std::make_shared<Scene>() }; // Always have at least one scene
-    size_t _activeSceneIndex = 0;
+    std::vector<std::shared_ptr<Scene>> _scenes;
+    size_t _activeSceneIndex = -1;
     Core::EventBus& _eventBus;
     
     void NotifySceneChanged();

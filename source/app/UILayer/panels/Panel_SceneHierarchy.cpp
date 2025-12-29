@@ -16,6 +16,8 @@ void Panel_SceneHierarchy::Render()
     static char inputTextbuffer[128];
     static Scene* lastScene = nullptr;
 
+    if (!_scene)
+        return;
     if (_scene != lastScene)
     {
         const std::string& sceneName = _scene->GetName();

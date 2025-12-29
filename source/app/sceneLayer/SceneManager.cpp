@@ -10,6 +10,7 @@ SceneManager::SceneManager(Core::EventBus& eventBus) : _eventBus(eventBus)
 
 std::shared_ptr<Scene> SceneManager::GetActiveScene() const
 {
+    if (_activeSceneIndex >= _scenes.size()) return nullptr;
     return _scenes[_activeSceneIndex];
 }
 
