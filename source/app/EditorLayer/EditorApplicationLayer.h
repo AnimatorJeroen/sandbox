@@ -9,11 +9,11 @@
 
 class SceneManager;
 
-class UIApplicationLayer : public Core::IApplicationLayer
+class EditorApplicationLayer : public Core::IApplicationLayer
 {
 public:
-	explicit UIApplicationLayer(Core::LayerContext& ctx);
-	~UIApplicationLayer() = default;
+	explicit EditorApplicationLayer(Core::LayerContext& ctx);
+	~EditorApplicationLayer() = default;
 	void OnUpdate(const float deltaTime) override;
 	void OnRender() override;
 

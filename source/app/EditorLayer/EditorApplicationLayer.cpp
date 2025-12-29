@@ -1,11 +1,11 @@
-#include "UIApplicationLayer.h"
+#include "EditorApplicationLayer.h"
 #include <imgui/imgui.h>
 #include <core/event/ApplicationEvent.h>
 #include <iostream>
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
 
-UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
+EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
@@ -25,17 +25,17 @@ _mainMenu(*ctx.Get<Core::EventBus>().get())
 	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
 }
 
-void UIApplicationLayer::OnUpdate(const float deltaTime)
+void EditorApplicationLayer::OnUpdate(const float deltaTime)
 {
 }
 
-void UIApplicationLayer::OnRender()
+void EditorApplicationLayer::OnRender()
 {
 	_mainMenu.Render();
 	_sceneHierarchyPanel.Render();
 }
 
-bool UIApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
+bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 {
 	if(!ImGui::GetIO().WantCaptureMouse)
 		return false;
@@ -44,7 +44,7 @@ bool UIApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 	return true;
 }
 
-bool UIApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
+bool EditorApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 {
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
@@ -53,7 +53,7 @@ bool UIApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 	return true;
 }
 
-bool UIApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
+bool EditorApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 {
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
@@ -62,7 +62,7 @@ bool UIApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 	return true;
 }
 
-bool UIApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
+bool EditorApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 {
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
@@ -71,7 +71,7 @@ bool UIApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 	return true;
 }
 
-bool UIApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
+bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 {
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
@@ -80,7 +80,7 @@ bool UIApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	return true;
 }
 
-bool UIApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
+bool EditorApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 {
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
@@ -89,7 +89,7 @@ bool UIApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 	return true;
 }
 
-bool UIApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& e)
+bool EditorApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& e)
 {
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
@@ -97,19 +97,19 @@ bool UIApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& e)
 	return true;
 }
 
-bool UIApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
+bool EditorApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
 {
 	std::cout << "Editor request to save scene received." << std::endl;
 	return false;
 }
 
-bool UIApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
+bool EditorApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
 {
 	std::cout << "Editor request to load scene received." << std::endl;
 	return false;
 }
 
-bool UIApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
+bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
 	std::cout << "Scene reloaded event received in UI layer." << std::endl;
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
