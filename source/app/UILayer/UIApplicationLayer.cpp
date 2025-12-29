@@ -117,9 +117,6 @@ bool UIApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
 bool UIApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
 	std::cout << "Scene reloaded event received in UI layer." << std::endl;
-	
-	// Update panel context with the new active scene
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
-	
-	return false; // Let other layers handle it too
+	return false;
 }

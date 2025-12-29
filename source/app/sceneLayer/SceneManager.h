@@ -48,7 +48,7 @@ public:
     }
     
     // Load a scene from file and add to open scenes
-    std::shared_ptr<Scene> LoadScene(const std::string& filepath, bool makeActive = true);
+    bool LoadScene(const std::string& filepath, bool makeActive = true);
     
     // Save the active scene
     bool SaveActiveScene(const std::string& filepath);

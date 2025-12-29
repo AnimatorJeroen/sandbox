@@ -97,13 +97,7 @@ bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent&
 	const std::string sceneFilePath = "saved files/scene.dat";
 	
 	// Use SceneManager to load - it handles everything and switches the active scene
-	auto newScene = _sceneManager->LoadScene(sceneFilePath, true);
-	
-	if (newScene) {
-		// Notify other layers that scene has been reloaded
-		_eventBus.PushEvent<OnChangeActiveSceneEvent>(OnChangeActiveSceneEvent());
-	}
-	
+	_sceneManager->LoadScene(sceneFilePath, true);
 	return true;
 }
 

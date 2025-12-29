@@ -2,14 +2,14 @@
 #include "core/serializer/Serializer.h"
 #include <iostream>
 
-std::shared_ptr<Scene> SceneManager::LoadScene(const std::string& filepath, bool makeActive)
+bool SceneManager::LoadScene(const std::string& filepath, bool makeActive)
 {
     try {
         auto scene = Core::Serializer::Deserialize<Scene>(filepath);
         
         if (!scene) {
             std::cerr << "Failed to deserialize scene from: " << filepath << std::endl;
-            return nullptr;
+            return false;
         }
         
         _scenes.push_back(scene);
@@ -19,11 +19,11 @@ std::shared_ptr<Scene> SceneManager::LoadScene(const std::string& filepath, bool
         }
         
         std::cout << "Scene loaded from: " << filepath << std::endl;
-        return scene;
+        return true;
     }
     catch (const std::exception& e) {
         std::cerr << "Error loading scene: " << e.what() << std::endl;
-        return nullptr;
+        return false;
     }
 }
 
