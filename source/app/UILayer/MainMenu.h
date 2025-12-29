@@ -2,7 +2,7 @@
 #include <imgui/imgui.h>
 #include "core/event/EventBus.h"
 #include "core/event/ApplicationEvent.h"
-#include "app/event/EditorEvent.h"
+#include "app/event/SceneEvent.h"
 
 
 class MainMenu
@@ -20,11 +20,11 @@ public:
             {
                 if(ImGui::MenuItem("Save"))
                 {
-					_eventBus.PushEvent<EditorRequestSaveSceneEvent>(EditorRequestSaveSceneEvent("saved files/scene.dat"));
+					_eventBus.PushEvent<RequestSaveSceneEvent>(RequestSaveSceneEvent("saved files/scene.dat"));
                 }
                 if(ImGui::MenuItem("Load"))
                 {
-					_eventBus.PushEvent<EditorRequestLoadSceneEvent>(EditorRequestLoadSceneEvent("saved files/scene.dat"));
+					_eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent("saved files/scene.dat"));
                 }
                 if (ImGui::MenuItem("Exit"))
                 {

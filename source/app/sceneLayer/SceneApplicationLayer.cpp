@@ -20,9 +20,9 @@ _eventBus(*ctx.Get<Core::EventBus>().get())
 
 	REGISTER_CALLBACK(_eventBus, Core::WindowResizeEvent, OnWindowResizedEvent);
 
-	REGISTER_CALLBACK(_eventBus, EditorRequestSaveSceneEvent, OnEditorRequestSaveSceneEvent);
-	REGISTER_CALLBACK(_eventBus, EditorRequestLoadSceneEvent, OnEditorRequestLoadSceneEvent);
-	REGISTER_CALLBACK(_eventBus, EditorSceneReloadedEvent, OnEditorSceneReloadedEvent);
+	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
+	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
+	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
 }
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)
@@ -81,7 +81,7 @@ bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& 
 	return false;
 }
 
-bool SceneApplicationLayer::OnEditorRequestSaveSceneEvent(const EditorRequestSaveSceneEvent& e)
+bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
 {
 	std::cout << "save scene received in scene layer." << std::endl;
 
@@ -91,7 +91,7 @@ bool SceneApplicationLayer::OnEditorRequestSaveSceneEvent(const EditorRequestSav
 	return true;
 }
 
-bool SceneApplicationLayer::OnEditorRequestLoadSceneEvent(const EditorRequestLoadSceneEvent& e)
+bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
 {
 	std::cout << "load scene received in scene layer." << std::endl;
 	const std::string sceneFilePath = "saved files/scene.dat";
@@ -101,18 +101,14 @@ bool SceneApplicationLayer::OnEditorRequestLoadSceneEvent(const EditorRequestLoa
 	
 	if (newScene) {
 		// Notify other layers that scene has been reloaded
-		_eventBus.PushEvent<EditorSceneReloadedEvent>(EditorSceneReloadedEvent());
+		_eventBus.PushEvent<OnChangeActiveSceneEvent>(OnChangeActiveSceneEvent());
 	}
 	
 	return true;
 }
 
-bool SceneApplicationLayer::OnEditorSceneReloadedEvent(const EditorSceneReloadedEvent& e)
+bool SceneApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
 	std::cout << "Scene reloaded event received in scene layer." << std::endl;
-	
-	// No need to update anything - we always get scene from SceneManager
-	// Just acknowledge the event
-	
 	return false; // Let other layers handle it too
 }

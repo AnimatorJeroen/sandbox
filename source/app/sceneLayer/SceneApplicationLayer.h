@@ -5,7 +5,7 @@
 #include <core/event/MouseEvent.h>
 #include <core/event/KeyEvent.h>
 #include <core/event/ApplicationEvent.h>
-#include "app/event/EditorEvent.h"
+#include "app/event/SceneEvent.h"
 
 class SceneManager;
 
@@ -26,9 +26,9 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 	bool OnKeyUpEvent(const Core::KeyUpEvent& e);
 	bool OnWindowResizedEvent(const Core::WindowResizeEvent& e);
 
-	bool OnEditorRequestSaveSceneEvent(const EditorRequestSaveSceneEvent& e);
-	bool OnEditorRequestLoadSceneEvent(const EditorRequestLoadSceneEvent& e);
-	bool OnEditorSceneReloadedEvent(const EditorSceneReloadedEvent& e);
+	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
+	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
+	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
 
 	private:
 	Core::EventBus& _eventBus;

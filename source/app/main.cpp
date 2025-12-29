@@ -1,7 +1,9 @@
 #include "core/Application.h"
 #include "app/sceneLayer/SceneApplicationLayer.h"
 #include "app/UILayer/UIApplicationLayer.h"
-#include "app/sceneLayer/SceneManager.h"
+
+//forward declare
+class SceneManager;
 
 int main() {
 

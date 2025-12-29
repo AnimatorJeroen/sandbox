@@ -4,6 +4,8 @@
 #include "app/sceneLayer/SceneManager.h"
 #include "core/renderer/Renderer_ImGui.h"
 #include <memory>
+#include <app/sceneLayer/shape/Circle.h>
+#include <app/sceneLayer/shape/BezierCurve.h>
 
 class TestScene1 : public ITestScene
 {
