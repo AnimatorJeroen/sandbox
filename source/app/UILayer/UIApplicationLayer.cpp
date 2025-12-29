@@ -2,8 +2,9 @@
 #include <imgui/imgui.h>
 #include <core/event/ApplicationEvent.h>
 #include <iostream>
+#include <core/serializer/Serializer.h>
 
-UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _sceneHierarchyPanel(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get())
+UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _sceneHierarchyPanel(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get()), _mainMenu(*ctx.Get<Core::EventBus>().get())
 {
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
@@ -13,6 +14,9 @@ UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplica
 	REGISTER_CALLBACK(_eventBus, Core::KeyDownEvent, OnKeyDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::KeyCharacterEvent, OnKeyCharacterEvent);
+
+	REGISTER_CALLBACK(_eventBus, EditorRequestSaveSceneEvent, OnEditorRequestSaveSceneEvent);
+	REGISTER_CALLBACK(_eventBus, EditorRequestLoadSceneEvent, OnEditorRequestLoadSceneEvent);
 }
 
 void UIApplicationLayer::OnUpdate(const float deltaTime)
@@ -21,7 +25,8 @@ void UIApplicationLayer::OnUpdate(const float deltaTime)
 
 void UIApplicationLayer::OnRender()
 {
-	_sceneHierarchyPanel.OnRender();
+	_mainMenu.Render();
+	_sceneHierarchyPanel.Render();
 }
 
 bool UIApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
@@ -84,4 +89,16 @@ bool UIApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& e)
 		return false;
 	std::cout << "Key character event in UI: " << e.character << std::endl;
 	return true;
+}
+
+bool UIApplicationLayer::OnEditorRequestSaveSceneEvent(const EditorRequestSaveSceneEvent& e)
+{
+	std::cout << "Editor request to save scene received." << std::endl;
+	return false;
+}
+
+bool UIApplicationLayer::OnEditorRequestLoadSceneEvent(const EditorRequestLoadSceneEvent& e)
+{
+	std::cout << "Editor request to load scene received." << std::endl;
+	return false;
 }

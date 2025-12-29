@@ -33,15 +33,17 @@ namespace Core
 		//register callbacks
 		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);
 		REGISTER_CALLBACK((*_eventBus), WindowCloseEvent, OnWindowCloseEvent);
+		REGISTER_CALLBACK((*_eventBus), ApplicationCloseEvent, OnApplicationCloseEvent);
 	}
 
+	static bool shouldClose = false;
 	void Application::Run()
 	{
 		float deltaTime = 0.0f;
 		float lastFrameTime = 0.0f;
 		float currentFrameTime = 0.0f;
 
-		while (!_window->ShouldClose())
+		while (!shouldClose)
 		{
 			_window->PollEvents();
 			_eventBus->HandleEvents();
@@ -97,9 +99,20 @@ namespace Core
 		return false;
 	}
 
+	bool Application::OnApplicationCloseEvent(const ApplicationCloseEvent& e)
+	{
+		std::cout << "application close event received." << std::endl;
+		shouldClose = true;
+		return false;
+	}
+
 	bool Application::OnWindowCloseEvent(const WindowCloseEvent& e)
 	{
 		std::cout << "Window close event received." << std::endl;
+		if (e.windowHandle == _window->GetHandle())
+		{
+			_eventBus->PushEvent<ApplicationCloseEvent>(ApplicationCloseEvent());
+		}
 		return false;
 	}
 

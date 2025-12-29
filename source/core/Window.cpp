@@ -24,7 +24,7 @@ namespace Core
         glfwSetWindowCloseCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window)
             {
                 auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
-				self->_eventBus.PushEvent(WindowCloseEvent());
+				self->_eventBus.PushEvent(WindowCloseEvent(window));
             });
 
         //Mouse events

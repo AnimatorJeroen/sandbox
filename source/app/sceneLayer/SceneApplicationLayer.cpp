@@ -1,8 +1,13 @@
 #include "SceneApplicationLayer.h"
 #include <iostream>
+#include <core/serializer/Serializer.h>
 
-SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _testScene(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get())
+SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), 
+_scene(ctx.Get<Scene>()), 
+_testScene(*ctx.Get<Scene>().get()), 
+_eventBus(*ctx.Get<Core::EventBus>().get())
 {
+	_testScene.Setup();
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
@@ -12,7 +17,9 @@ SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IA
 	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
 
 	REGISTER_CALLBACK(_eventBus, Core::WindowResizeEvent, OnWindowResizedEvent);
-	_testScene.Setup();
+
+	REGISTER_CALLBACK(_eventBus, EditorRequestSaveSceneEvent, OnEditorRequestSaveSceneEvent);
+	REGISTER_CALLBACK(_eventBus, EditorRequestLoadSceneEvent, OnEditorRequestLoadSceneEvent);
 }
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)
@@ -69,4 +76,21 @@ bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& 
 	specs.width = e.Width;
 	_testScene.SetRenderSpecs(specs);
 	return false;
+}
+
+bool SceneApplicationLayer::OnEditorRequestSaveSceneEvent(const EditorRequestSaveSceneEvent& e)
+{
+	std::cout << "save scene received in scene layer." << std::endl;
+
+	const std::string sceneFilePath = "saved files/scene.dat";
+	bool success = Core::Serializer::Serialize<Scene>(_scene, sceneFilePath);
+	return true;
+}
+
+bool SceneApplicationLayer::OnEditorRequestLoadSceneEvent(const EditorRequestLoadSceneEvent& e)
+{
+	std::cout << "load scene received in scene layer." << std::endl;
+	const std::string sceneFilePath = "saved files/scene.dat";
+	_scene = Core::Serializer::Deserialize<Scene>(sceneFilePath);
+	return true;
 }

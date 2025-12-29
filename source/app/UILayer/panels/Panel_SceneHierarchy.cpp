@@ -5,7 +5,7 @@ Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& context) : _scene(context)
 {
 }
 
-void Panel_SceneHierarchy::OnRender()
+void Panel_SceneHierarchy::Render()
 {
 	static char inputTextbuffer[128];
 	static bool initialized = false;

@@ -27,6 +27,8 @@ namespace Core
 	class WindowCloseEvent : public Core::IEvent
 	{
 		public:
+			void* windowHandle;
+			WindowCloseEvent(void* handle) : windowHandle(handle) {}
 			SET_EVENT_TYPE_FUNCTIONS(WindowCloseEvent)
 	};
 }
