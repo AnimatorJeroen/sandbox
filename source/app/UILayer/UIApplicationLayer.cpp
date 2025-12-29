@@ -23,11 +23,6 @@ _mainMenu(*ctx.Get<Core::EventBus>().get())
 	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
 	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
 	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
-	
-	// Register callback for scene changes
-	_sceneManager->RegisterSceneChangedCallback([this](std::shared_ptr<Scene> newScene) {
-		_sceneHierarchyPanel.SetContext(*newScene);
-	});
 }
 
 void UIApplicationLayer::OnUpdate(const float deltaTime)

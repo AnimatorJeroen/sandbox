@@ -1,17 +1,14 @@
 #pragma once
 #include "Scene.h"
+#include "core/event/EventBus.h"
 #include <memory>
 #include <vector>
 #include <string>
-#include <functional>
 
 class SceneManager
 {
 public:
-    // Callback type for scene change notifications
-    using SceneChangedCallback = std::function<void(std::shared_ptr<Scene>)>;
-    
-    SceneManager() = default;
+    explicit SceneManager(Core::EventBus& eventBus);
     
     // Get the currently active scene (never returns null, always has at least one scene)
     std::shared_ptr<Scene> GetActiveScene() const { 
@@ -63,7 +60,7 @@ public:
         size_t oldIndex = _activeSceneIndex;
         _activeSceneIndex = index;
         
-        // Notify all registered callbacks if scene changed
+        // Push event to event bus if scene changed
         if (oldIndex != index) {
             NotifySceneChanged();
         }
@@ -89,11 +86,6 @@ public:
         }
     }
     
-    // Register a callback for when the active scene changes
-    void RegisterSceneChangedCallback(const SceneChangedCallback& callback) {
-        _sceneChangedCallbacks.push_back(callback);
-    }
-    
     // Get number of open scenes
     size_t GetSceneCount() const {
         return _scenes.size();
@@ -102,12 +94,7 @@ public:
 private:
     std::vector<std::shared_ptr<Scene>> _scenes{ std::make_shared<Scene>() }; // Always have at least one scene
     size_t _activeSceneIndex = 0;
-    std::vector<SceneChangedCallback> _sceneChangedCallbacks;
+    Core::EventBus& _eventBus;
     
-    void NotifySceneChanged() {
-        auto activeScene = GetActiveScene();
-        for (const auto& callback : _sceneChangedCallbacks) {
-            callback(activeScene);
-        }
-    }
+    void NotifySceneChanged();
 };

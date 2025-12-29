@@ -1,6 +1,16 @@
 #include "SceneManager.h"
 #include "core/serializer/Serializer.h"
+#include "app/event/SceneEvent.h"
 #include <iostream>
+
+SceneManager::SceneManager(Core::EventBus& eventBus) : _eventBus(eventBus)
+{
+}
+
+void SceneManager::NotifySceneChanged()
+{
+    _eventBus.PushEvent<OnChangeActiveSceneEvent>(OnChangeActiveSceneEvent());
+}
 
 bool SceneManager::LoadScene(const std::string& filepath, bool makeActive)
 {

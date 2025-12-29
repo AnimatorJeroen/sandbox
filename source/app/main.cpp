@@ -1,9 +1,7 @@
 #include "core/Application.h"
 #include "app/sceneLayer/SceneApplicationLayer.h"
 #include "app/UILayer/UIApplicationLayer.h"
-
-//forward declare
-class SceneManager;
+#include "app/sceneLayer/SceneManager.h"
 
 int main() {
 
@@ -14,7 +12,7 @@ int main() {
 	};
 	Core::Application app(specs);
 
-	auto sceneManager = std::make_shared<SceneManager>();
+	auto sceneManager = std::make_shared<SceneManager>(*app.GetContext().Get<Core::EventBus>());
 	app.GetContext().Register<SceneManager>(sceneManager);
 	
 	app.PushLayer<UIApplicationLayer>();
