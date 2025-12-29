@@ -1,18 +1,41 @@
 #include "Panel_SceneHierarchy.h"
 #include <imgui/imgui.h>
+#include <app/sceneLayer/shape/Circle.h>
 
-Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& context) : _scene(context)
+Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene) : _scene(&scene)
 {
 }
 
-void Panel_SceneHierarchy::OnRender()
+void Panel_SceneHierarchy::SetContext(Scene& scene)
 {
-	static char inputTextbuffer[128];
+    _scene = &scene;
+}
+
+void Panel_SceneHierarchy::Render()
+{
+    static char inputTextbuffer[128];
+    static Scene* lastScene = nullptr;
+
+    if (!_scene)
+        return;
+    if (_scene != lastScene)
+    {
+        const std::string& sceneName = _scene->GetName();
+        strncpy_s(inputTextbuffer, sceneName.c_str(), sizeof(inputTextbuffer) - 1);
+        inputTextbuffer[sizeof(inputTextbuffer) - 1] = '\0';
+        lastScene = _scene;
+    }
+    
     ImGui::Begin("Scene Hierarchy");
-	ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer));
+	
+	// Update scene name when input changes
+	if (ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer)))
+	{
+		_scene->SetName(std::string(inputTextbuffer));
+	}
+	
     if (ImGui::Button("Add Circle"))
     {
-
         static int posIncr = 0;
         auto newCircle = std::make_shared<Circle>(
             glm::vec2{ 150.0f + posIncr, 150.0f },  // center
@@ -22,11 +45,11 @@ void Panel_SceneHierarchy::OnRender()
             32,                           // num_segments
             1.0f                          // thickness
         );
-        _scene.shapes.push_back(newCircle);
+        _scene->GetShapes().push_back(newCircle);
         posIncr += 20;
     }
 
-    for(const auto& entity : _scene.shapes)
+    for(const auto& entity : _scene->GetShapes())
     {
         ImGui::Text("Entity ID: %d");
 	}

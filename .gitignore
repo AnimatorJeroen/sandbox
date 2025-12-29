@@ -13,6 +13,8 @@
 ## git rm -rf --cached .
 ## git add .
 
+# Exluding custom folders
+saved files/
 
 # Exluding who knows what
 *.ini

@@ -2,8 +2,14 @@
 #include <imgui/imgui.h>
 #include <core/event/ApplicationEvent.h>
 #include <iostream>
+#include <core/serializer/Serializer.h>
+#include "app/sceneLayer/SceneManager.h"
 
-UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _sceneHierarchyPanel(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get())
+UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
+_sceneManager(ctx.Get<SceneManager>()),
+_sceneHierarchyPanel(*_sceneManager->GetActiveScene()),
+_eventBus(*ctx.Get<Core::EventBus>().get()), 
+_mainMenu(*ctx.Get<Core::EventBus>().get())
 {
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
@@ -13,6 +19,10 @@ UIApplicationLayer::UIApplicationLayer(Core::LayerContext& ctx) : Core::IApplica
 	REGISTER_CALLBACK(_eventBus, Core::KeyDownEvent, OnKeyDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::KeyCharacterEvent, OnKeyCharacterEvent);
+
+	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
+	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
+	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
 }
 
 void UIApplicationLayer::OnUpdate(const float deltaTime)
@@ -21,7 +31,8 @@ void UIApplicationLayer::OnUpdate(const float deltaTime)
 
 void UIApplicationLayer::OnRender()
 {
-	_sceneHierarchyPanel.OnRender();
+	_mainMenu.Render();
+	_sceneHierarchyPanel.Render();
 }
 
 bool UIApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
@@ -84,4 +95,23 @@ bool UIApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& e)
 		return false;
 	std::cout << "Key character event in UI: " << e.character << std::endl;
 	return true;
+}
+
+bool UIApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
+{
+	std::cout << "Editor request to save scene received." << std::endl;
+	return false;
+}
+
+bool UIApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
+{
+	std::cout << "Editor request to load scene received." << std::endl;
+	return false;
+}
+
+bool UIApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
+{
+	std::cout << "Scene reloaded event received in UI layer." << std::endl;
+	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
+	return false;
 }

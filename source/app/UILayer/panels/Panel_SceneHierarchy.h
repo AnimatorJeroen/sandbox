@@ -1,12 +1,14 @@
 #pragma once
 #include "app/sceneLayer/Scene.h"
+#include <memory>
 
 class Panel_SceneHierarchy
 {
 public:
-	explicit Panel_SceneHierarchy(Scene& context);
+	explicit Panel_SceneHierarchy(Scene& scene);
 	~Panel_SceneHierarchy() = default;
-	void OnRender();
+	void Render();
+	void SetContext(Scene& scene);
 private:
-	Scene& _scene;
+	Scene* _scene;
 };

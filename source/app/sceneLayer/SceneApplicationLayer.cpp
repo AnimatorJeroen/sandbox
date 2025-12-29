@@ -1,8 +1,15 @@
 #include "SceneApplicationLayer.h"
+#include "SceneManager.h"
 #include <iostream>
+#include <core/serializer/Serializer.h>
 
-SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx), _testScene(*ctx.Get<Scene>().get()), _eventBus(*ctx.Get<Core::EventBus>().get())
+SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
+_sceneManager(ctx.Get<SceneManager>()),
+_testScene(ctx.Get<SceneManager>()),
+_eventBus(*ctx.Get<Core::EventBus>().get())
 {
+	_testScene.Setup();
+	
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
@@ -12,7 +19,10 @@ SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IA
 	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
 
 	REGISTER_CALLBACK(_eventBus, Core::WindowResizeEvent, OnWindowResizedEvent);
-	_testScene.Setup();
+
+	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
+	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
+	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
 }
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)
@@ -69,4 +79,30 @@ bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& 
 	specs.width = e.Width;
 	_testScene.SetRenderSpecs(specs);
 	return false;
+}
+
+bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
+{
+	std::cout << "save scene received in scene layer." << std::endl;
+
+	const std::string sceneFilePath = "saved files/scene.dat";
+	bool success = _sceneManager->SaveActiveScene(sceneFilePath);
+	
+	return true;
+}
+
+bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
+{
+	std::cout << "load scene received in scene layer." << std::endl;
+	const std::string sceneFilePath = "saved files/scene.dat";
+	
+	// Use SceneManager to load - it handles everything and switches the active scene
+	_sceneManager->LoadScene(sceneFilePath, true);
+	return true;
+}
+
+bool SceneApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
+{
+	std::cout << "Scene reloaded event received in scene layer." << std::endl;
+	return false; // Let other layers handle it too
 }

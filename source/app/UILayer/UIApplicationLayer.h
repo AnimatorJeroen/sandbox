@@ -1,9 +1,13 @@
 #pragma once
 #include "core/IApplicationLayer.h"
 #include "panels/Panel_SceneHierarchy.h"
+#include "MainMenu.h"
 #include <core/event/EventBus.h>
 #include "core/event/MouseEvent.h"
 #include "core/event/KeyEvent.h"
+#include "app/event/SceneEvent.h"
+
+class SceneManager;
 
 class UIApplicationLayer : public Core::IApplicationLayer
 {
@@ -21,7 +25,13 @@ public:
 	bool OnKeyUpEvent(const Core::KeyUpEvent& e);
 	bool OnKeyCharacterEvent(const Core::KeyCharacterEvent& e);
 
+	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
+	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
+	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
+
 private:
+	std::shared_ptr<SceneManager> _sceneManager;
 	Panel_SceneHierarchy _sceneHierarchyPanel;
+	MainMenu _mainMenu;
 	Core::EventBus& _eventBus;
 };
