@@ -40,7 +40,7 @@ bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 	if(!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	LOG_TRACE(std::string(e.GetName()) + " captured by UI Layer: Button " + std::to_string(e.identifier));
+	LOG_TRACE(std::string(e.GetName()) + " captured by editor layer: Button " + std::to_string(e.identifier));
 	return true;
 }
 
@@ -49,7 +49,7 @@ bool EditorApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	LOG_TRACE(std::string(e.GetName()) + " in UI: Button " + std::to_string(e.identifier));
+	LOG_TRACE(std::string(e.GetName()) + " in editor layer: Button " + std::to_string(e.identifier));
 	return true;
 }
 
@@ -58,7 +58,7 @@ bool EditorApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	//LOG_TRACE(std::string(e.GetName()) + " in UI: " + std::to_string(e.posX) + ", " + std::to_string(e.posY));
+	//LOG_TRACE(std::string(e.GetName()) + " in editor layer: " + std::to_string(e.posX) + ", " + std::to_string(e.posY));
 	return true;
 }
 
@@ -67,7 +67,7 @@ bool EditorApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	//LOG_TRACE(std::string(e.GetName()) + " in UI: " + std::to_string(e.scrollX) + ", " + std::to_string(e.scrollY));
+	//LOG_TRACE(std::string(e.GetName()) + " in editor layer: " + std::to_string(e.scrollX) + ", " + std::to_string(e.scrollY));
 	return true;
 }
 
@@ -76,7 +76,7 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
 
-	LOG_TRACE(std::string(e.GetName()) + " in UI: Key " + std::to_string(e.key) + ", repeated: " + std::to_string(e.repeated));
+	LOG_TRACE(std::string(e.GetName()) + " in editor layer: Key " + std::to_string(e.key) + ", repeated: " + std::to_string(e.repeated));
 	return true;
 }
 
@@ -85,7 +85,7 @@ bool EditorApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
 
-	LOG_TRACE(std::string(e.GetName()) + " in UI: Key " + std::to_string(e.key));
+	LOG_TRACE(std::string(e.GetName()) + " in editor layer: Key " + std::to_string(e.key));
 	return true;
 }
 
@@ -93,7 +93,7 @@ bool EditorApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& 
 {
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
-	LOG_TRACE(std::string(e.GetName()) + " in UI: Character " + std::to_string(e.character));
+	LOG_TRACE(std::string(e.GetName()) + " in editor layer: Character " + std::to_string(e.character));
 	return true;
 }
 
@@ -111,7 +111,7 @@ bool EditorApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent
 
 bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " received in UI layer.");
+	LOG_TRACE(std::string(e.GetName()) + " received in editor layer.");
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
 	return false;
 }

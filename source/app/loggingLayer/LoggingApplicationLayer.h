@@ -24,4 +24,5 @@ private:
 	bool _showWarn = true;
 	bool _showError = true;
 	bool _showCritical = true;
+	size_t _previousLogCount = 0;
 };

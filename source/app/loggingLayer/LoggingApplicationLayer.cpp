@@ -40,6 +40,7 @@ void LoggingApplicationLayer::OnRender()
 		if (ImGui::Button("Clear"))
 		{
 			Core::Log::ClearGuiLogs();
+			_previousLogCount = 0;
 		}
 		
 		ImGui::EndMenuBar();
@@ -50,6 +51,10 @@ void LoggingApplicationLayer::OnRender()
 	
 	ImGui::Text("Total Logs: %zu", logs.size());
 	ImGui::Separator();
+	
+	// Check if new logs were added
+	bool hasNewLogs = logs.size() > _previousLogCount;
+	_previousLogCount = logs.size();
 	
 	// Event list in a scrollable region
 	ImGui::BeginChild("LogList", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
@@ -111,9 +116,11 @@ void LoggingApplicationLayer::OnRender()
 		ImGui::PopStyleColor();
 	}
 	
-	// Auto-scroll to bottom
-	if (_autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+	// Auto-scroll to bottom only when new logs are added
+	if (_autoScroll && hasNewLogs)
+	{
 		ImGui::SetScrollHereY(1.0f);
+	}
 	
 	ImGui::EndChild();
 	ImGui::End();
