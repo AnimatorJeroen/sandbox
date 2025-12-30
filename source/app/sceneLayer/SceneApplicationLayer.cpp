@@ -37,13 +37,13 @@ void SceneApplicationLayer::OnRender()
 
 bool SceneApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " in Scene: Button " + std::to_string(e.identifier));
+	LOG_TRACE() << e.GetName() << " in Scene: Button " << e.identifier;
 	return false;
 }
 
 bool SceneApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " in Scene: Button " + std::to_string(e.identifier));
+	LOG_TRACE() << e.GetName() << " in Scene: Button " << e.identifier;
 	return false;
 }
 
@@ -54,25 +54,25 @@ bool SceneApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 
 bool SceneApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 {
-	//LOG_TRACE(std::string(e.GetName()) + " in Scene: " + std::to_string(e.scrollX) + ", " + std::to_string(e.scrollY));
+	//LOG_TRACE() << e.GetName() << " in Scene: " << e.scrollX << ", " << e.scrollY;
 	return false;
 }
 
 bool SceneApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " in Scene: Key " + std::to_string(e.key) + ", repeated: " + std::to_string(e.repeated));
+	LOG_TRACE() << e.GetName() << " in Scene: Key " << e.key << ", repeated: " << e.repeated;
 	return false;
 }
 
 bool SceneApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " in Scene: Key " + std::to_string(e.key));
+	LOG_TRACE() << e.GetName() << " in Scene: Key " << e.key;
 	return false;
 }
 
 bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " in Scene Layer: " + std::to_string(e.Width) + "x" + std::to_string(e.Height));
+	//LOG_TRACE() << e.GetName() << " in Scene Layer: " << e.Width << "x" << e.Height;
 	auto specs = _testScene.GetRenderSpecs();
 	specs.height = e.Height;
 	specs.width = e.Width;
@@ -82,7 +82,7 @@ bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& 
 
 bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " received in scene layer.");
+	LOG_TRACE() << e.GetName() << " received in scene layer.";
 
 	const std::string sceneFilePath = "saved files/scene.dat";
 	bool success = _sceneManager->SaveActiveScene(sceneFilePath);
@@ -92,7 +92,7 @@ bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent&
 
 bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " received in scene layer.");
+	LOG_TRACE() << e.GetName() << " received in scene layer.";
 	const std::string sceneFilePath = "saved files/scene.dat";
 	
 	// Use SceneManager to load - it handles everything and switches the active scene
@@ -102,6 +102,6 @@ bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent&
 
 bool SceneApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
-	LOG_TRACE(std::string(e.GetName()) + " received in scene layer.");
+	LOG_TRACE() << e.GetName() << " received in scene layer.";
 	return false; // Let other layers handle it too
 }

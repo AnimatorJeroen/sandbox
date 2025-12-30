@@ -114,6 +114,40 @@ namespace Core {
             size_t max_gui_logs_ = 1000;
         };
 
+        // Stream-based helper class that defers message construction
+        class LogStream {
+        public:
+            LogStream(Level lvl, const char* file, int line, const char* func)
+                : level_(lvl), file_(file), line_(line), func_(func), enabled_(Logger::instance().should_log(lvl)) {}
+
+            ~LogStream() {
+                if (enabled_) {
+                    Logger::instance().log(level_, file_, line_, func_, stream_.str());
+                }
+            }
+
+            // Allow any type that supports operator<< to be streamed
+            template<typename T>
+            LogStream& operator<<(const T& value) {
+                if (enabled_) {
+                    stream_ << value;
+                }
+                return *this;
+            }
+
+            // Prevent copying
+            LogStream(const LogStream&) = delete;
+            LogStream& operator=(const LogStream&) = delete;
+
+        private:
+            Level level_;
+            const char* file_;
+            int line_;
+            const char* func_;
+            bool enabled_;
+            std::ostringstream stream_;
+        };
+
         // Convenience functions to avoid touching the singleton in call sites
         inline void SetLevel(Level lvl) { Logger::instance().set_level(lvl); }
         inline void EnableConsole(bool e) { Logger::instance().enable_console(e); }
@@ -123,16 +157,13 @@ namespace Core {
         inline std::vector<LogEntry> GetGuiLogs() { return Logger::instance().get_gui_logs(); }
         inline void ClearGuiLogs() { Logger::instance().clear_gui_logs(); }
 
-        // Macros to capture location without string concatenation at call site
-#define LOG_AT(lvl, msg) \
-    do { if (Core::Log::Logger::instance().should_log(lvl)) \
-        Core::Log::Logger::instance().log(lvl, __FILE__, __LINE__, __func__, (msg)); } while(0)
-
-#define LOG_TRACE(msg)    LOG_AT(Core::Log::Level::Trace,    (msg))
-#define LOG_DEBUG(msg)    LOG_AT(Core::Log::Level::Debug,    (msg))
-#define LOG_INFO(msg)     LOG_AT(Core::Log::Level::Info,     (msg))
-#define LOG_WARN(msg)     LOG_AT(Core::Log::Level::Warn,     (msg))
-#define LOG_ERROR(msg)    LOG_AT(Core::Log::Level::Error,    (msg))
-#define LOG_CRITICAL(msg) LOG_AT(Core::Log::Level::Critical, (msg))
+        // Stream-based macros with zero overhead when log level is disabled
+        // Usage: LOG_TRACE() << "Value: " << x << ", Name: " << name;
+#define LOG_TRACE()    Core::Log::LogStream(Core::Log::Level::Trace,    __FILE__, __LINE__, __func__)
+#define LOG_DEBUG()    Core::Log::LogStream(Core::Log::Level::Debug,    __FILE__, __LINE__, __func__)
+#define LOG_INFO()     Core::Log::LogStream(Core::Log::Level::Info,     __FILE__, __LINE__, __func__)
+#define LOG_WARN()     Core::Log::LogStream(Core::Log::Level::Warn,     __FILE__, __LINE__, __func__)
+#define LOG_ERROR()    Core::Log::LogStream(Core::Log::Level::Error,    __FILE__, __LINE__, __func__)
+#define LOG_CRITICAL() Core::Log::LogStream(Core::Log::Level::Critical, __FILE__, __LINE__, __func__)
     }
 }

@@ -23,16 +23,16 @@ namespace Core
 				try {
 					cereal::BinaryOutputArchive outputArchive(outputFile);
 					outputArchive(*data);
-					LOG_DEBUG("Data saved to file: " + data->GetName());
+					LOG_DEBUG() << "Data saved to file: " << data->GetName();
 					success = true;
 				}
 				catch (const std::exception& e) {
-					LOG_ERROR("Failed to save data : " + std::string(e.what()));
+					LOG_ERROR() << "Failed to save data : " << e.what();
 				}
 				outputFile.close();
 			}
 			else {
-				LOG_ERROR("Failed to open file for saving data");
+				LOG_ERROR() << "Failed to open file for saving data";
 			}
 			return success;
 		}
@@ -47,15 +47,15 @@ namespace Core
 				try {
 					cereal::BinaryInputArchive inputArchive(inputFile);
 					inputArchive(*data);
-                    LOG_DEBUG("Data loaded from file: " + data->GetName());
+                    LOG_DEBUG() << "Data loaded from file: " << data->GetName();
 				}
 				catch (const std::exception& e) {
-					LOG_ERROR("Failed to load data: " + std::string(e.what()));
+					LOG_ERROR() << "Failed to load data: " << e.what();
 				}
 				inputFile.close();
 			}
 			else {
-				LOG_DEBUG("No saved data found");
+				LOG_DEBUG() << "No saved data found";
 			}
 			return data;
 		}
