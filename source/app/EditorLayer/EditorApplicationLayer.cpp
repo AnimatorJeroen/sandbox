@@ -1,9 +1,9 @@
 #include "EditorApplicationLayer.h"
 #include <imgui/imgui.h>
 #include <core/event/ApplicationEvent.h>
-#include <iostream>
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
+#include <core/Logger.h>
 
 EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
@@ -40,7 +40,7 @@ bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 	if(!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	std::cout << "Mouse Button Down Event captured by UI Layer: " << e.identifier << std::endl;
+	LOG_TRACE("Mouse Button Down Event captured by UI Layer: " + std::to_string(e.identifier));
 	return true;
 }
 
@@ -49,7 +49,7 @@ bool EditorApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	std::cout << "Mouse button up event in UI: " << e.identifier << std::endl;
+	LOG_TRACE("Mouse button up event in UI: " + std::to_string(e.identifier));
 	return true;
 }
 
@@ -58,7 +58,7 @@ bool EditorApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	std::cout << "Mouse move event in UI: " << e.posX << ", " << e.posY << std::endl;
+	LOG_TRACE("Logger: Mouse move event in UI : " + std::to_string(e.posX) + ", " + std::to_string(e.posY));
 	return true;
 }
 
@@ -67,7 +67,7 @@ bool EditorApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
-	std::cout << "Mouse scroll event in UI: " << e.scrollX << ", " << e.scrollY << std::endl;
+	LOG_TRACE("Mouse scroll event in UI: " + std::to_string(e.scrollX) + ", " + std::to_string(e.scrollY));
 	return true;
 }
 
@@ -76,7 +76,7 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
 
-	std::cout << "Key down event in UI: " << e.key << ", repeated: " << e.repeated << std::endl;
+	LOG_TRACE("Key down event in UI: " + std::to_string(e.key) + ", repeated: " + std::to_string(e.repeated));
 	return true;
 }
 
@@ -85,7 +85,7 @@ bool EditorApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
 
-	std::cout << "Key up event in UI: " << e.key << std::endl;
+	LOG_TRACE("Key up event in UI: " + std::to_string(e.key));
 	return true;
 }
 
@@ -93,25 +93,25 @@ bool EditorApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& 
 {
 	if (!ImGui::GetIO().WantCaptureKeyboard)
 		return false;
-	std::cout << "Key character event in UI: " << e.character << std::endl;
+	LOG_TRACE("Key character event in UI: " + std::to_string(e.character));
 	return true;
 }
 
 bool EditorApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
 {
-	std::cout << "Editor request to save scene received." << std::endl;
+	LOG_TRACE("Editor request to save scene received.");
 	return false;
 }
 
 bool EditorApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
 {
-	std::cout << "Editor request to load scene received." << std::endl;
+	LOG_TRACE("Editor request to load scene received.");
 	return false;
 }
 
 bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
-	std::cout << "Scene reloaded event received in UI layer." << std::endl;
+	LOG_TRACE("Scene reloaded event received in UI layer.");
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
 	return false;
 }

@@ -3,6 +3,7 @@
 #include "app/editorLayer/EditorApplicationLayer.h"
 #include "app/loggingLayer/LoggingApplicationLayer.h"
 #include "app/sceneLayer/SceneManager.h"
+#include <core/Logger.h>
 
 int main() {
 
@@ -12,6 +13,10 @@ int main() {
 		"Application Skeleton"
 	};
 	Core::Application app(specs);
+
+
+	Core::Log::SetLevel(Core::Log::Level::Trace);
+	Core::Log::EnableConsole(true);
 
 	auto sceneManager = std::make_shared<SceneManager>(*app.GetContext().Get<Core::EventBus>());
 	app.GetContext().Register<SceneManager>(sceneManager);
