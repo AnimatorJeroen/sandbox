@@ -32,6 +32,7 @@ namespace Core {
             }
 
             void set_level(Level lvl) { level_ = lvl; }
+			Level get_level() const { return level_; }
             void enable_console(bool enabled) { console_enabled_ = enabled; }
             void enable_gui_logging(bool enabled) { gui_logging_enabled_ = enabled; }
             void set_max_gui_logs(size_t max) { max_gui_logs_ = max; }
@@ -156,6 +157,7 @@ namespace Core {
 
         // Convenience functions to avoid touching the singleton in call sites
         inline void SetLevel(Level lvl) { Logger::instance().set_level(lvl); }
+		inline Level GetLevel() { return Logger::instance().get_level(); }
         inline void EnableConsole(bool e) { Logger::instance().enable_console(e); }
         inline void EnableGuiLogging(bool e) { Logger::instance().enable_gui_logging(e); }
         inline void SetMaxGuiLogs(size_t max) { Logger::instance().set_max_gui_logs(max); }

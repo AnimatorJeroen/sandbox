@@ -5,7 +5,10 @@
 #include "core/event/KeyEvent.h"
 #include "core/event/ApplicationEvent.h"
 #include "app/event/SceneEvent.h"
+#include "core/Logger.h"
 #include <string>
+
+struct ImVec4;
 
 class LoggingApplicationLayer : public Core::IApplicationLayer
 {
@@ -16,13 +19,16 @@ public:
 	void OnRender() override;
 
 private:
+	ImVec4 GetLogLevelColor(Core::Log::Level level) const;
+
 	Core::EventBus& _eventBus;
 	bool _autoScroll = true;
-	bool _showTrace = false;
+	bool _showTrace = true;
 	bool _showDebug = true;
 	bool _showInfo = true;
 	bool _showWarn = true;
 	bool _showError = true;
 	bool _showCritical = true;
 	size_t _previousLogCount = 0;
+	int _currentLogLevel = 2; // Default to Info (Trace=0, Debug=1, Info=2, Warn=3, Error=4, Critical=5)
 };

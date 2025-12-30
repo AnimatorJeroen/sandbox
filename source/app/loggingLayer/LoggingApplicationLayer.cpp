@@ -10,10 +10,25 @@ LoggingApplicationLayer::LoggingApplicationLayer(Core::LayerContext& ctx)
 	// Enable GUI logging
 	Core::Log::EnableGuiLogging(true);
 	Core::Log::SetMaxGuiLogs(1000);
+	_currentLogLevel = static_cast<int>(Core::Log::GetLevel());
 }
 
 void LoggingApplicationLayer::OnUpdate(const float deltaTime)
 {
+}
+
+ImVec4 LoggingApplicationLayer::GetLogLevelColor(Core::Log::Level level) const
+{
+	switch (level)
+	{
+	case Core::Log::Level::Trace:    return ImVec4(0.7f, 0.7f, 0.7f, 1.0f); // Gray
+	case Core::Log::Level::Debug:    return ImVec4(0.5f, 0.8f, 1.0f, 1.0f); // Light blue
+	case Core::Log::Level::Info:     return ImVec4(0.6f, 1.0f, 0.6f, 1.0f); // Green
+	case Core::Log::Level::Warn:     return ImVec4(1.0f, 1.0f, 0.4f, 1.0f); // Yellow
+	case Core::Log::Level::Error:    return ImVec4(1.0f, 0.4f, 0.4f, 1.0f); // Red
+	case Core::Log::Level::Critical: return ImVec4(1.0f, 0.0f, 1.0f, 1.0f); // Magenta
+	default:                         return ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // White
+	}
 }
 
 void LoggingApplicationLayer::OnRender()
@@ -23,20 +38,65 @@ void LoggingApplicationLayer::OnRender()
 	// Menu bar for controls
 	if (ImGui::BeginMenuBar())
 	{
+		// Log Level dropdown
+		ImGui::Text("Log Level:");
+
+		ImGui::SetNextItemWidth(80.0f);
+		const char* levelNames[] = { "Trace", "Debug", "Info", "Warn", "Error", "Critical" };
+		const char* currentLevelName = levelNames[_currentLogLevel];
+		ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(_currentLogLevel)));
+
+		if (ImGui::BeginCombo("##Log Level", currentLevelName))
+		{
+			for (int i = 0; i < 6; i++)
+			{
+				const bool isSelected = (_currentLogLevel == i);
+				
+				// Push color for this specific level
+				ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(i)));
+				
+				if (ImGui::Selectable(levelNames[i], isSelected))
+				{
+					_currentLogLevel = i;
+					Core::Log::SetLevel(static_cast<Core::Log::Level>(_currentLogLevel));
+				}
+				
+				ImGui::PopStyleColor();
+				
+				// Set the initial focus when opening the combo
+				if (isSelected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::PopStyleColor();
+		
 		if (ImGui::BeginMenu("Options"))
 		{
 			ImGui::Checkbox("Auto-scroll", &_autoScroll);
 			ImGui::Separator();
 			ImGui::Text("Filter Levels:");
+			ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(0)));
 			ImGui::Checkbox("Trace", &_showTrace);
+			ImGui::PopStyleColor();
+			ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(1)));
 			ImGui::Checkbox("Debug", &_showDebug);
+			ImGui::PopStyleColor();
+			ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(2)));
 			ImGui::Checkbox("Info", &_showInfo);
+			ImGui::PopStyleColor();
+			ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(3)));
 			ImGui::Checkbox("Warn", &_showWarn);
+			ImGui::PopStyleColor();
+			ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(4)));
 			ImGui::Checkbox("Error", &_showError);
+			ImGui::PopStyleColor();
+			ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(static_cast<Core::Log::Level>(5)));
 			ImGui::Checkbox("Critical", &_showCritical);
+			ImGui::PopStyleColor();
 			ImGui::EndMenu();
 		}
-		
+
 		if (ImGui::Button("Clear"))
 		{
 			Core::Log::ClearGuiLogs();
@@ -76,17 +136,8 @@ void LoggingApplicationLayer::OnRender()
 		if (!shouldShow)
 			continue;
 		
-		// Color code different log levels
-		ImVec4 color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // White default
-		switch (entry.level)
-		{
-		case Core::Log::Level::Trace:    color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); break; // Gray
-		case Core::Log::Level::Debug:    color = ImVec4(0.5f, 0.8f, 1.0f, 1.0f); break; // Light blue
-		case Core::Log::Level::Info:     color = ImVec4(0.6f, 1.0f, 0.6f, 1.0f); break; // Green
-		case Core::Log::Level::Warn:     color = ImVec4(1.0f, 1.0f, 0.4f, 1.0f); break; // Yellow
-		case Core::Log::Level::Error:    color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); break; // Red
-		case Core::Log::Level::Critical: color = ImVec4(1.0f, 0.0f, 1.0f, 1.0f); break; // Magenta
-		}
+		// Color code different log levels using the helper function
+		ImVec4 color = GetLogLevelColor(entry.level);
 		
 		ImGui::PushStyleColor(ImGuiCol_Text, color);
 		

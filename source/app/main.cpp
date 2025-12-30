@@ -15,7 +15,7 @@ int main() {
 	Core::Application app(specs);
 
 
-	Core::Log::SetLevel(Core::Log::Level::Trace);
+	Core::Log::SetLevel(Core::Log::Level::Debug);
 	Core::Log::EnableConsole(false);
 
 	auto sceneManager = std::make_shared<SceneManager>(*app.GetContext().Get<Core::EventBus>());
