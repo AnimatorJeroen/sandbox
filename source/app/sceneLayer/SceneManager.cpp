@@ -83,6 +83,7 @@ size_t SceneManager::GetSceneCount() const
 
 void SceneManager::NotifySceneChanged()
 {
+    LOG_INFO() << "Activated scene with index [" << _activeSceneIndex << "]";
     _eventBus.PushEvent<OnChangeActiveSceneEvent>(OnChangeActiveSceneEvent());
 }
 
