@@ -1,10 +1,10 @@
 #include "Application.h"
 #include "glew/glew.h"
 #include <GLFW/glfw3.h>
-#include <iostream>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
+#include <core/Logger.h>
 
 
 namespace Core
@@ -12,13 +12,13 @@ namespace Core
 	Application::Application(const ApplicationSpecs& specs) : _applicationSpecs(specs)
 	{
 		if (!glfwInit()) {
-			std::cerr << "Failed to initialize GLFW" << std::endl;
+			LOG_ERROR("Failed to initialize GLFW");
 			return;
 		}
 		_window = std::make_shared<Window>(_applicationSpecs.windowWidth, _applicationSpecs.windowHeight, _applicationSpecs.windowTitle, *_eventBus);
 
 		if (glewInit() != GLEW_OK) {
-			std::cerr << "Failed to initialize GLEW" << std::endl;
+			LOG_ERROR("Failed to initialize GLEW");
 			return;
 		}
 
@@ -95,20 +95,20 @@ namespace Core
 
 	bool Application::OnWindowResizeEvent(const WindowResizeEvent& e)
 	{
-		std::cout << "Window resized to: " << e.Width << "x" << e.Height << std::endl;
+		LOG_DEBUG(std::string(e.GetName()) + ": " + std::to_string(e.Width) + "x" + std::to_string(e.Height));
 		return false;
 	}
 
 	bool Application::OnApplicationCloseEvent(const ApplicationCloseEvent& e)
 	{
-		std::cout << "application close event received." << std::endl;
+		LOG_DEBUG(std::string(e.GetName()) + " received.");
 		shouldClose = true;
 		return false;
 	}
 
 	bool Application::OnWindowCloseEvent(const WindowCloseEvent& e)
 	{
-		std::cout << "Window close event received." << std::endl;
+		LOG_DEBUG(std::string(e.GetName()) + " received.");
 		if (e.windowHandle == _window->GetHandle())
 		{
 			_eventBus->PushEvent<ApplicationCloseEvent>(ApplicationCloseEvent());

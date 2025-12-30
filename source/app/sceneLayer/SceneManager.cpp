@@ -2,7 +2,7 @@
 #include "core/event/EventBus.h"
 #include "core/serializer/Serializer.h"
 #include "app/event/SceneEvent.h"
-#include <iostream>
+#include <core/Logger.h>
 
 SceneManager::SceneManager(Core::EventBus& eventBus) : _eventBus(eventBus)
 {
@@ -92,7 +92,7 @@ bool SceneManager::LoadScene(const std::string& filepath, bool makeActive)
         auto scene = Core::Serializer::Deserialize<Scene>(filepath);
         
         if (!scene) {
-            std::cerr << "Failed to deserialize scene from: " << filepath << std::endl;
+            LOG_ERROR("Failed to deserialize scene from: " + filepath);
             return false;
         }
         
@@ -102,11 +102,11 @@ bool SceneManager::LoadScene(const std::string& filepath, bool makeActive)
             SetActiveScene(_scenes.size() - 1);
         }
         
-        std::cout << "Scene loaded from: " << filepath << std::endl;
+        LOG_INFO("Scene loaded from: " + filepath);
         return true;
     }
     catch (const std::exception& e) {
-        std::cerr << "Error loading scene: " << e.what() << std::endl;
+        LOG_ERROR("Error loading scene: " + std::string(e.what()));
         return false;
     }
 }
@@ -119,7 +119,7 @@ bool SceneManager::SaveActiveScene(const std::string& filepath)
 bool SceneManager::SaveScene(size_t index, const std::string& filepath)
 {
     if (index >= _scenes.size()) {
-        std::cerr << "Invalid scene index: " << index << std::endl;
+        LOG_ERROR("Invalid scene index: " + std::to_string(index));
         return false;
     }
     
@@ -127,15 +127,15 @@ bool SceneManager::SaveScene(size_t index, const std::string& filepath)
         bool success = Core::Serializer::Serialize<Scene>(_scenes[index], filepath);
         
         if (success) {
-            std::cout << "Scene saved to: " << filepath << std::endl;
+            LOG_INFO("Scene saved to: " + filepath);
         } else {
-            std::cerr << "Failed to serialize scene to: " << filepath << std::endl;
+            LOG_ERROR("Failed to serialize scene to: " + filepath);
         }
         
         return success;
     }
     catch (const std::exception& e) {
-        std::cerr << "Error saving scene: " << e.what() << std::endl;
+        LOG_ERROR("Error saving scene: " + std::string(e.what()));
         return false;
     }
 }

@@ -1,4 +1,3 @@
-
 // logger.h
 #pragma once
 #include <mutex>
@@ -9,11 +8,22 @@
 #include <ctime>
 #include <sstream>
 #include <iomanip>
+#include <deque>
+#include <vector>
 
 namespace Core {
 
     namespace Log {
         enum class Level { Trace, Debug, Info, Warn, Error, Critical };
+
+        struct LogEntry {
+            std::string timestamp;
+            Level level;
+            std::string message;
+            std::string file;
+            int line;
+            std::string func;
+        };
 
         class Logger {
         public:
@@ -24,6 +34,9 @@ namespace Core {
 
             void set_level(Level lvl) { level_ = lvl; }
             void enable_console(bool enabled) { console_enabled_ = enabled; }
+            void enable_gui_logging(bool enabled) { gui_logging_enabled_ = enabled; }
+            void set_max_gui_logs(size_t max) { max_gui_logs_ = max; }
+            
             bool open_file(const std::string& path) {
                 std::lock_guard<std::mutex> lock(mu_);
                 file_.close();
@@ -42,15 +55,38 @@ namespace Core {
                 auto tm = std::localtime(&t);
 
                 std::ostringstream oss;
-                oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S")
+                oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
+                std::string timestamp = oss.str();
+
+                std::ostringstream fullOss;
+                fullOss << timestamp
                     << " [" << level_name(lvl) << "] "
                     << "(" << func << " " << file << ":" << line << ") "
                     << msg << "\n";
-                auto lineStr = oss.str();
+                auto lineStr = fullOss.str();
 
                 std::lock_guard<std::mutex> lock(mu_);
+                
+                // Store for GUI display
+                if (gui_logging_enabled_) {
+                    gui_logs_.push_back({ timestamp, lvl, msg, file, line, func });
+                    if (gui_logs_.size() > max_gui_logs_) {
+                        gui_logs_.pop_front();
+                    }
+                }
+                
                 if (console_enabled_) std::cerr << lineStr;
                 if (file_.is_open()) file_ << lineStr;
+            }
+
+            std::vector<LogEntry> get_gui_logs() const {
+                std::lock_guard<std::mutex> lock(mu_);
+                return std::vector<LogEntry>(gui_logs_.begin(), gui_logs_.end());
+            }
+
+            void clear_gui_logs() {
+                std::lock_guard<std::mutex> lock(mu_);
+                gui_logs_.clear();
             }
 
         private:
@@ -71,14 +107,21 @@ namespace Core {
 
             mutable std::mutex mu_;
             std::ofstream file_;
+            std::deque<LogEntry> gui_logs_;
             Level level_ = Level::Info;
             bool console_enabled_ = true;
+            bool gui_logging_enabled_ = false;
+            size_t max_gui_logs_ = 1000;
         };
 
         // Convenience functions to avoid touching the singleton in call sites
         inline void SetLevel(Level lvl) { Logger::instance().set_level(lvl); }
         inline void EnableConsole(bool e) { Logger::instance().enable_console(e); }
+        inline void EnableGuiLogging(bool e) { Logger::instance().enable_gui_logging(e); }
+        inline void SetMaxGuiLogs(size_t max) { Logger::instance().set_max_gui_logs(max); }
         inline bool OpenFile(const std::string& path) { return Logger::instance().open_file(path); }
+        inline std::vector<LogEntry> GetGuiLogs() { return Logger::instance().get_gui_logs(); }
+        inline void ClearGuiLogs() { Logger::instance().clear_gui_logs(); }
 
         // Macros to capture location without string concatenation at call site
 #define LOG_AT(lvl, msg) \
