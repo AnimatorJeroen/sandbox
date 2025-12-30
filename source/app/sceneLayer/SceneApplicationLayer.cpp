@@ -1,7 +1,7 @@
 #include "SceneApplicationLayer.h"
 #include "SceneManager.h"
-#include <iostream>
 #include <core/serializer/Serializer.h>
+#include <core/Logger.h>
 
 SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
@@ -37,43 +37,42 @@ void SceneApplicationLayer::OnRender()
 
 bool SceneApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 {
-	std::cout << "Mouse Button Down Event in Scene: " << e.identifier << std::endl;
-	return true;
+	LOG_TRACE() << e.GetName() << " in Scene: Button " << e.identifier;
+	return false;
 }
 
 bool SceneApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 {
-	std::cout << "Mouse button up event in Scene: " << e.identifier << std::endl;
-	return true;
+	LOG_TRACE() << e.GetName() << " in Scene: Button " << e.identifier;
+	return false;
 }
 
 bool SceneApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 {
-	std::cout << "Mouse move event in Scene: " << e.posX << ", " << e.posY << std::endl;
-	return true;
+	return false;
 }
 
 bool SceneApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 {
-	std::cout << "Mouse scroll event in Scene: " << e.scrollX << ", " << e.scrollY << std::endl;
-	return true;
+	//LOG_TRACE() << e.GetName() << " in Scene: " << e.scrollX << ", " << e.scrollY;
+	return false;
 }
 
 bool SceneApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 {
-	std::cout << "Key down event in Scene: " << e.key << ", repeated: " << e.repeated << std::endl;
-	return true;
+	LOG_TRACE() << e.GetName() << " in Scene: Key " << e.key << ", repeated: " << e.repeated;
+	return false;
 }
 
 bool SceneApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 {
-	std::cout << "Key up event in Scene: " << e.key << std::endl;
-	return true;
+	LOG_TRACE() << e.GetName() << " in Scene: Key " << e.key;
+	return false;
 }
 
 bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& e)
 {
-	std::cout << "Window resized in Scene Layer to: " << e.Width << "x" << e.Height << std::endl;
+	//LOG_TRACE() << e.GetName() << " in Scene Layer: " << e.Width << "x" << e.Height;
 	auto specs = _testScene.GetRenderSpecs();
 	specs.height = e.Height;
 	specs.width = e.Width;
@@ -83,7 +82,7 @@ bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& 
 
 bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
 {
-	std::cout << "save scene received in scene layer." << std::endl;
+	LOG_TRACE() << e.GetName() << " received in scene layer.";
 
 	const std::string sceneFilePath = "saved files/scene.dat";
 	bool success = _sceneManager->SaveActiveScene(sceneFilePath);
@@ -93,7 +92,7 @@ bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent&
 
 bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
 {
-	std::cout << "load scene received in scene layer." << std::endl;
+	LOG_TRACE() << e.GetName() << " received in scene layer.";
 	const std::string sceneFilePath = "saved files/scene.dat";
 	
 	// Use SceneManager to load - it handles everything and switches the active scene
@@ -103,6 +102,6 @@ bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent&
 
 bool SceneApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
-	std::cout << "Scene reloaded event received in scene layer." << std::endl;
+	LOG_TRACE() << e.GetName() << " received in scene layer.";
 	return false; // Let other layers handle it too
 }

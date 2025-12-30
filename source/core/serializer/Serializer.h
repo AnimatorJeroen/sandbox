@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include "core/Logger.h"
 
 namespace Core
 {
@@ -22,16 +23,16 @@ namespace Core
 				try {
 					cereal::BinaryOutputArchive outputArchive(outputFile);
 					outputArchive(*data);
-					std::cout << "Data saved to file: " << data->GetName() << std::endl;
+					LOG_DEBUG() << "Data saved to file: " << data->GetName();
 					success = true;
 				}
 				catch (const std::exception& e) {
-					std::cerr << "Failed to save data: " << e.what() << std::endl;
+					LOG_ERROR() << "Failed to save data : " << e.what();
 				}
 				outputFile.close();
 			}
 			else {
-				std::cerr << "Failed to open file for saving data" << std::endl;
+				LOG_ERROR() << "Failed to open file for saving data";
 			}
 			return success;
 		}
@@ -46,16 +47,15 @@ namespace Core
 				try {
 					cereal::BinaryInputArchive inputArchive(inputFile);
 					inputArchive(*data);
-					std::cout << "Data loaded from file: " << data->GetName() << std::endl;
+                    LOG_DEBUG() << "Data loaded from file: " << data->GetName();
 				}
 				catch (const std::exception& e) {
-					std::cerr << "Failed to load data: " << e.what() << std::endl;
-					// Continue with default data
+					LOG_ERROR() << "Failed to load data: " << e.what();
 				}
 				inputFile.close();
 			}
 			else {
-				std::cout << "No saved data found" << std::endl;
+				LOG_DEBUG() << "No saved data found";
 			}
 			return data;
 		}
