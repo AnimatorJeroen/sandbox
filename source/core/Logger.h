@@ -1,4 +1,3 @@
-// logger.h
 #pragma once
 #include <mutex>
 #include <fstream>
@@ -52,7 +51,14 @@ namespace Core {
                 if (!should_log(lvl)) return;
                 auto now = std::chrono::system_clock::now();
                 auto t = std::chrono::system_clock::to_time_t(now);
-                auto tm = std::localtime(&t);
+                
+                std::tm tm_buf;
+#ifdef _WIN32
+                localtime_s(&tm_buf, &t);
+                auto tm = &tm_buf;
+#else
+                auto tm = localtime_r(&t, &tm_buf);
+#endif
 
                 std::ostringstream oss;
                 oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
