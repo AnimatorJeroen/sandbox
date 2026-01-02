@@ -4,13 +4,17 @@
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
 #include <core/Logger.h>
+#include <core/undo/ChangeApplicator.h>
+#include <core/undo/UndoManager.h>
 
 EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
-_mainMenu(*ctx.Get<Core::EventBus>().get())
+_mainMenu(*ctx.Get<Core::EventBus>().get()),
+_applicator(_sceneManager->GetActiveScene()->GetRegistry())
 {
+
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
@@ -75,10 +79,24 @@ bool EditorApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 
 bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 {
-	if (!ImGui::GetIO().WantCaptureKeyboard)
-		return false;
+	//if (!ImGui::GetIO().WantCaptureKeyboard)
+	//	return false;
 
 	LOG_TRACE() << e.GetName() << " in editor layer: Key " << e.key << ", repeated: " << e.repeated;
+
+    // When user presses 'A', modify scene color via ChangeApplicator
+    if (!e.repeated && (e.key == 'A' || e.key == 'a')) {
+        auto scene = _sceneManager->GetActiveScene();
+        Core::ChangeApplicator applicator(scene->GetRegistry());
+		
+		// Random value between 0.0f and 1.0f
+		static thread_local std::mt19937 rng{ std::random_device{}() };
+		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+		float newColor = dist(rng);
+
+        applicator.SetField(entt::null, 0, "Scene.sceneColor", Core::Value{newColor});
+        LOG_TRACE() << "Scene color set to " << newColor;
+    }
 	return true;
 }
 
@@ -120,14 +138,14 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 
 bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 {
-	bool handled = _undoManager.Undo();
+	bool handled = _undoManager.Undo(_sceneManager->GetActiveScene()->GetRegistry());
 	LOG_TRACE() << e.GetName() << " Undo requested: " << handled;
 	return true;
 }
 
 bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
 {
-	bool handled = _undoManager.Redo();
+	bool handled = _undoManager.Redo(_sceneManager->GetActiveScene()->GetRegistry());
 	LOG_TRACE() << e.GetName() << " Redo requested: " << handled;
 	return true;
 }

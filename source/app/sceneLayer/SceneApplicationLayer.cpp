@@ -9,6 +9,9 @@ _testScene(ctx.Get<SceneManager>()),
 _eventBus(*ctx.Get<Core::EventBus>().get())
 {
 	_testScene.Setup();
+
+    // Store scene pointer in entt registry context for ChangeApplicator direct scene fields
+    _sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
 	
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
@@ -103,5 +106,6 @@ bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent&
 bool SceneApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
 	LOG_TRACE() << e.GetName() << " received in scene layer.";
+    _sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
 	return false; // Let other layers handle it too
 }

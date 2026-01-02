@@ -28,6 +28,7 @@ void Panel_SceneHierarchy::Render()
     
     ImGui::Begin("Scene Hierarchy");
 	
+    ImGui::InputFloat("scene color", &_scene->sceneColor);
 	// Update scene name when input changes
 	if (ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer)))
 	{

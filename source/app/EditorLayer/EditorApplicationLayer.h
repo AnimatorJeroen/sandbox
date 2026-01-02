@@ -7,7 +7,14 @@
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
 #include "app/event/UndoEvent.h"
-#include <core/undo/UndoManager.h>
+#include "core/undo/ChangeApplicator.h"
+#include "core/undo/UndoManager.h"
+
+namespace Core
+{
+	class UndoManager;
+	class ChangeApplicator;
+}
 
 class SceneManager;
 
@@ -39,4 +46,5 @@ private:
 	MainMenu _mainMenu;
 	Core::EventBus& _eventBus;
 	Core::UndoManager _undoManager;
+	Core::ChangeApplicator _applicator;
 };
