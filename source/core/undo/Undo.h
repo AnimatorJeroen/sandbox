@@ -63,13 +63,56 @@ struct UndoableCommand {
     std::vector<Patch> patches;
 
     template<class Registry>
-    void Apply(Registry& /*registry*/) const {
-        // No-op by default; provide specializations per component type elsewhere.
+    void Apply(Registry& registry) const {
+        for (const auto& p : patches) {
+            // Scene direct field via registry context
+            if (p.compTypeId == entt::type_id<class Scene>().hash()) {
+                if (registry.ctx().contains<class Scene*>()) {
+                    auto* scene = registry.ctx().get<class Scene*>();
+                    if (p.fieldId == entt::hashed_string("sceneColor").value()) {
+                        scene->sceneColor = std::get<float>(p.newValue);
+                    }
+                }
+                continue;
+            }
+            // DummyComponent float fields
+            if (p.compTypeId == entt::type_id<struct DummyComponent>().hash()) {
+                if (auto* c = registry.try_get<struct DummyComponent>(p.entity)) {
+                    if (p.fieldId == entt::hashed_string("value").value()) c->value = std::get<float>(p.newValue);
+                    else if (p.fieldId == entt::hashed_string("r").value()) c->r = std::get<float>(p.newValue);
+                    else if (p.fieldId == entt::hashed_string("g").value()) c->g = std::get<float>(p.newValue);
+                    else if (p.fieldId == entt::hashed_string("b").value()) c->b = std::get<float>(p.newValue);
+                    else if (p.fieldId == entt::hashed_string("a").value()) c->a = std::get<float>(p.newValue);
+                }
+                continue;
+            }
+            // Extend with other component types as needed
+        }
     }
 
     template<class Registry>
-    void Revert(Registry& /*registry*/) const {
-        // No-op by default; provide specializations per component type elsewhere.
+    void Revert(Registry& registry) const {
+        for (const auto& p : patches) {
+            if (p.compTypeId == entt::type_id<class Scene>().hash()) {
+                if (registry.ctx().contains<class Scene*>()) {
+                    auto* scene = registry.ctx().get<class Scene*>();
+                    if (p.fieldId == entt::hashed_string("sceneColor").value()) {
+                        scene->sceneColor = std::get<float>(p.oldValue);
+                    }
+                }
+                continue;
+            }
+            if (p.compTypeId == entt::type_id<struct DummyComponent>().hash()) {
+                if (auto* c = registry.try_get<struct DummyComponent>(p.entity)) {
+                    if (p.fieldId == entt::hashed_string("value").value()) c->value = std::get<float>(p.oldValue);
+                    else if (p.fieldId == entt::hashed_string("r").value()) c->r = std::get<float>(p.oldValue);
+                    else if (p.fieldId == entt::hashed_string("g").value()) c->g = std::get<float>(p.oldValue);
+                    else if (p.fieldId == entt::hashed_string("b").value()) c->b = std::get<float>(p.oldValue);
+                    else if (p.fieldId == entt::hashed_string("a").value()) c->a = std::get<float>(p.oldValue);
+                }
+                continue;
+            }
+        }
     }
 };
 

@@ -12,7 +12,7 @@ _sceneManager(ctx.Get<SceneManager>()),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
 _mainMenu(*ctx.Get<Core::EventBus>().get()),
-_applicator(_sceneManager->GetActiveScene()->GetRegistry())
+_applicator(_undoManager)
 {
 
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
@@ -86,15 +86,12 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 
     // When user presses 'A', modify scene color via ChangeApplicator
     if (!e.repeated && (e.key == 'A' || e.key == 'a')) {
-        auto scene = _sceneManager->GetActiveScene();
-        Core::ChangeApplicator applicator(scene->GetRegistry());
-		
 		// Random value between 0.0f and 1.0f
 		static thread_local std::mt19937 rng{ std::random_device{}() };
 		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 		float newColor = dist(rng);
 
-        applicator.SetField(entt::null, 0, "Scene.sceneColor", Core::Value{newColor});
+        _applicator.SetField(entt::null, 0, "Scene.sceneColor", Core::Value{newColor});
         LOG_TRACE() << "Scene color set to " << newColor;
     }
 	return true;
@@ -133,6 +130,7 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
+	_applicator.SetContext(_sceneManager->GetActiveScene()->GetRegistry());
 	return false;
 }
 
