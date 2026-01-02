@@ -6,6 +6,8 @@
 #include "core/event/MouseEvent.h"
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
+#include "app/event/UndoEvent.h"
+#include <core/undo/UndoManager.h>
 
 class SceneManager;
 
@@ -28,10 +30,13 @@ public:
 	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
 	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
+	bool OnRequestUndo(const RequestUndoEvent& e);
+	bool OnRequestRedo(const RequestRedoEvent& e);
 
 private:
 	std::shared_ptr<SceneManager> _sceneManager;
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
 	Core::EventBus& _eventBus;
+	Core::UndoManager _undoManager;
 };

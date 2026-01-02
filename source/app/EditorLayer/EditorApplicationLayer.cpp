@@ -23,6 +23,8 @@ _mainMenu(*ctx.Get<Core::EventBus>().get())
 	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
 	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
 	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
+	REGISTER_CALLBACK(_eventBus, RequestUndoEvent, OnRequestUndo);
+	REGISTER_CALLBACK(_eventBus, RequestRedoEvent, OnRequestRedo);
 }
 
 void EditorApplicationLayer::OnUpdate(const float deltaTime)
@@ -114,4 +116,18 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
 	return false;
+}
+
+bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
+{
+	bool handled = _undoManager.Undo();
+	LOG_TRACE() << e.GetName() << " Undo requested: " << handled;
+	return true;
+}
+
+bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
+{
+	bool handled = _undoManager.Redo();
+	LOG_TRACE() << e.GetName() << " Redo requested: " << handled;
+	return true;
 }

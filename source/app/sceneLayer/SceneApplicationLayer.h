@@ -6,6 +6,7 @@
 #include <core/event/KeyEvent.h>
 #include <core/event/ApplicationEvent.h>
 #include "app/event/SceneEvent.h"
+#include "app/event/UndoEvent.h"
 
 class SceneManager;
 
