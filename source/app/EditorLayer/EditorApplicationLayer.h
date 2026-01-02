@@ -10,12 +10,6 @@
 #include "core/undo/ChangeApplicator.h"
 #include "core/undo/UndoManager.h"
 
-namespace Core
-{
-	class UndoManager;
-	class ChangeApplicator;
-}
-
 class SceneManager;
 
 class EditorApplicationLayer : public Core::IApplicationLayer
@@ -37,6 +31,7 @@ public:
 	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
 	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
+
 	bool OnRequestUndo(const RequestUndoEvent& e);
 	bool OnRequestRedo(const RequestRedoEvent& e);
 
@@ -45,6 +40,6 @@ private:
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
 	Core::EventBus& _eventBus;
-	Core::UndoManager _undoManager;
 	Core::ChangeApplicator _applicator;
+	Core::UndoManager _undoManager;
 };

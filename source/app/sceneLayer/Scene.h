@@ -23,6 +23,8 @@ class Scene
 {
 	public:
 		Scene() = default;
+		~Scene() = default;
+		Scene(const Scene&) {}
 		
 		void Draw(Core::DrawCommandRecorder& recorder);
 		void SetName(const std::string& name);

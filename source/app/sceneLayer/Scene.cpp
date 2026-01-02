@@ -1,6 +1,5 @@
 #include "Scene.h"
 #include <random>
-#include <entt/entt.hpp>
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
@@ -25,7 +24,7 @@ entt::entity Scene::CreateEntity()
 	// random float between 0 and 1
 	static std::mt19937 rng{std::random_device{}()};
 	std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-	_registry.emplace<DummyComponent>(e, DummyComponent{dist(rng), dist(rng), dist(rng), dist(rng)});
+	_registry.emplace<DummyComponent>(e, DummyComponent{dist(rng)});
 	return e;
 }
 

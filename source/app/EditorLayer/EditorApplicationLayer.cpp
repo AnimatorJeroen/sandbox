@@ -1,11 +1,9 @@
 #include "EditorApplicationLayer.h"
 #include <imgui/imgui.h>
-#include <core/event/ApplicationEvent.h>
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
 #include <core/Logger.h>
-#include <core/undo/ChangeApplicator.h>
-#include <core/undo/UndoManager.h>
+#include <random>
 
 EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
