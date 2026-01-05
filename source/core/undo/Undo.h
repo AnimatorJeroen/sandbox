@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 #include <entt/entt.hpp>
-#include <entt/meta/meta/meta.hpp>
+#include <entt/meta/meta.hpp>
 
 namespace Core {
 

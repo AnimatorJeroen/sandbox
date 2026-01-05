@@ -6,7 +6,7 @@
 #include <core/Logger.h>
 
 #include <entt/entt.hpp>
-#include <entt/meta/meta/meta.hpp>
+#include <entt/meta/meta.hpp>
 
 #include <core/undo/Undo.h>
 #include "app/sceneLayer/Scene.h"
