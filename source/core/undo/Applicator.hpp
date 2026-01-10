@@ -19,18 +19,18 @@ namespace Core {
     public:
         explicit Applicator(UndoManager<ValueTypes>& undoManager) : _undoManager(undoManager) {}
 
-        // Apply with compile-time string literal (C++20)
-        // Usage: applicator.Apply<"Transform.Position.x">(entity, value);
+        // SetField with compile-time string literal (C++20)
+        // Usage: applicator.SetField<"Transform.Position.x">(entity, value);
         template<CompileTimeString PathStr, typename T>
-        void Apply(entt::entity e, T&& newVal) {
+        void SetField(entt::entity e, T&& newVal) {
             constexpr auto fullPath = PATH_FULL_CONSTEXPR(PathStr.value);
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
             _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
         }
 
-        // Apply with runtime string (for variables)
+        // SetField with runtime string (for variables)
         template<typename T>
-        void Apply(entt::entity e, const std::string& path_str, T&& newVal) {
+        void SetField(entt::entity e, const std::string& path_str, T&& newVal) {
             auto fullPath = reflection::ParseFullPathRuntime(path_str.c_str());
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
             _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });

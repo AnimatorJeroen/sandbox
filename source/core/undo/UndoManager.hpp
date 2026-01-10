@@ -29,7 +29,7 @@ namespace Core {
 
 
         void SetContext(entt::registry& registry) {
-            _applicator.SetContext(registry);
+            _internalApplicator.SetContext(registry);
         }
 
 
@@ -92,7 +92,7 @@ namespace Core {
             return meta_type.info().hash();
         }
 
-        InternalApplicatorType _applicator;
+        InternalApplicatorType _internalApplicator;
         std::stack<PatchGroupType> _undo_stack;
         std::stack<PatchGroupType> _redo_stack;
 

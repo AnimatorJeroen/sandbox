@@ -25,8 +25,8 @@ namespace Core {
         // Create patch (captures old value)
         PatchType patch = make_patch(e, compId, pathIds, newVal);
 
-        // Apply the change
-        _applicator.Apply(patch);
+        // SetField the change
+        _internalApplicator.SetField(patch);
 
         // If we're recording, add to current group
         if (_recording && _current_group.has_value()) {
@@ -98,7 +98,7 @@ namespace Core {
 
         // Revert all patches in the group in reverse order
         for (auto it = group.patches.rbegin(); it != group.patches.rend(); ++it) {
-            _applicator.Revert(*it);
+            _internalApplicator.Revert(*it);
         }
 
         // Move to redo stack
@@ -118,9 +118,9 @@ namespace Core {
         PatchGroupType group = std::move(_redo_stack.top());
         _redo_stack.pop();
 
-        // Apply all patches in the group in forward order
+        // SetField all patches in the group in forward order
         for (auto& patch : group.patches) {
-            _applicator.Apply(patch);
+            _internalApplicator.SetField(patch);
         }
 
         // Move back to undo stack
@@ -168,7 +168,7 @@ namespace Core {
         entt::id_type compId,
         const reflection::Path& pathIds,
         const ValueTypes& newVal) {
-        auto inst = _applicator.resolve(e, compId);
+        auto inst = _internalApplicator.resolve(e, compId);
         if (!inst) throw std::runtime_error("Component instance not found for make_patch");
         ValueTypes oldVal = GetByPath<ValueTypes>(inst, pathIds);
         return PatchType{ e, compId, pathIds, oldVal, newVal };

@@ -92,7 +92,7 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 
 		auto& scene = *_sceneManager->GetActiveScene();
 		_applicator.BeginUndo();
-        _applicator.Apply(scene.GetSceneEntity(), "Scene.sceneColor", newValue);
+        _applicator.SetField(scene.GetSceneEntity(), "Scene.sceneColor", newValue);
 		_applicator.EndUndo();
         LOG_TRACE() << "Scene color set to " << newValue;
     }

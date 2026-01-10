@@ -50,7 +50,7 @@ namespace Core {
     }
 
     template<typename ValueTypes>
-    void InternalApplicator<ValueTypes>::Apply(const PatchType& p) {
+    void InternalApplicator<ValueTypes>::SetField(const PatchType& p) {
         if (!apply_impl(p.entity, p.componentType, p.path, p.newValue)) [[unlikely]] {
             throw std::runtime_error("Component instance not found");
         }
