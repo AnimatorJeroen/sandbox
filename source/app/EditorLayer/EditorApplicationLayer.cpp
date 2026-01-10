@@ -84,7 +84,7 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	LOG_TRACE() << e.GetName() << " in editor layer: Key " << e.key << ", repeated: " << e.repeated;
 
     // When user presses 'A', modify scene color via ChangeApplicator
-    if (!e.repeated && (e.key == 'A' || e.key == 'a')) {
+    if (!e.repeated && e.key == 'A') {
 		// Random value between 0.0f and 1.0f
 		static thread_local std::mt19937 rng{ std::random_device{}() };
 		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
@@ -96,6 +96,14 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 		_applicator.EndUndo();
         LOG_TRACE() << "Scene color set to " << newValue;
     }
+
+	if (e.key == 'Z') {
+		_eventBus.PushEvent(RequestUndoEvent());
+	}
+	else if (e.key == 'X') {
+		_eventBus.PushEvent(RequestRedoEvent());
+	}
+
 	return true;
 }
 
