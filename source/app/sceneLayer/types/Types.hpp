@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <iostream> // Added for std::ostream
 
 #include <cereal/archives/binary.hpp>
 
@@ -34,6 +35,12 @@ struct String64 {
     template<class Archive>
     void serialize(Archive& ar) { ar(data); }
 };
+
+// Add stream operator for String64 to support logging
+inline std::ostream& operator<<(std::ostream& os, const String64& str) {
+    os << str.data;
+    return os;
+}
 
 // ----- Editor Value type (extend as needed)
 using AppValueTypes = std::variant<bool, int, float, double, String64, Vec3>;
