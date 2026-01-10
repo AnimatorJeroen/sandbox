@@ -11,6 +11,7 @@
 #include "shape/IShape.h"
 #include <entt/entt.hpp>
 #include <core/renderer/DrawCommandRecorder.h>
+#include "types/Types.hpp"
 
 // Dummy component to track with the registry
 struct DummyComponent {
@@ -32,24 +33,20 @@ struct SceneData {
 class Scene
 {
 	public:
-		entt::entity sceneEntity;
-
 		Scene() {
-			sceneEntity = _registry.create(); 
-			_registry.emplace<SceneData>(sceneEntity, SceneData{});
+			_sceneEntity = _registry.create(); 
+			_registry.emplace<SceneData>(_sceneEntity, SceneData{});
 		}
 		~Scene() = default;
 		Scene(const Scene&) {}
 		
 		void Draw(Core::DrawCommandRecorder& recorder);
-		void SetName(const std::string& name);
-		const std::string& GetName();
 
 		template<class Archive>
 		void serialize(Archive& archive)
 		{
 			// 2. Serialize scene-level components 
-			auto& sceneData = _registry.get<SceneData>(sceneEntity);
+			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
 			archive(sceneData, _shapes);
 		}
 
@@ -62,14 +59,18 @@ class Scene
         // Create a new entity and attach a DummyComponent with random value
         entt::entity CreateEntity();
 
-        // Returns reference to the scene data for access
-        const SceneData& GetSceneData() const { return _registry.get<SceneData>(sceneEntity); } // Updated return type to reference
+		const entt::entity& GetSceneEntity() const { return _sceneEntity; }
 
-		const entt::entity& GetSceneEntity() const { return sceneEntity; }
+		void SetName(const std::string& name);
+		const std::string& GetName();
+		inline const float GetSceneColor() { return data().sceneColor; }
+		inline void SetSceneColor(float color) { data().sceneColor = color; }
+
 	private:
+		entt::entity _sceneEntity;
 		std::vector<std::shared_ptr<IShape>> _shapes;
 		int a = 0;
 		entt::registry _registry{};
 
-		SceneData& data() { return _registry.get<SceneData>(sceneEntity); } // Updated return type to reference
+		SceneData& data() { return _registry.get<SceneData>(_sceneEntity); } // Updated return type to reference
 };

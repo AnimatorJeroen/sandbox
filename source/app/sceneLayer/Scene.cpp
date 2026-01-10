@@ -15,7 +15,7 @@ void Scene::SetName(const std::string& name)
 
 const std::string& Scene::GetName()
 {
-	return GetSceneData()._name;
+	return data()._name;
 }
 
 entt::entity Scene::CreateEntity()

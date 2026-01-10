@@ -1,14 +1,16 @@
 #pragma once
 #include "app/sceneLayer/Scene.h"
+#include <core/undo/Applicator.hpp>
 #include <memory>
 
 class Panel_SceneHierarchy
 {
 public:
-	explicit Panel_SceneHierarchy(Scene& scene);
+	explicit Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppValueTypes>& applicator);
 	~Panel_SceneHierarchy() = default;
 	void Render();
 	void SetContext(Scene& scene);
 private:
 	Scene* _scene;
+	Core::Applicator<AppValueTypes>& _applicator;
 };

@@ -2,7 +2,8 @@
 #include <imgui/imgui.h>
 #include <app/sceneLayer/shape/Circle.h>
 
-Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene) : _scene(&scene)
+
+Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppValueTypes>& applicator) : _scene(&scene), _applicator(applicator)
 {
 }
 
@@ -28,11 +29,14 @@ void Panel_SceneHierarchy::Render()
     
     ImGui::Begin("Scene Hierarchy");
 	
-    ImGui::Text("Scene Color: %f", _scene->GetSceneData().sceneColor);
+    ImGui::Text("Scene Color: %f", _scene->GetSceneColor());
 	// Update scene name when input changes
 	if (ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer)))
 	{
-		_scene->SetName(std::string(inputTextbuffer));
+		//_scene->SetName(std::string(inputTextbuffer));
+        _applicator.BeginUndo();
+        _applicator.SetField(_scene->GetSceneEntity(), "Scene.name", std::string("t"));
+        _applicator.EndUndo();
 	}
 	
     if (ImGui::Button("Add Circle"))

@@ -7,11 +7,11 @@
 
 EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
-_sceneHierarchyPanel(*_sceneManager->GetActiveScene()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
 _mainMenu(*ctx.Get<Core::EventBus>().get()),
 _undoManager(),
-_applicator(_undoManager)
+_applicator(_undoManager),
+_sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _applicator)
 {
 
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
