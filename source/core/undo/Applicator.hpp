@@ -3,14 +3,35 @@
 
 namespace Core {
 
+    // C++20 compile-time string wrapper for non-type template parameters
+    template<std::size_t N>
+    struct CompileTimeString {
+        constexpr CompileTimeString(const char (&str)[N]) {
+            std::copy_n(str, N, value);
+        }
+        
+        char value[N];
+        static constexpr std::size_t size = N;
+    };
+
     template<typename ValueTypes>
     class Applicator {
     public:
         explicit Applicator(UndoManager<ValueTypes>& undoManager) : _undoManager(undoManager) {}
 
-        // Apply with compile-time parsed path (PATH_FULL_CONSTEXPR)
+        // Apply with compile-time string literal (C++20)
+        // Usage: applicator.Apply<"Transform.Position.x">(entity, value);
+        template<CompileTimeString PathStr, typename T>
+        void Apply(entt::entity e, T&& newVal) {
+            constexpr auto fullPath = PATH_FULL_CONSTEXPR(PathStr.value);
+            entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
+            _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
+        }
+
+        // Apply with runtime string (for variables)
         template<typename T>
-        void Apply(entt::entity e, const reflection::FullPath& fullPath, T&& newVal) {
+        void Apply(entt::entity e, const std::string& path_str, T&& newVal) {
+            auto fullPath = reflection::ParseFullPathRuntime(path_str.c_str());
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
             _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
         }

@@ -91,10 +91,8 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 		float newValue = dist(rng);
 
 		auto& scene = *_sceneManager->GetActiveScene();
-		//auto entity = scene.CreateEntity(); // just to show some action
 		_applicator.BeginUndo();
-        //_applicator.Apply(entity, PATH_FULL_CONSTEXPR("DummyComponent.value"), newValue);
-        _applicator.Apply(scene.GetSceneEntity(), PATH_FULL_CONSTEXPR("Scene.sceneColor"), newValue);
+        _applicator.Apply(scene.GetSceneEntity(), "Scene.sceneColor", newValue);
 		_applicator.EndUndo();
         LOG_TRACE() << "Scene color set to " << newValue;
     }
@@ -135,19 +133,20 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
 	_undoManager.SetContext(_sceneManager->GetActiveScene()->GetRegistry());
+	_undoManager.Clear();
 	return false;
 }
 
 bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 {
 	bool handled = _undoManager.Undo();
-	LOG_TRACE() << e.GetName() << " Undo requested: " << handled;
+	LOG_DEBUG() << e.GetName() << " Undo handled: " << handled;
 	return true;
 }
 
 bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
 {
 	bool handled = _undoManager.Redo();
-	LOG_TRACE() << e.GetName() << " Redo requested: " << handled;
+	LOG_DEBUG() << e.GetName() << " Redo handled: " << handled;
 	return true;
 }
