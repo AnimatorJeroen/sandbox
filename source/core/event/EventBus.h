@@ -38,7 +38,9 @@ namespace Core
         };
 
         std::queue<QueueEvent> m_eventQueue;
+        std::queue<QueueEvent> m_immediateEventQueue; // For events that need processing before frame update
         std::map<std::type_index, std::vector<std::function<bool(const IEvent&)>>> m_eventCallbacks;
+        bool m_isHandlingEvents = false; // Prevent recursive HandleEvents
 
     public:
 
@@ -59,8 +61,24 @@ namespace Core
             m_eventQueue.emplace(QueueEvent(typeid(TDerivedEvent), sizeof(TDerivedEvent), (const char*)&e)); 
         }
 
+        // Push event that will be handled immediately after current event queue is processed
+        // Use this for critical events that affect resource lifetime (e.g., scene changes, deletions)
+        template<typename TDerivedEvent>
+        inline void PushImmediateEvent(const TDerivedEvent& e)
+        {
+            m_immediateEventQueue.emplace(QueueEvent(typeid(TDerivedEvent), sizeof(TDerivedEvent), (const char*)&e));
+        }
+
         inline void HandleEvents()
         {
+            if (m_isHandlingEvents) {
+                // Already handling events, don't recurse
+                return;
+            }
+
+            m_isHandlingEvents = true;
+
+            // Process main event queue
             while (!m_eventQueue.empty())
             {
                 const auto& e = m_eventQueue.front();
@@ -74,6 +92,24 @@ namespace Core
 
                 m_eventQueue.pop();
             }
+
+            // Process immediate event queue (events pushed during main queue processing)
+            // These are handled before returning control to the application
+            while (!m_immediateEventQueue.empty())
+            {
+                const auto& e = m_immediateEventQueue.front();
+
+                if (auto elem = m_eventCallbacks.find(e.typeIndex); elem != m_eventCallbacks.end())
+                    for (const auto& callback : elem->second)
+                    {
+                        if(callback(*(const IEvent*)e.data) == true) //returns true if handled
+                            break;
+                    }
+
+                m_immediateEventQueue.pop();
+            }
+
+            m_isHandlingEvents = false;
         }
     };
 }

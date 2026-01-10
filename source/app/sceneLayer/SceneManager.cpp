@@ -71,10 +71,11 @@ void SceneManager::CloseScene(size_t index)
     // Adjust active index if needed
     if (_activeSceneIndex >= _scenes.size()) {
         _activeSceneIndex = _scenes.size() - 1;
-        NotifySceneChanged();
     } else if (index <= _activeSceneIndex && _activeSceneIndex > 0) {
         _activeSceneIndex--;
     }
+    // Notify scene changed - will be handled immediately before frame update
+    NotifySceneChanged();
 }
 
 size_t SceneManager::GetSceneCount() const
@@ -85,7 +86,9 @@ size_t SceneManager::GetSceneCount() const
 void SceneManager::NotifySceneChanged()
 {
     LOG_INFO() << "Activated scene with index [" << _activeSceneIndex << "]";
-    _eventBus.PushEvent<OnChangeActiveSceneEvent>(OnChangeActiveSceneEvent());
+    // Use PushImmediateEvent so listeners are notified before OnUpdate/OnRender
+    // This prevents stale scene references
+    _eventBus.PushImmediateEvent<OnChangeActiveSceneEvent>(OnChangeActiveSceneEvent());
 }
 
 bool SceneManager::LoadScene(const std::string& filepath, bool makeActive)
