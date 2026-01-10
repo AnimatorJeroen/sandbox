@@ -25,7 +25,13 @@ namespace Core {
         using PatchGroupType = PatchGroup<ValueTypes>;
         using InternalApplicatorType = InternalApplicator<ValueTypes>;
 
-        explicit UndoManager(entt::registry& registry);
+        explicit UndoManager();
+
+
+        void SetContext(entt::registry& registry) {
+            _applicator.SetContext(registry);
+        }
+
 
         // Execute a change with FullPath (component type extracted from path string)
         template<typename T>
@@ -86,7 +92,6 @@ namespace Core {
             return meta_type.info().hash();
         }
 
-        entt::registry& _reg;
         InternalApplicatorType _applicator;
         std::stack<PatchGroupType> _undo_stack;
         std::stack<PatchGroupType> _redo_stack;

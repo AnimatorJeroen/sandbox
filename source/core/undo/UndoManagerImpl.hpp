@@ -12,8 +12,8 @@ namespace Core {
 
 
     template<typename ValueTypes>
-    UndoManager<ValueTypes>::UndoManager(entt::registry& registry)
-        : _reg(registry), _applicator{ registry }, _recording(false) {
+    UndoManager<ValueTypes>::UndoManager()
+        : _recording(false) {
     }
 
     // Execute a change and push it onto the undo stack

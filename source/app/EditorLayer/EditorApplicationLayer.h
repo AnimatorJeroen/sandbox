@@ -10,6 +10,8 @@
 #include "core/undo/Applicator.hpp"
 #include "core/undo/UndoManager.hpp"
 
+#include "app/sceneLayer/types/Types.hpp"
+
 class SceneManager;
 
 class EditorApplicationLayer : public Core::IApplicationLayer
@@ -40,6 +42,6 @@ private:
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
 	Core::EventBus& _eventBus;
-	Core::Applicator _applicator;
-	Core::UndoManager _undoManager;
+	Core::Applicator<AppValueTypes> _applicator;
+	Core::UndoManager<AppValueTypes> _undoManager;
 };

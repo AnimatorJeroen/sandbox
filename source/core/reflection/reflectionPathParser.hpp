@@ -292,7 +292,7 @@ namespace Core {
     //        PATH_FULL_CONSTEXPR("Transform.Matrix.data[1][2]")
 #define PATH_FULL_CONSTEXPR(path_str) \
     ([]() constexpr { \
-        constexpr ::reflection::CTPath path{path_str}; \
+        constexpr Core::reflection::CTPath path{path_str}; \
         return path.to_full_path(); \
     }())
 
@@ -305,7 +305,7 @@ namespace Core {
 //        PATH_CONSTEXPR("Matrix.data[1][2]")
 #define PATH_CONSTEXPR(path_str) \
     ([]() constexpr { \
-        constexpr ::reflection::CTPath path{path_str}; \
+        constexpr Core::reflection::CTPath path{path_str}; \
         return path.to_path(); \
     }())
 
@@ -320,7 +320,7 @@ namespace Core {
 //        PATH_FULL_RUNTIME("Transform.Position.x")
 //        PATH_FULL_RUNTIME(std::string("Transform.Weights[1]"))
 #define PATH_FULL_RUNTIME(path_str) \
-    (::reflection::ParseFullPathRuntime(path_str))
+    (Core::reflection::ParseFullPathRuntime(path_str))
 
 // RUNTIME PATH PARSING - parses at runtime from string variables
 // Returns std::array<PathElement, 16> (sentinel-terminated like C strings)
@@ -329,6 +329,6 @@ namespace Core {
 //        PATH_RUNTIME("Position.x")  // Also works with literals
 //        PATH_RUNTIME(std::string("Weights[1]"))
 #define PATH_RUNTIME(path_str) \
-    (::reflection::ParsePathRuntime(path_str))
+    (Core::reflection::ParsePathRuntime(path_str))
 
 }

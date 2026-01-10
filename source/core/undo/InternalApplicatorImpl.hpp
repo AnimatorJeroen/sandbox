@@ -16,7 +16,7 @@ namespace Core {
     template<typename ValueTypes>
     entt::meta_any InternalApplicator<ValueTypes>::resolve(entt::entity e, entt::id_type compId) const {
         // Generic path using EnTT's storage system
-        auto* storage = _reg.storage(compId);
+        auto* storage = _reg->storage(compId);
         if (!storage) [[unlikely]] {
             return entt::meta_any{};
         }

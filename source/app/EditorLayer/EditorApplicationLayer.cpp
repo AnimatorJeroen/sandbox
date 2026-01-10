@@ -10,6 +10,7 @@ _sceneManager(ctx.Get<SceneManager>()),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
 _mainMenu(*ctx.Get<Core::EventBus>().get()),
+_undoManager(),
 _applicator(_undoManager)
 {
 
@@ -89,7 +90,9 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 		float newColor = dist(rng);
 
-        _applicator.Apply(entt::null, 0, "Scene.sceneColor", Core::Value{newColor});
+		_applicator.BeginUndo();
+        _applicator.Apply(entt::null, PATH_FULL_CONSTEXPR("Scene.sceneColor"), newColor);
+		_applicator.EndUndo();
         LOG_TRACE() << "Scene color set to " << newColor;
     }
 	return true;
@@ -128,20 +131,20 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
-	_applicator.SetContext(_sceneManager->GetActiveScene()->GetRegistry());
+	_undoManager.SetContext(_sceneManager->GetActiveScene()->GetRegistry());
 	return false;
 }
 
 bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 {
-	bool handled = _undoManager.Undo(_sceneManager->GetActiveScene()->GetRegistry());
+	bool handled = _undoManager.Undo();
 	LOG_TRACE() << e.GetName() << " Undo requested: " << handled;
 	return true;
 }
 
 bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
 {
-	bool handled = _undoManager.Redo(_sceneManager->GetActiveScene()->GetRegistry());
+	bool handled = _undoManager.Redo();
 	LOG_TRACE() << e.GetName() << " Redo requested: " << handled;
 	return true;
 }

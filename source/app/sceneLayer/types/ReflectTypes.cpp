@@ -3,6 +3,7 @@
 #include "../vendor/include/entt/entt.hpp"
 #include "../vendor/include/entt/meta/meta.hpp"
 #include "Types.hpp"
+#include <app/sceneLayer/Scene.h>
 
 // ----- Meta registration (call once before usage)
 void ReflectTypes() {
@@ -28,7 +29,6 @@ void ReflectTypes() {
         .data<&Transform::Weights, entt::as_ref_t>("Weights"_hs)
         .data<&Transform::Matrix, entt::as_ref_t>("Matrix"_hs);
 
-    entt::meta_factory<GameObject>()
-        .type("GameObject"_hs)  // Register type name
-        .data<&GameObject::transform, entt::as_ref_t>("Transform"_hs);
+    entt::meta_factory<Scene>()
+        .data<&Scene::sceneColor>("sceneColor"_hs);
 }
