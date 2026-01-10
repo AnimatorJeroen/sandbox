@@ -14,7 +14,7 @@ void Panel_SceneHierarchy::SetContext(Scene& scene)
 
 void Panel_SceneHierarchy::Render()
 {
-    static char inputTextbuffer[128];
+    static char inputTextbuffer[64];
     static Scene* lastScene = nullptr;
     static float sceneColor = _scene->GetSceneColor();
     if (!_scene)
@@ -31,14 +31,14 @@ void Panel_SceneHierarchy::Render()
         _applicator.EndUndo();
     }
 	// Update scene name when input changes
-    strncpy_s(inputTextbuffer, _scene->GetName().c_str(), sizeof(inputTextbuffer) - 1);
+    strncpy_s(inputTextbuffer, _scene->GetName().data, sizeof(inputTextbuffer) - 1);
     ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer));
     if (ImGui::IsItemDeactivatedAfterEdit())
     {
-        _scene->SetName(std::string(inputTextbuffer));
-        //_applicator.BeginUndo();
-        //_applicator.SetField(_scene->GetSceneEntity(), "Scene.name", std::string("t"));
-        //_applicator.EndUndo();
+        //_scene->SetName(std::string(inputTextbuffer));
+        _applicator.BeginUndo();
+        _applicator.SetField(_scene->GetSceneEntity(), "Scene.name", String64(inputTextbuffer));
+        _applicator.EndUndo();
     }
 	
     if (ImGui::Button("Add Circle"))

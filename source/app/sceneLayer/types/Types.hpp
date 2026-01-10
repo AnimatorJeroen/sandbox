@@ -5,6 +5,8 @@
 #include <vector>
 #include <array>
 
+#include <cereal/archives/binary.hpp>
+
 // ----- Minimal data types
 struct Vec3 { 
     float x{}, y{}, z{}; 
@@ -22,9 +24,16 @@ struct Transform {
     Matrix2x3 Matrix{};           // nested arrays for testing
 };
 
-struct GameObject { 
-    Transform transform{}; 
+struct String64 {
+
+    char data[64];
+    String64() { data[0] = '\0'; }
+    String64(const std::string& s) { std::strncpy(data, s.c_str(), 63); data[63] = '\0'; }
+    operator std::string() const { return std::string(data);}
+
+    template<class Archive>
+    void serialize(Archive& ar) { ar(data); }
 };
 
 // ----- Editor Value type (extend as needed)
-using AppValueTypes = std::variant<bool, int, float, double, std::string, Vec3>;
+using AppValueTypes = std::variant<bool, int, float, double, String64, Vec3>;

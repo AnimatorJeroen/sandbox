@@ -13,7 +13,7 @@ void Scene::SetName(const std::string& name)
 	data()._name = name;
 }
 
-const std::string& Scene::GetName()
+const String64& Scene::GetName()
 {
 	return data()._name;
 }

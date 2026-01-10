@@ -23,7 +23,7 @@ struct DummyComponent {
 struct SceneData {
 
 	float sceneColor = 0.f;
-	std::string _name;
+	String64 _name;
 	template<class Archive> 
 	void serialize(Archive& ar) {
 		ar(_name, sceneColor);
@@ -62,7 +62,7 @@ class Scene
 		const entt::entity& GetSceneEntity() const { return _sceneEntity; }
 
 		void SetName(const std::string& name);
-		const std::string& GetName();
+		const String64& GetName();
 		inline const float GetSceneColor() { return data().sceneColor; }
 		inline void SetSceneColor(float color) { data().sceneColor = color; }
 
