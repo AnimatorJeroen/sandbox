@@ -29,6 +29,12 @@ void ReflectTypes() {
         .data<&Transform::Weights, entt::as_ref_t>("Weights"_hs)
         .data<&Transform::Matrix, entt::as_ref_t>("Matrix"_hs);
 
-    entt::meta_factory<Scene>()
-        .data<&Scene::sceneColor>("sceneColor"_hs);
+    entt::meta_factory<SceneData>()
+        .type("Scene"_hs)  // Register type name - THIS IS CRITICAL!
+        .data<&SceneData::sceneColor>("sceneColor"_hs);
+
+    entt::meta_factory<DummyComponent>()
+        .type("DummyComponent"_hs)  // Register type name
+        .data<&DummyComponent::value, entt::as_ref_t>("value"_hs);
+    
 }

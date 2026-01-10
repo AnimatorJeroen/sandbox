@@ -19,10 +19,20 @@ struct DummyComponent {
     float r{1.0f}, g{1.0f}, b{1.0f}, a{1.0f};
 };
 
+struct SceneData {
+	float sceneColor = 0.f;
+	float testValue = 42.f;
+};
+
 class Scene
 {
 	public:
-		Scene() = default;
+		entt::entity sceneEntity;
+
+		Scene() {
+			sceneEntity = _registry.create(); 
+			_registry.emplace<SceneData>(sceneEntity, SceneData{});
+		}
 		~Scene() = default;
 		Scene(const Scene&) {}
 		
@@ -45,9 +55,10 @@ class Scene
         // Create a new entity and attach a DummyComponent with random value
         entt::entity CreateEntity();
 
-        // Editable direct scene color channel (for demo) 
-        float sceneColor{1.0f};
+        // Returns reference to the scene data for access
+        const SceneData& GetSceneData() const { return _registry.get<SceneData>(sceneEntity); } // Updated return type to reference
 
+		const entt::entity& GetSceneEntity() const { return sceneEntity; }
 	private:
 		std::string _name;
 		std::vector<std::shared_ptr<IShape>> _shapes;

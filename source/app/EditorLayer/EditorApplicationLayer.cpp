@@ -88,12 +88,15 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 		// Random value between 0.0f and 1.0f
 		static thread_local std::mt19937 rng{ std::random_device{}() };
 		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-		float newColor = dist(rng);
+		float newValue = dist(rng);
 
+		auto& scene = *_sceneManager->GetActiveScene();
+		//auto entity = scene.CreateEntity(); // just to show some action
 		_applicator.BeginUndo();
-        _applicator.Apply(entt::null, PATH_FULL_CONSTEXPR("Scene.sceneColor"), newColor);
+        //_applicator.Apply(entity, PATH_FULL_CONSTEXPR("DummyComponent.value"), newValue);
+        _applicator.Apply(scene.GetSceneEntity(), PATH_FULL_CONSTEXPR("Scene.sceneColor"), newValue);
 		_applicator.EndUndo();
-        LOG_TRACE() << "Scene color set to " << newColor;
+        LOG_TRACE() << "Scene color set to " << newValue;
     }
 	return true;
 }
