@@ -18,6 +18,22 @@ class RequestLoadSceneEvent : public Core::IEvent
 		RequestLoadSceneEvent(const std::string& filepath) : filepath(filepath) {}
 };
 
+class RequestSetActiveSceneEvent : public Core::IEvent
+{
+	public:
+		size_t sceneIndex;
+		SET_EVENT_TYPE_FUNCTIONS(RequestSetActiveSceneEvent)
+		RequestSetActiveSceneEvent(size_t index) : sceneIndex(index) {}
+};
+
+class RequestCloseSceneEvent : public Core::IEvent
+{
+	public:
+		size_t sceneIndex;
+		SET_EVENT_TYPE_FUNCTIONS(RequestCloseSceneEvent)
+		RequestCloseSceneEvent(size_t index) : sceneIndex(index) {}
+};
+
 class OnChangeActiveSceneEvent : public Core::IEvent
 {
 	public:

@@ -31,6 +31,13 @@ struct String64 {
     String64() { data[0] = '\0'; }
     String64(const std::string& s) { std::strncpy(data, s.c_str(), 63); data[63] = '\0'; }
     operator std::string() const { return std::string(data);}
+	
+    String64& operator=(const char* s) { std::strncpy(data, s, 63); data[63] = '\0'; return *this; }
+    std::string to_string() const { return std::string(data); }
+
+    bool empty() const { return data[0] == '\0'; }
+    size_t length() const { return std::strlen(data); }
+
 
     template<class Archive>
     void serialize(Archive& ar) { ar(data); }

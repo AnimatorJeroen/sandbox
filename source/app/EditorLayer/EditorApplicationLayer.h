@@ -11,6 +11,7 @@
 #include "core/undo/UndoManager.hpp"
 
 #include "app/sceneLayer/types/Types.hpp"
+#include "OpenDocumentsTopBar.h"
 
 class SceneManager;
 
@@ -41,6 +42,8 @@ private:
 	std::shared_ptr<SceneManager> _sceneManager;
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
+	OpenDocumentsTopBar _openDocumentsTopBar;
+
 	Core::EventBus& _eventBus;
 	Core::Applicator<AppValueTypes> _applicator;
 	Core::UndoManager<AppValueTypes> _undoManager;

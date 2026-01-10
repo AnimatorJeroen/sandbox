@@ -89,7 +89,6 @@ namespace Core {
     template<typename ValueTypes>
     bool UndoManager<ValueTypes>::Undo() {
         if (_undo_stack.empty()) {
-            std::cout << "Nothing to undo\n";
             return false;
         }
 
@@ -111,7 +110,6 @@ namespace Core {
     template<typename ValueTypes>
     bool UndoManager<ValueTypes>::Redo() {
         if (_redo_stack.empty()) {
-            std::cout << "Nothing to redo\n";
             return false;
         }
 

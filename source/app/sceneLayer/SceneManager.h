@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "app/event/SceneEvent.h"
 
 //forward declare
 namespace Core
@@ -43,4 +44,5 @@ private:
     Core::EventBus& _eventBus;
     
     void NotifySceneChanged();
+    bool onRequestCloseSceneEvent(const RequestCloseSceneEvent& e);
 };
