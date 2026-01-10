@@ -10,12 +10,12 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 
 void Scene::SetName(const std::string& name)
 {
-	_name = name;
+	data()._name = name;
 }
 
-std::string& Scene::GetName()
+const std::string& Scene::GetName()
 {
-	return _name;
+	return GetSceneData()._name;
 }
 
 entt::entity Scene::CreateEntity()

@@ -20,8 +20,13 @@ struct DummyComponent {
 };
 
 struct SceneData {
+
 	float sceneColor = 0.f;
-	float testValue = 42.f;
+	std::string _name;
+	template<class Archive> 
+	void serialize(Archive& ar) {
+		ar(_name, sceneColor);
+	}
 };
 
 class Scene
@@ -38,12 +43,14 @@ class Scene
 		
 		void Draw(Core::DrawCommandRecorder& recorder);
 		void SetName(const std::string& name);
-		std::string& GetName();
+		const std::string& GetName();
 
 		template<class Archive>
 		void serialize(Archive& archive)
 		{
-			archive(_name, _shapes);
+			// 2. Serialize scene-level components 
+			auto& sceneData = _registry.get<SceneData>(sceneEntity);
+			archive(sceneData, _shapes);
 		}
 
 		inline std::vector<std::shared_ptr<IShape>>& GetShapes() { return _shapes; }
@@ -60,8 +67,9 @@ class Scene
 
 		const entt::entity& GetSceneEntity() const { return sceneEntity; }
 	private:
-		std::string _name;
 		std::vector<std::shared_ptr<IShape>> _shapes;
 		int a = 0;
 		entt::registry _registry{};
+
+		SceneData& data() { return _registry.get<SceneData>(sceneEntity); } // Updated return type to reference
 };
