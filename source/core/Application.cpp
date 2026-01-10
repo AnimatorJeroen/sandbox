@@ -6,7 +6,6 @@
 #include <imgui/imgui_impl_opengl3.h>
 #include <core/Logger.h>
 
-
 namespace Core
 {
 	Application::Application(const ApplicationSpecs& specs) : _applicationSpecs(specs)
@@ -15,6 +14,7 @@ namespace Core
 			LOG_ERROR() << "Failed to initialize GLFW";
 			return;
 		}
+		
 		_window = std::make_shared<Window>(_applicationSpecs.windowWidth, _applicationSpecs.windowHeight, _applicationSpecs.windowTitle, *_eventBus);
 
 		if (glewInit() != GLEW_OK) {
@@ -28,8 +28,8 @@ namespace Core
 		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)_window->GetHandle(), true);
 		ImGui_ImplOpenGL3_Init("#version 330");
 
-
 		_layerContext.Register<EventBus>(_eventBus);
+		
 		//register callbacks
 		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);
 		REGISTER_CALLBACK((*_eventBus), WindowCloseEvent, OnWindowCloseEvent);

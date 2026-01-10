@@ -37,7 +37,5 @@ namespace Core
 			std::shared_ptr<Window> _window;
 			std::vector<std::unique_ptr<IApplicationLayer>> _applicationLayers;
 			std::shared_ptr<EventBus> _eventBus = std::make_shared<EventBus>();
-
-
 	};
 }

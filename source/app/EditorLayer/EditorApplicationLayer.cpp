@@ -83,25 +83,28 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 
 	LOG_TRACE() << e.GetName() << " in editor layer: Key " << e.key << ", repeated: " << e.repeated;
 
-    // When user presses 'A', modify scene color via ChangeApplicator
-    if (!e.repeated && e.key == 'A') {
-		// Random value between 0.0f and 1.0f
-		static thread_local std::mt19937 rng{ std::random_device{}() };
-		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-		float newValue = dist(rng);
-
-		auto& scene = *_sceneManager->GetActiveScene();
-		_applicator.BeginUndo();
-        _applicator.SetField(scene.GetSceneEntity(), "Scene.sceneColor", newValue);
-		_applicator.EndUndo();
-        LOG_TRACE() << "Scene color set to " << newValue;
-    }
-
+	// Check modifiers directly from the event
 	if (e.key == 'Z') {
-		_eventBus.PushEvent(RequestUndoEvent());
+		if ((e.mods & Core::MOD_CONTROL) && (e.mods & Core::MOD_SHIFT)) {
+			// Ctrl+Shift+Z: Redo
+			_eventBus.PushEvent(RequestRedoEvent());
+		}
+		else if (e.mods & Core::MOD_CONTROL) {
+			// Ctrl+Z: Undo
+			_eventBus.PushEvent(RequestUndoEvent());
+		}
 	}
-	else if (e.key == 'X') {
-		_eventBus.PushEvent(RequestRedoEvent());
+	else if (e.key == 'S') {
+		if (e.mods & Core::MOD_CONTROL)
+		{
+			_eventBus.PushEvent<RequestSaveSceneEvent>(RequestSaveSceneEvent("saved files/scene.dat"));
+		}
+	}
+	else if (e.key == 'O') {
+		if (e.mods & Core::MOD_CONTROL)
+		{
+			_eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent("saved files/scene.dat"));
+		}
 	}
 
 	return true;

@@ -7,7 +7,6 @@
 #include "event/MouseEvent.h"
 #include "event/KeyEvent.h"
 
-
 namespace Core
 {
     void Window::SetCallBacks() const
@@ -56,7 +55,6 @@ namespace Core
             });
 
         //Key events
-
         glfwSetKeyCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window, int key, int code, int action, int mods)
             {
                 auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
@@ -65,17 +63,17 @@ namespace Core
                 {
                 case GLFW_PRESS:
                 {
-                    self->_eventBus.PushEvent(KeyDownEvent(key, false));
+                    self->_eventBus.PushEvent(KeyDownEvent(key, false, mods));
                     break;
                 }
                 case GLFW_REPEAT:
                 {
-                    self->_eventBus.PushEvent(KeyDownEvent(key, true));
+                    self->_eventBus.PushEvent(KeyDownEvent(key, true, mods));
                     break;
                 }
                 case GLFW_RELEASE:
                 {
-                    self->_eventBus.PushEvent(KeyUpEvent(key));
+                    self->_eventBus.PushEvent(KeyUpEvent(key, mods));
                     break;
                 }
 
