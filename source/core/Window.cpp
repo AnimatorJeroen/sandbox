@@ -1,11 +1,18 @@
 #include "Window.h"
 #include <glew/glew.h>
 #include <GLFW/glfw3.h>
+
+#ifdef _WIN32
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#endif
+
 #include <iostream>
 #include "event/EventBus.h"
 #include "event/ApplicationEvent.h"
 #include "event/MouseEvent.h"
 #include "event/KeyEvent.h"
+#include "Logger.h"
 
 namespace Core
 {
@@ -130,4 +137,31 @@ namespace Core
     {
         glfwGetFramebufferSize((GLFWwindow*)_glfwWindow, &width, &height);
 	}
+
+    void* Window::GetNativeWindowHandle() const
+    {
+#ifdef _WIN32
+        if (!_glfwWindow)
+        {
+            LOG_ERROR() << "GetNativeWindowHandle: _glfwWindow is null!";
+            return nullptr;
+        }
+        
+        void* hwnd = glfwGetWin32Window((GLFWwindow*)_glfwWindow);
+        
+        if (!hwnd)
+        {
+            LOG_ERROR() << "GetNativeWindowHandle: glfwGetWin32Window returned null!";
+        }
+        else
+        {
+            LOG_DEBUG() << "GetNativeWindowHandle: returning HWND " << hwnd;
+        }
+        
+        return hwnd;
+#else
+        // For other platforms, return the GLFW window handle
+        return _glfwWindow;
+#endif
+    }
 }

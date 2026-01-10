@@ -51,11 +51,13 @@ namespace Core
 				}
 				catch (const std::exception& e) {
 					LOG_ERROR() << "Failed to load data: " << e.what();
+					data = nullptr;
 				}
 				inputFile.close();
 			}
 			else {
 				LOG_DEBUG() << "No saved data found";
+				data = nullptr;
 			}
 			return data;
 		}

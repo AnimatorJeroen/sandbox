@@ -29,6 +29,7 @@ namespace Core
 		ImGui_ImplOpenGL3_Init("#version 330");
 
 		_layerContext.Register<EventBus>(_eventBus);
+		_layerContext.Register<Window>(_window); // Register Window so layers can access it
 		
 		//register callbacks
 		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);

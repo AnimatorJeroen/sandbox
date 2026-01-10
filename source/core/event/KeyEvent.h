@@ -3,13 +3,13 @@
 
 namespace Core
 {
-	// GLFW modifier bit flags
-	constexpr int MOD_SHIFT = 0x0001;
-	constexpr int MOD_CONTROL = 0x0002;
-	constexpr int MOD_ALT = 0x0004;
-	constexpr int MOD_SUPER = 0x0008;
-	constexpr int MOD_CAPS_LOCK = 0x0010;
-	constexpr int MOD_NUM_LOCK = 0x0020;
+	// GLFW modifier bit flags (renamed to avoid Windows.h conflicts)
+	constexpr int KMOD_SHIFT = 0x0001;
+	constexpr int KMOD_CONTROL = 0x0002;
+	constexpr int KMOD_ALT = 0x0004;
+	constexpr int KMOD_SUPER = 0x0008;
+	constexpr int KMOD_CAPS_LOCK = 0x0010;
+	constexpr int KMOD_NUM_LOCK = 0x0020;
 
 	class KeyDownEvent : public Core::IEvent
 	{

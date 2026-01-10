@@ -16,6 +16,7 @@ namespace Core
 		void GetFramebufferSize(int& width, int& height) const;
 		void PollEvents() const;
 		inline void* GetHandle() const { return _glfwWindow; }
+		void* GetNativeWindowHandle() const; // Get platform-specific window handle (HWND on Windows)
 	private:
 		void* _glfwWindow;
 		EventBus& _eventBus;

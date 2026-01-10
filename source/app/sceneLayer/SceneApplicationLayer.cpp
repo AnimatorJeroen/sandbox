@@ -86,20 +86,14 @@ bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& 
 bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
 {
 	LOG_TRACE() << e.GetName() << " received in scene layer.";
-
-	const std::string sceneFilePath = "saved files/scene.dat";
-	bool success = _sceneManager->SaveActiveScene(sceneFilePath);
-	
+	bool success = _sceneManager->SaveActiveScene(e.filepath);
 	return true;
 }
 
 bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)
 {
 	LOG_TRACE() << e.GetName() << " received in scene layer.";
-	const std::string sceneFilePath = "saved files/scene.dat";
-	
-	// Use SceneManager to load - it handles everything and switches the active scene
-	_sceneManager->LoadScene(sceneFilePath, true);
+	_sceneManager->LoadScene(e.filepath, true);
 	return true;
 }
 

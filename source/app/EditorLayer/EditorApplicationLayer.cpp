@@ -3,6 +3,7 @@
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
 #include <core/Logger.h>
+#include <core/Window.h>
 #include <random>
 
 EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
@@ -12,7 +13,7 @@ _eventBus(*ctx.Get<Core::EventBus>().get()),
 _undoManager(),
 _applicator(_undoManager),
 //ui panels
-_mainMenu(*ctx.Get<Core::EventBus>().get()),
+_mainMenu(*ctx.Get<Core::EventBus>().get(), ctx.Get<Core::Window>()->GetNativeWindowHandle()),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _applicator),
 _openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get())
 {
@@ -89,23 +90,23 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 
 	// Check modifiers directly from the event
 	if (e.key == 'Z') {
-		if ((e.mods & Core::MOD_CONTROL) && (e.mods & Core::MOD_SHIFT)) {
+		if ((e.mods & Core::KMOD_CONTROL) && (e.mods & Core::KMOD_SHIFT)) {
 			// Ctrl+Shift+Z: Redo
 			_eventBus.PushEvent(RequestRedoEvent());
 		}
-		else if (e.mods & Core::MOD_CONTROL) {
+		else if (e.mods & Core::KMOD_CONTROL) {
 			// Ctrl+Z: Undo
 			_eventBus.PushEvent(RequestUndoEvent());
 		}
 	}
 	else if (e.key == 'S' && !e.repeated) {
-		if (e.mods & Core::MOD_CONTROL)
+		if (e.mods & Core::KMOD_CONTROL)
 		{
 			_eventBus.PushEvent<RequestSaveSceneEvent>(RequestSaveSceneEvent("saved files/scene.dat"));
 		}
 	}
 	else if (e.key == 'O' && !e.repeated) {
-		if (e.mods & Core::MOD_CONTROL)
+		if (e.mods & Core::KMOD_CONTROL)
 		{
 			_eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent("saved files/scene.dat"));
 		}
