@@ -2,7 +2,8 @@
 #include <imgui/imgui.h>
 #include <app/sceneLayer/shape/Circle.h>
 
-Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene) : _scene(&scene)
+
+Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppValueTypes>& applicator) : _scene(&scene), _applicator(applicator)
 {
 }
 
@@ -13,26 +14,32 @@ void Panel_SceneHierarchy::SetContext(Scene& scene)
 
 void Panel_SceneHierarchy::Render()
 {
-    static char inputTextbuffer[128];
+    static char inputTextbuffer[64];
     static Scene* lastScene = nullptr;
-
+    static float sceneColor = _scene->GetSceneColor();
     if (!_scene)
         return;
-    if (_scene != lastScene)
-    {
-        const std::string& sceneName = _scene->GetName();
-        strncpy_s(inputTextbuffer, sceneName.c_str(), sizeof(inputTextbuffer) - 1);
-        inputTextbuffer[sizeof(inputTextbuffer) - 1] = '\0';
-        lastScene = _scene;
-    }
-    
+
     ImGui::Begin("Scene Hierarchy");
 	
+    sceneColor = _scene->GetSceneColor();
+    ImGui::InputFloat("Scene Color: %f", &sceneColor);
+    if (ImGui::IsItemDeactivatedAfterEdit())
+    {
+        _applicator.BeginUndo();
+        _applicator.SetField(_scene->GetSceneEntity(), "Scene.sceneColor", sceneColor);
+        _applicator.EndUndo();
+    }
 	// Update scene name when input changes
-	if (ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer)))
-	{
-		_scene->SetName(std::string(inputTextbuffer));
-	}
+    strncpy_s(inputTextbuffer, _scene->GetName().data, sizeof(inputTextbuffer) - 1);
+    ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer));
+    if (ImGui::IsItemDeactivatedAfterEdit())
+    {
+        //_scene->SetName(std::string(inputTextbuffer));
+        _applicator.BeginUndo();
+        _applicator.SetField(_scene->GetSceneEntity(), "Scene.name", String64(inputTextbuffer));
+        _applicator.EndUndo();
+    }
 	
     if (ImGui::Button("Add Circle"))
     {

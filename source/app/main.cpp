@@ -5,7 +5,15 @@
 #include "app/sceneLayer/SceneManager.h"
 #include <core/Logger.h>
 
+#include <entt/entt.hpp>
+#include <entt/meta/meta.hpp>
+
+#include "app/sceneLayer/Scene.h"
+#include "app/sceneLayer/types/ReflectTypes.hpp"
+
 int main() {
+
+    ReflectTypes();
 
 	Core::ApplicationSpecs specs {
 		800,

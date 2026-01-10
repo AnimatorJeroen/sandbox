@@ -3,6 +3,7 @@
 #include "core/event/EventBus.h"
 #include "core/event/ApplicationEvent.h"
 #include "app/event/SceneEvent.h"
+#include "app/event/UndoEvent.h"
 
 
 class MainMenu
@@ -34,8 +35,14 @@ public:
             }
             if (ImGui::BeginMenu("Edit"))
             {
-                ImGui::MenuItem("Option A");
-                ImGui::MenuItem("Option B");
+                if (ImGui::MenuItem("Undo"))
+                {
+                    _eventBus.PushEvent<RequestUndoEvent>(RequestUndoEvent());
+                }
+                if (ImGui::MenuItem("Redo"))
+                {
+                    _eventBus.PushEvent<RequestRedoEvent>(RequestRedoEvent());
+                }
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();

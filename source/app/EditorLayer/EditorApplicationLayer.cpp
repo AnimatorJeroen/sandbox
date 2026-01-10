@@ -1,16 +1,19 @@
 #include "EditorApplicationLayer.h"
 #include <imgui/imgui.h>
-#include <core/event/ApplicationEvent.h>
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
 #include <core/Logger.h>
+#include <random>
 
 EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
-_sceneHierarchyPanel(*_sceneManager->GetActiveScene()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
-_mainMenu(*ctx.Get<Core::EventBus>().get())
+_mainMenu(*ctx.Get<Core::EventBus>().get()),
+_undoManager(),
+_applicator(_undoManager),
+_sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _applicator)
 {
+
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
@@ -23,6 +26,8 @@ _mainMenu(*ctx.Get<Core::EventBus>().get())
 	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
 	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
 	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
+	REGISTER_CALLBACK(_eventBus, RequestUndoEvent, OnRequestUndo);
+	REGISTER_CALLBACK(_eventBus, RequestRedoEvent, OnRequestRedo);
 }
 
 void EditorApplicationLayer::OnUpdate(const float deltaTime)
@@ -73,10 +78,32 @@ bool EditorApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 
 bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 {
-	if (!ImGui::GetIO().WantCaptureKeyboard)
-		return false;
+	//if (!ImGui::GetIO().WantCaptureKeyboard)
+	//	return false;
 
 	LOG_TRACE() << e.GetName() << " in editor layer: Key " << e.key << ", repeated: " << e.repeated;
+
+    // When user presses 'A', modify scene color via ChangeApplicator
+    if (!e.repeated && e.key == 'A') {
+		// Random value between 0.0f and 1.0f
+		static thread_local std::mt19937 rng{ std::random_device{}() };
+		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+		float newValue = dist(rng);
+
+		auto& scene = *_sceneManager->GetActiveScene();
+		_applicator.BeginUndo();
+        _applicator.SetField(scene.GetSceneEntity(), "Scene.sceneColor", newValue);
+		_applicator.EndUndo();
+        LOG_TRACE() << "Scene color set to " << newValue;
+    }
+
+	if (e.key == 'Z') {
+		_eventBus.PushEvent(RequestUndoEvent());
+	}
+	else if (e.key == 'X') {
+		_eventBus.PushEvent(RequestRedoEvent());
+	}
+
 	return true;
 }
 
@@ -113,5 +140,21 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
+	_undoManager.SetContext(_sceneManager->GetActiveScene()->GetRegistry());
+	_undoManager.Clear();
 	return false;
+}
+
+bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
+{
+	bool handled = _undoManager.Undo();
+	LOG_DEBUG() << e.GetName() << " Undo handled: " << handled;
+	return true;
+}
+
+bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
+{
+	bool handled = _undoManager.Redo();
+	LOG_DEBUG() << e.GetName() << " Redo handled: " << handled;
+	return true;
 }
