@@ -7,8 +7,8 @@
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
 #include "app/event/UndoEvent.h"
-#include "core/undo/ChangeApplicator.h"
-#include "core/undo/UndoManager.h"
+#include "core/undo/Applicator.hpp"
+#include "core/undo/UndoManager.hpp"
 
 class SceneManager;
 
@@ -40,6 +40,6 @@ private:
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
 	Core::EventBus& _eventBus;
-	Core::ChangeApplicator _applicator;
+	Core::Applicator _applicator;
 	Core::UndoManager _undoManager;
 };

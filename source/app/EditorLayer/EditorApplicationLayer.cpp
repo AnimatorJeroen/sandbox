@@ -89,7 +89,7 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 		std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 		float newColor = dist(rng);
 
-        _applicator.SetField(entt::null, 0, "Scene.sceneColor", Core::Value{newColor});
+        _applicator.Apply(entt::null, 0, "Scene.sceneColor", Core::Value{newColor});
         LOG_TRACE() << "Scene color set to " << newColor;
     }
 	return true;

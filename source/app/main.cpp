@@ -8,28 +8,12 @@
 #include <entt/entt.hpp>
 #include <entt/meta/meta.hpp>
 
-#include <core/undo/Undo.h>
 #include "app/sceneLayer/Scene.h"
-
-static void reflect_types() {
-    using namespace entt::literals;
-
-    entt::meta_factory<Core::Vec3>()
-        .data<&Core::Vec3::x>("x"_hs)
-        .data<&Core::Vec3::y>("y"_hs)
-        .data<&Core::Vec3::z>("z"_hs);
-    entt::meta_factory<Core::Color>()
-        .data<&Core::Color::r>("r"_hs)
-        .data<&Core::Color::g>("g"_hs)
-        .data<&Core::Color::b>("b"_hs)
-        .data<&Core::Color::a>("a"_hs);
-    entt::meta_factory<Scene>()
-        .data<&Scene::sceneColor>("sceneColor"_hs);
-}
+#include "app/sceneLayer/types/ReflectTypes.hpp"
 
 int main() {
 
-    reflect_types();
+    ReflectTypes();
 
 	Core::ApplicationSpecs specs {
 		800,
