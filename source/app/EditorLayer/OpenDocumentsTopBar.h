@@ -43,7 +43,7 @@ public:
         if (ImGui::BeginTabBar("OpenDocumentsTabBar", tabBarFlags))
         {
             // Track if we need to close a scene
-            int sceneToClose = -1;
+            size_t sceneToClose = -1;
             size_t currentlySelectedTab = -1;
 
             // Iterate through all scenes and create tabs
