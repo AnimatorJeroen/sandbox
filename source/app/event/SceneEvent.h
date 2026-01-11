@@ -9,10 +9,7 @@ class RequestSaveSceneEvent : public Core::IEvent
 		SET_EVENT_TYPE_FUNCTIONS(RequestSaveSceneEvent)
 		RequestSaveSceneEvent(const std::string& _filepath)
 		{
-			size_t len = _filepath.size() + 1;
-			filepath = (char*)malloc(len);
-			memcpy(filepath, _filepath.data(), len);
-			allocationPtr = filepath;
+			HeapAllocateData(filepath, _filepath.data(), _filepath.size() + 1);
 		}
 };
 
@@ -23,10 +20,7 @@ class RequestLoadSceneEvent : public Core::IEvent
 		SET_EVENT_TYPE_FUNCTIONS(RequestLoadSceneEvent)
 		RequestLoadSceneEvent(const std::string& _filepath)
 		{
-			size_t len = _filepath.size() + 1;
-			filepath = (char*)malloc(len);
-			memcpy(filepath, _filepath.c_str(), len);
-			allocationPtr = filepath;
+			HeapAllocateData(filepath, _filepath.data(), _filepath.size() + 1);
 		}
 };
 
