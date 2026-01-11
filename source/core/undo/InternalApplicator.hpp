@@ -4,22 +4,22 @@
 #include "Patch.hpp"
 
 // ===========================================================================
-// InternalApplicator: Applies undo/redo changes (templated on ValueTypes)
+// InternalApplicatorT: Applies undo/redo changes (templated on ValueTypes)
 // ===========================================================================
 
 namespace Core {
 
 
     template<typename ValueTypes>
-    struct InternalApplicator {
-        using PatchType = Patch<ValueTypes>;
+    struct InternalApplicatorT {
+        using Patch = PatchT<ValueTypes>;
 
         entt::registry* _reg;
 
         entt::meta_any resolve(entt::entity e, entt::id_type compId) const;
         bool apply_impl(entt::entity e, entt::id_type compId, const reflection::Path& pathIds, const ValueTypes& value);
-        void SetField(const PatchType& p);
-        void Revert(const PatchType& p);
+        void SetField(const Patch& p);
+        void Revert(const Patch& p);
         void SetContext(entt::registry& registry) {
             _reg = &registry;
         }

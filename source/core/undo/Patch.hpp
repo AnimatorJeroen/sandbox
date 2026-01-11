@@ -7,7 +7,7 @@
 #include <vector>
 
 // ===========================================================================
-// Patch: Stores undo/redo information (templated on ValueTypes)
+// PatchT: Stores undo/redo information (templated on ValueTypes)
 // ===========================================================================
 // Uses a sentinel-terminated fixed-size array (max 16 elements)
 // ===========================================================================
@@ -16,7 +16,7 @@ namespace Core {
 
 
     template<typename ValueTypes_>
-    struct Patch {
+    struct PatchT {
         using ValueTypes = ValueTypes_;  // Expose ValueTypes for macro usage
 
         entt::entity entity{};
@@ -25,13 +25,13 @@ namespace Core {
         ValueTypes oldValue{}, newValue{};
 
         // Construct from Path
-        Patch(entt::entity e, entt::id_type comp, const reflection::Path& p, ValueTypes old_val, ValueTypes new_val)
+        PatchT(entt::entity e, entt::id_type comp, const reflection::Path& p, ValueTypes old_val, ValueTypes new_val)
             : entity(e), componentType(comp), path(p),
             oldValue(std::move(old_val)), newValue(std::move(new_val)) {
         }
 
         // Default constructor
-        Patch() = default;
+        PatchT() = default;
 
         // Helpers to print patch info (optional)
         void Dump() const {
@@ -42,26 +42,26 @@ namespace Core {
     };
 
     // ===========================================================================
-    // PatchGroup: Bundles multiple patches as a single undo/redo step
+    // PatchGroupT: Bundles multiple patches as a single undo/redo step
     // ===========================================================================
 
     template<typename ValueTypes_>
-    struct PatchGroup {
+    struct PatchGroupT {
         using ValueTypes = ValueTypes_;
-        using PatchType = Patch<ValueTypes>;
+        using Patch = PatchT<ValueTypes>;
 
-        std::vector<PatchType> patches;
+        std::vector<Patch> patches;
 
         // Default constructor
-        PatchGroup() = default;
+        PatchGroupT() = default;
 
         // Construct with initial capacity
-        explicit PatchGroup(size_t reserveSize) {
+        explicit PatchGroupT(size_t reserveSize) {
             patches.reserve(reserveSize);
         }
 
         // Add a patch to the group
-        void Add(PatchType&& patch) {
+        void Add(Patch&& patch) {
             patches.push_back(std::move(patch));
         }
 

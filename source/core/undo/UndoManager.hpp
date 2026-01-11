@@ -21,9 +21,9 @@ namespace Core {
     template<typename ValueTypes>
     class UndoManager {
     public:
-        using PatchType = Patch<ValueTypes>;
-        using PatchGroupType = PatchGroup<ValueTypes>;
-        using InternalApplicatorType = InternalApplicator<ValueTypes>;
+        using Patch = PatchT<ValueTypes>;
+        using PatchGroup = PatchGroupT<ValueTypes>;
+        using InternalApplicator = InternalApplicatorT<ValueTypes>;
 
         explicit UndoManager();
 
@@ -78,7 +78,7 @@ namespace Core {
 
     private:
         // Build a patch (capture old via meta)
-        PatchType make_patch(entt::entity e,
+        Patch make_patch(entt::entity e,
             entt::id_type compId,
             const reflection::Path& pathIds,
             const ValueTypes& newVal);
@@ -92,13 +92,13 @@ namespace Core {
             return meta_type.info().hash();
         }
 
-        InternalApplicatorType _internalApplicator;
-        std::stack<PatchGroupType> _undo_stack;
-        std::stack<PatchGroupType> _redo_stack;
+        InternalApplicator _internalApplicator;
+        std::stack<PatchGroup> _undo_stack;
+        std::stack<PatchGroup> _redo_stack;
 
         // Recording state for bundling patches
         bool _recording = false;
-        std::optional<PatchGroupType> _current_group;
+        std::optional<PatchGroup> _current_group;
     };
 
 }

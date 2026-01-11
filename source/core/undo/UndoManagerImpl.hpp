@@ -23,7 +23,7 @@ namespace Core {
         const reflection::Path& pathIds,
         const ValueTypes& newVal) {
         // Create patch (captures old value)
-        PatchType patch = make_patch(e, compId, pathIds, newVal);
+        Patch patch = make_patch(e, compId, pathIds, newVal);
 
         // SetField the change
         _internalApplicator.SetField(patch);
@@ -34,7 +34,7 @@ namespace Core {
         }
         else {
             // Otherwise, push as a single-patch group to undo stack
-            PatchGroupType group;
+            PatchGroup group;
             group.Add(std::move(patch));
             _undo_stack.push(std::move(group));
 
@@ -52,7 +52,7 @@ namespace Core {
             throw std::runtime_error("BeginUndo() called while already recording. Call EndUndo() first.");
         }
         _recording = true;
-        _current_group = PatchGroupType();
+        _current_group = PatchGroup();
     }
 
     // End recording and push all bundled patches as a single undo step
@@ -92,7 +92,7 @@ namespace Core {
             return false;
         }
 
-        PatchGroupType group = std::move(_undo_stack.top());
+        PatchGroup group = std::move(_undo_stack.top());
         _undo_stack.pop();
 
         // Revert all patches in the group in reverse order
@@ -113,7 +113,7 @@ namespace Core {
             return false;
         }
 
-        PatchGroupType group = std::move(_redo_stack.top());
+        PatchGroup group = std::move(_redo_stack.top());
         _redo_stack.pop();
 
         // SetField all patches in the group in forward order
@@ -162,13 +162,13 @@ namespace Core {
 
     // Build a patch (capture old via meta)
     template<typename ValueTypes>
-    typename UndoManager<ValueTypes>::PatchType UndoManager<ValueTypes>::make_patch(entt::entity e,
+    typename UndoManager<ValueTypes>::Patch UndoManager<ValueTypes>::make_patch(entt::entity e,
         entt::id_type compId,
         const reflection::Path& pathIds,
         const ValueTypes& newVal) {
         auto inst = _internalApplicator.resolve(e, compId);
         if (!inst) throw std::runtime_error("Component instance not found for make_patch");
         ValueTypes oldVal = GetByPath<ValueTypes>(inst, pathIds);
-        return PatchType{ e, compId, pathIds, oldVal, newVal };
+        return Patch{ e, compId, pathIds, oldVal, newVal };
     }
 }

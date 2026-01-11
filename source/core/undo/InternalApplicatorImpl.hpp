@@ -14,7 +14,7 @@
 namespace Core {
 
     template<typename ValueTypes>
-    entt::meta_any InternalApplicator<ValueTypes>::resolve(entt::entity e, entt::id_type compId) const {
+    entt::meta_any InternalApplicatorT<ValueTypes>::resolve(entt::entity e, entt::id_type compId) const {
         // Generic path using EnTT's storage system
         auto* storage = _reg->storage(compId);
         if (!storage) [[unlikely]] {
@@ -40,7 +40,7 @@ namespace Core {
     }
 
     template<typename ValueTypes>
-    bool InternalApplicator<ValueTypes>::apply_impl(entt::entity e, entt::id_type compId, const reflection::Path& pathIds, const ValueTypes& value) {
+    bool InternalApplicatorT<ValueTypes>::apply_impl(entt::entity e, entt::id_type compId, const reflection::Path& pathIds, const ValueTypes& value) {
         auto inst = resolve(e, compId);
         if (!inst) [[unlikely]] {
             return false;
@@ -50,14 +50,14 @@ namespace Core {
     }
 
     template<typename ValueTypes>
-    void InternalApplicator<ValueTypes>::SetField(const PatchType& p) {
+    void InternalApplicatorT<ValueTypes>::SetField(const typename InternalApplicatorT<ValueTypes>::Patch& p) {
         if (!apply_impl(p.entity, p.componentType, p.path, p.newValue)) [[unlikely]] {
             throw std::runtime_error("Component instance not found");
         }
     }
 
     template<typename ValueTypes>
-    void InternalApplicator<ValueTypes>::Revert(const PatchType& p) {
+    void InternalApplicatorT<ValueTypes>::Revert(const typename InternalApplicatorT<ValueTypes>::Patch& p) {
         if (!apply_impl(p.entity, p.componentType, p.path, p.oldValue)) [[unlikely]] {
             throw std::runtime_error("Component instance not found");
         }
