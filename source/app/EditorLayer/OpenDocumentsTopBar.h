@@ -11,6 +11,7 @@ class OpenDocumentsTopBar
 private:
     Core::EventBus& _eventBus;
     SceneManager& _sceneManager;
+    size_t _lastActiveIndex = static_cast<size_t>(-1); // Track last known active scene
 public:
     OpenDocumentsTopBar(SceneManager& sceneManager, Core::EventBus& eventBus) : _eventBus(eventBus), _sceneManager(sceneManager) {}
 
@@ -44,7 +45,7 @@ public:
         {
             // Track if we need to close a scene
             int sceneToClose = -1;
-            size_t currentlySelectedTab = -1;
+            size_t currentlySelectedTab = static_cast<size_t>(-1);
 
             // Iterate through all scenes and create tabs
             for (size_t i = 0; i < scenes.size(); ++i)
@@ -61,18 +62,33 @@ public:
                 // Create unique ID for each tab
                 std::string tabId = sceneName.to_string() + "##" + std::to_string(i);
 
-                // Don't use SetSelected flag - let the tab bar manage selection naturally
+                // Force this tab to be selected if it's the active scene and active scene changed externally
                 ImGuiTabItemFlags tabFlags = 0;
+                if (i == activeIndex && activeIndex != _lastActiveIndex) {
+                    tabFlags |= ImGuiTabItemFlags_SetSelected;
+                }
 
                 bool tabOpen = true;
                 if (ImGui::BeginTabItem(tabId.c_str(),
                     scenes.size() > 1 ? &tabOpen : nullptr,
                     tabFlags))
                 {
-                    // This tab is currently selected
+                    // This tab is currently selected by ImGui
                     currentlySelectedTab = i;
 
                     ImGui::EndTabItem();
+                }
+
+                // Show filepath tooltip when hovering over the tab
+                if (ImGui::IsItemHovered())
+                {
+                    const std::string& filepath = scene->GetFilepath();
+                    if (!filepath.empty())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("%s", filepath.c_str());
+                        ImGui::EndTooltip();
+                    }
                 }
 
                 // Check if tab was closed
@@ -82,12 +98,17 @@ public:
                 }
             }
 
-            // Only update active scene if the selected tab changed
-            if (currentlySelectedTab != -1 && 
-                currentlySelectedTab != activeIndex)
+            // Only update active scene if user clicked a different tab
+            // (not if ImGui just re-selected a tab internally)
+            if (currentlySelectedTab != static_cast<size_t>(-1) && 
+                currentlySelectedTab != activeIndex &&
+                currentlySelectedTab != _lastActiveIndex)
             {
                 _sceneManager.SetActiveScene(currentlySelectedTab);
             }
+
+            // Update the last active index
+            _lastActiveIndex = activeIndex;
 
             // Close scene after iteration to avoid invalidating iterator
             if (sceneToClose >= 0)
