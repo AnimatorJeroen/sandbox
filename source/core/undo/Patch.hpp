@@ -15,9 +15,8 @@
 namespace Core {
 
 
-    template<typename ValueTypes_>
+    template<typename ValueTypes>
     struct PatchT {
-        using ValueTypes = ValueTypes_;  // Expose ValueTypes for macro usage
 
         entt::entity entity{};
         entt::id_type componentType{};   // e.g., entt::type_id<Transform>().hash()
@@ -45,9 +44,8 @@ namespace Core {
     // PatchGroupT: Bundles multiple patches as a single undo/redo step
     // ===========================================================================
 
-    template<typename ValueTypes_>
+    template<typename ValueTypes>
     struct PatchGroupT {
-        using ValueTypes = ValueTypes_;
         using Patch = PatchT<ValueTypes>;
 
         std::vector<Patch> patches;

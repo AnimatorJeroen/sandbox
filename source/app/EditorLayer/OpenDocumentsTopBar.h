@@ -94,7 +94,7 @@ public:
                 // Check if tab was closed
                 if (!tabOpen && scenes.size() > 1)
                 {
-                    sceneToClose = i;
+                    sceneToClose = static_cast<int>(i);
                 }
             }
 
