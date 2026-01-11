@@ -93,6 +93,17 @@ void SceneManager::NotifySceneChanged()
 
 bool SceneManager::LoadScene(const char* filepath, bool makeActive)
 {
+    // Check if scene with this filepath is already open
+    for (size_t i = 0; i < _scenes.size(); ++i) {
+        if (_scenes[i]->GetFilepath() == filepath) {
+            LOG_INFO() << "Scene already open, switching to it: " << filepath;
+            if (makeActive) {
+                SetActiveScene(i);
+            }
+            return true;
+        }
+    }
+    
     try {
         auto scene = Core::Serializer::Deserialize<Scene>(filepath);
         
@@ -100,6 +111,9 @@ bool SceneManager::LoadScene(const char* filepath, bool makeActive)
             LOG_ERROR() << "Failed to deserialize scene from: " << filepath;
             return false;
         }
+        
+        // Set the filepath for the loaded scene
+        scene->SetFilepath(filepath);
         
         _scenes.push_back(scene);
         
@@ -132,6 +146,8 @@ bool SceneManager::SaveScene(size_t index, const std::string& filepath)
         bool success = Core::Serializer::Serialize<Scene>(_scenes[index], filepath);
         
         if (success) {
+            // Update the scene's filepath after successful save
+            _scenes[index]->SetFilepath(filepath);
             LOG_INFO() << "Scene saved to: " << filepath;
         } else {
             LOG_ERROR() << "Failed to serialize scene to: " << filepath;
