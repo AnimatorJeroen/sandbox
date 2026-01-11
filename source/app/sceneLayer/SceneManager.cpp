@@ -91,7 +91,7 @@ void SceneManager::NotifySceneChanged()
     _eventBus.PushImmediateEvent<OnChangeActiveSceneEvent>(OnChangeActiveSceneEvent());
 }
 
-bool SceneManager::LoadScene(const std::string& filepath, bool makeActive)
+bool SceneManager::LoadScene(const char* filepath, bool makeActive)
 {
     try {
         auto scene = Core::Serializer::Deserialize<Scene>(filepath);

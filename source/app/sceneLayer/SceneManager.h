@@ -28,7 +28,7 @@ public:
     
     bool SaveScene(size_t index, const std::string& filepath);
 
-    bool LoadScene(const std::string& filepath, bool makeActive = true);
+    bool LoadScene(const char* filepath, bool makeActive = true);
 
     bool SaveActiveScene(const std::string& filepath);
 

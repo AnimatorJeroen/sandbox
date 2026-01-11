@@ -9,6 +9,8 @@ namespace Core
     {
     public:
 
+		void* allocationPtr = nullptr; // For custom memory allocation trackign if needed
+
         ~IEvent() = default;
 
         virtual const char* GetName() const = 0;

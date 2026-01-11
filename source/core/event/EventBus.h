@@ -89,7 +89,8 @@ namespace Core
                         if(callback(*(const IEvent*)e.data) == true) //returns true if handled
                             break;
                     }
-
+				if (((const IEvent&)e.data).allocationPtr != nullptr )
+					delete ((IEvent&)e.data).allocationPtr; //clean up dynamic allocation if used
                 m_eventQueue.pop();
             }
 
