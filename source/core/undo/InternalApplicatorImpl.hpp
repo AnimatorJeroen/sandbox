@@ -40,7 +40,7 @@ namespace Core {
     }
 
     template<typename ValueTypes>
-    bool InternalApplicatorT<ValueTypes>::apply_impl(entt::entity e, entt::id_type compId, const reflection::Path& pathIds, const ValueTypes& value) {
+    bool InternalApplicatorT<ValueTypes>::SetField(entt::entity e, entt::id_type compId, const reflection::Path& pathIds, const ValueTypes& value) {
         auto inst = resolve(e, compId);
         if (!inst) [[unlikely]] {
             return false;
@@ -50,15 +50,15 @@ namespace Core {
     }
 
     template<typename ValueTypes>
-    void InternalApplicatorT<ValueTypes>::SetField(const typename InternalApplicatorT<ValueTypes>::Patch& p) {
-        if (!apply_impl(p.entity, p.componentType, p.path, p.newValue)) [[unlikely]] {
+    void InternalApplicatorT<ValueTypes>::Apply(const typename InternalApplicatorT<ValueTypes>::Patch& p) {
+        if (!SetField(p.entity, p.componentType, p.path, p.newValue)) [[unlikely]] {
             throw std::runtime_error("Component instance not found");
         }
     }
 
     template<typename ValueTypes>
     void InternalApplicatorT<ValueTypes>::Revert(const typename InternalApplicatorT<ValueTypes>::Patch& p) {
-        if (!apply_impl(p.entity, p.componentType, p.path, p.oldValue)) [[unlikely]] {
+        if (!SetField(p.entity, p.componentType, p.path, p.oldValue)) [[unlikely]] {
             throw std::runtime_error("Component instance not found");
         }
     }

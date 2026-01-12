@@ -3,13 +3,14 @@
 #include "../reflection/Reflection.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <memory>
+#include "ops/SetFieldOp.hpp"
 
 // ===========================================================================
 // Template Implementation for UndoManager
 // ===========================================================================
 
 namespace Core {
-
 
     template<typename ValueTypes>
     UndoManager<ValueTypes>::UndoManager()
@@ -18,25 +19,26 @@ namespace Core {
 
     // Execute a change and push it onto the undo stack
     template<typename ValueTypes>
-    void UndoManager<ValueTypes>::Execute(entt::entity e,
+	void UndoManager<ValueTypes>::Execute(
+        entt::entity e,
         entt::id_type compId,
         const reflection::Path& pathIds,
         const ValueTypes& newVal) {
-        // Create patch (captures old value)
-        Patch patch = make_patch(e, compId, pathIds, newVal);
+        // Create SetFieldOp (captures old value)
+        auto op = std::make_unique<Core::SetFieldOp<ValueTypes>>(*_registry, e, compId, pathIds, newVal);
 
-        // SetField the change
-        _internalApplicator.SetField(patch);
+        // Apply the change
+        op->Apply();
 
-        // If we're recording, add to current group
-        if (_recording && _current_group.has_value()) {
-            _current_group->Add(std::move(patch));
+        // If we're recording, add to current command
+        if (_recording && _current_command.has_value()) {
+            _current_command->AddOp(std::move(op));
         }
         else {
-            // Otherwise, push as a single-patch group to undo stack
-            PatchGroup group;
-            group.Add(std::move(patch));
-            _undo_stack.push(std::move(group));
+            // Otherwise, push as a single-op command to undo stack
+            UndoableCommand command;
+            command.AddOp(std::move(op));
+            _undo_stack.push(std::move(command));
 
             // Clear redo stack when a new action is performed
             while (!_redo_stack.empty()) {
@@ -45,17 +47,17 @@ namespace Core {
         }
     }
 
-    // Begin recording patches for bundling
+    // Begin recording operations for bundling
     template<typename ValueTypes>
     void UndoManager<ValueTypes>::BeginUndo() {
         if (_recording) {
             throw std::runtime_error("BeginUndo() called while already recording. Call EndUndo() first.");
         }
         _recording = true;
-        _current_group = PatchGroup();
+        _current_command = UndoableCommand();
     }
 
-    // End recording and push all bundled patches as a single undo step
+    // End recording and push all bundled operations as a single undo step
     template<typename ValueTypes>
     void UndoManager<ValueTypes>::EndUndo() {
         if (!_recording) {
@@ -64,10 +66,10 @@ namespace Core {
 
         _recording = false;
 
-        // Only push to undo stack if we have patches
-        if (_current_group.has_value() && !_current_group->Empty()) {
-            _undo_stack.push(std::move(*_current_group));
-            _current_group.reset();
+        // Only push to undo stack if we have operations
+        if (_current_command.has_value() && !_current_command->Empty()) {
+            _undo_stack.push(std::move(*_current_command));
+            _current_command.reset();
 
             // Clear redo stack when a new action is performed
             while (!_redo_stack.empty()) {
@@ -75,7 +77,7 @@ namespace Core {
             }
         }
         else {
-            _current_group.reset();
+            _current_command.reset();
         }
     }
 
@@ -92,16 +94,14 @@ namespace Core {
             return false;
         }
 
-        PatchGroup group = std::move(_undo_stack.top());
+        UndoableCommand command = std::move(_undo_stack.top());
         _undo_stack.pop();
 
-        // Revert all patches in the group in reverse order
-        for (auto it = group.patches.rbegin(); it != group.patches.rend(); ++it) {
-            _internalApplicator.Revert(*it);
-        }
+        // Revert the command (operations are reverted in reverse order internally)
+        command.Revert();
 
         // Move to redo stack
-        _redo_stack.push(std::move(group));
+        _redo_stack.push(std::move(command));
 
         return true;
     }
@@ -113,16 +113,14 @@ namespace Core {
             return false;
         }
 
-        PatchGroup group = std::move(_redo_stack.top());
+        UndoableCommand command = std::move(_redo_stack.top());
         _redo_stack.pop();
 
-        // SetField all patches in the group in forward order
-        for (auto& patch : group.patches) {
-            _internalApplicator.SetField(patch);
-        }
+        // Apply the command (operations are applied in forward order)
+        command.Apply();
 
         // Move back to undo stack
-        _undo_stack.push(std::move(group));
+        _undo_stack.push(std::move(command));
 
         return true;
     }
@@ -157,18 +155,7 @@ namespace Core {
         while (!_undo_stack.empty()) _undo_stack.pop();
         while (!_redo_stack.empty()) _redo_stack.pop();
         _recording = false;
-        _current_group.reset();
+        _current_command.reset();
     }
 
-    // Build a patch (capture old via meta)
-    template<typename ValueTypes>
-    typename UndoManager<ValueTypes>::Patch UndoManager<ValueTypes>::make_patch(entt::entity e,
-        entt::id_type compId,
-        const reflection::Path& pathIds,
-        const ValueTypes& newVal) {
-        auto inst = _internalApplicator.resolve(e, compId);
-        if (!inst) throw std::runtime_error("Component instance not found for make_patch");
-        ValueTypes oldVal = GetByPath<ValueTypes>(inst, pathIds);
-        return Patch{ e, compId, pathIds, oldVal, newVal };
-    }
 }

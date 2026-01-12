@@ -2,13 +2,12 @@
 
 #include "../vendor/include/entt/entt.hpp"
 #include "Patch.hpp"
+#include "UndoableCommand.hpp"
 #include "InternalApplicator.hpp"
 #include "core/reflection/reflectionPathParser.hpp"
 #include "core/reflection/Reflection.hpp"
 #include <stack>
 #include <vector>
-#include <type_traits>
-#include <concepts>
 #include <optional>
 
 // ===========================================================================
@@ -22,14 +21,13 @@ namespace Core {
     class UndoManager {
     public:
         using Patch = PatchT<ValueTypes>;
-        using PatchGroup = PatchGroupT<ValueTypes>;
         using InternalApplicator = InternalApplicatorT<ValueTypes>;
 
         explicit UndoManager();
 
 
         void SetContext(entt::registry& registry) {
-            _internalApplicator.SetContext(registry);
+            _registry = &registry;
         }
 
 
@@ -83,6 +81,12 @@ namespace Core {
             const reflection::Path& pathIds,
             const ValueTypes& newVal);
 
+        std::unique_ptr<IOp> make_set_field_op(entt::registry& reg,
+            entt::entity e,
+            entt::id_type compId,
+            const reflection::Path& pathIds,
+            const ValueTypes& newVal);
+
         // Helper: Resolve component name hash to actual component type ID
         static entt::id_type resolve_component_type(entt::id_type nameHash) {
             auto meta_type = entt::resolve(nameHash);
@@ -92,13 +96,14 @@ namespace Core {
             return meta_type.info().hash();
         }
 
+        entt::registry* _registry;
         InternalApplicator _internalApplicator;
-        std::stack<PatchGroup> _undo_stack;
-        std::stack<PatchGroup> _redo_stack;
+        std::stack<UndoableCommand> _undo_stack;
+        std::stack<UndoableCommand> _redo_stack;
 
         // Recording state for bundling patches
         bool _recording = false;
-        std::optional<PatchGroup> _current_group;
+        std::optional<UndoableCommand> _current_command;
     };
 
 }
