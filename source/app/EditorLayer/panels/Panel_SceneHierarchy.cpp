@@ -56,9 +56,48 @@ void Panel_SceneHierarchy::Render()
         posIncr += 20;
     }
 
-    for(const auto& entity : _scene->GetShapes())
+    ImGui::SameLine();
+    if (ImGui::Button("Add Entity"))
     {
-        ImGui::Text("Entity ID: %d");
-	}
+        _scene->CreateEntity();
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Scene Entities:");
+    
+    // Display all entities in the registry (except the scene entity itself)
+    auto& registry = _scene->GetRegistry();
+    auto view = registry.view<NameComponent>();
+    
+    for (auto entity : view) {
+        const auto& nameComp = view.get<NameComponent>(entity);
+        
+        // Skip the scene entity
+        if (entity == _scene->GetSceneEntity())
+            continue;
+        
+        // Display entity with its name
+        ImGui::PushID(static_cast<int>(entt::to_integral(entity)));
+        
+        bool nodeOpen = ImGui::TreeNodeEx(
+            nameComp.name.data, 
+            ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen
+        );
+        
+        // Show entity ID in tooltip
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            ImGui::Text("Entity ID: %u", entt::to_integral(entity));
+            
+            // Show component info
+            if (auto* dummy = registry.try_get<DummyComponent>(entity)) {
+                ImGui::Text("Value: %.2f", dummy->value);
+            }
+            ImGui::EndTooltip();
+        }
+        
+        ImGui::PopID();
+    }
+
     ImGui::End();
 }

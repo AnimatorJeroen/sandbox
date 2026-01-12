@@ -38,4 +38,8 @@ void ReflectTypes() {
         .type("DummyComponent"_hs)  // Register type name
         .data<&DummyComponent::value, entt::as_ref_t>("value"_hs);
     
+    // Reflect NameComponent
+    entt::meta_factory<NameComponent>()
+        .type("NameComponent"_hs)  // Register type name
+        .data<&NameComponent::name, entt::as_ref_t>("name"_hs);
 }

@@ -13,6 +13,14 @@
 #include <core/renderer/DrawCommandRecorder.h>
 #include "types/Types.hpp"
 
+// Name component for entities
+struct NameComponent {
+    String64 name;
+    
+    NameComponent() = default;
+    NameComponent(const std::string& n) : name(n) {}
+};
+
 // Dummy component to track with the registry
 struct DummyComponent {
     float value{0.0f};
@@ -56,8 +64,11 @@ class Scene
 		inline entt::registry& GetRegistry() { return _registry; }
 		inline const entt::registry& GetRegistry() const { return _registry; }
 
-        // Create a new entity and attach a DummyComponent with random value
+        // Create a new entity with DummyComponent and unique name
         entt::entity CreateEntity();
+        
+        // Create a named entity
+        entt::entity CreateEntity(const std::string& name);
 
 		const entt::entity& GetSceneEntity() const { return _sceneEntity; }
 
@@ -76,6 +87,7 @@ class Scene
 		int a = 0;
 		entt::registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
+		int _entityCounter = 0; // Counter for generating unique entity names
 
 		SceneData& data() { return _registry.get<SceneData>(_sceneEntity); } // Updated return type to reference
 };
