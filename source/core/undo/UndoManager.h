@@ -36,6 +36,10 @@ namespace Core {
             const reflection::Path& pathIds,
             const ValueTypes& newVal);
 
+        // Create entities from selection snapshot
+        template<typename... Cs>
+        void Create(const std::unordered_set<entt::entity>& selection);
+
         // Begin recording patches for bundling
         void BeginUndo();
 
@@ -83,6 +87,7 @@ namespace Core {
         // Recording state for bundling patches
         bool _recording = false;
         std::optional<UndoableCommand> _current_command;
+
     };
 
 }

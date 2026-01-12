@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <memory>
 #include "ops/SetFieldOp.h"
+#include "ops/CreateOp.h"
+#include "UndoManager.h"
 
 // ===========================================================================
 // Template Implementation for UndoManager
@@ -46,6 +48,35 @@ namespace Core {
             }
         }
     }
+
+    template<typename ValueTypes>
+    template<typename... Cs>
+    void UndoManager<ValueTypes>::Create(const std::unordered_set<entt::entity>& selection)
+    {
+        auto snapshot = Core::make_selection_snapshot<Cs...>(_registry, selection);
+        auto op = std::make_unique<Core::CreateSelectionOp<Cs...>>(
+            *_registry, std::move(snapshot));
+
+        // Apply the change
+        op->Apply();
+
+        // If we're recording, add to current command
+        if (_recording && _current_command.has_value()) {
+            _current_command->AddOp(std::move(op));
+        }
+        else {
+            // Otherwise, push as a single-op command to undo stack
+            UndoableCommand command;
+            command.AddOp(std::move(op));
+            _undo_stack.push(std::move(command));
+
+            // Clear redo stack when a new action is performed
+            while (!_redo_stack.empty()) {
+                _redo_stack.pop();
+            }
+        }
+
+	}
 
     // Begin recording operations for bundling
     template<typename ValueTypes>

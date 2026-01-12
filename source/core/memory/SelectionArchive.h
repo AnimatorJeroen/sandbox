@@ -33,7 +33,15 @@ namespace Core {
         // Per-component captured payloads
         std::tuple<std::vector<std::pair<entt::entity, Cs>>...> storages;
 
-        // Entities sink for entt::snapshot
+        // Entities sink for entt::snapshot - accepts underlying type
+        void operator()(std::underlying_type_t<entt::entity> e) {
+            entt::entity entity{e};
+            if (!sel || sel->count(entity)) {
+                entities.push_back(entity);
+            }
+        }
+        
+        // Entities sink for entt::snapshot - accepts entity type
         void operator()(entt::entity e) {
             if (!sel || sel->count(e)) {
                 entities.push_back(e);
@@ -49,7 +57,13 @@ namespace Core {
             }
         }
 
-        // Component sink for entt::snapshot - individual component version
+        // Component sink for entt::snapshot - with underlying entity type
+        template<class C>
+        void operator()(std::underlying_type_t<entt::entity> e, const C& c) {
+            capture<C>(entt::entity{e}, c);
+        }
+
+        // Component sink for entt::snapshot - with entity type
         template<class C>
         void operator()(entt::entity e, const C& c) {
             capture<C>(e, c);
@@ -64,12 +78,26 @@ namespace Core {
     {
         SelectionArchive<Cs...> archive{ sel };
 
-        // Capture entities and components
-        entt::snapshot snap{ reg };
-        snap.entities(archive)
-            .component<Cs...>(archive);
+        // Manually iterate and capture entities with their components
+        for (auto entity : sel) {
+            if (reg.valid(entity)) {
+                archive.entities.push_back(entity);
+                
+                // Capture each component type
+                ((reg.all_of<Cs>(entity) ? archive.template capture<Cs>(entity, reg.get<Cs>(entity)) : void()), ...);
+            }
+        }
 
         return archive;
+    }
+
+    // Helper to create a snapshot of selected entities with specified components (pointer overload)
+    template<class... Cs>
+    SelectionArchive<Cs...> make_selection_snapshot(
+        entt::registry* reg,
+        const std::unordered_set<entt::entity>& sel)
+    {
+        return make_selection_snapshot<Cs...>(*reg, sel);
     }
 
     // Helper to create a full snapshot of all entities with specified components
@@ -80,8 +108,8 @@ namespace Core {
         archive.sel = nullptr; // No filter - capture all
 
         entt::snapshot snap{ reg };
-        snap.entities(archive)
-            .component<Cs...>(archive);
+        snap.get<entt::entity>(archive);
+        (snap.template get<Cs>(archive), ...);
 
         return archive;
     }

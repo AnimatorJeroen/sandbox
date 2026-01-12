@@ -1,5 +1,7 @@
 #pragma once
 #include "UndoManager.h"
+#include <core/memory/SelectionArchive.h>
+#include "ops/CreateOp.h"
 
 namespace Core {
 
@@ -34,6 +36,12 @@ namespace Core {
             auto fullPath = reflection::ParseFullPathRuntime(path_str.c_str());
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
             _undoManager.SetField(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
+        }
+
+        template<typename... Cs>
+        void Create(const std::unordered_set<entt::entity>& selection)
+        {
+            _undoManager.template Create<Cs...>(selection);
         }
 
         // Begin recording patches for bundling into a single undo step
