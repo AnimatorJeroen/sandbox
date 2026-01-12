@@ -38,15 +38,18 @@ namespace Core {
             _undoManager.SetField(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
         }
 
+		//captures specified component types
         template<typename... Cs>
-        void Create(const std::unordered_set<entt::entity>& selection)
+        void CaptureCreate(const std::unordered_set<entt::entity>& selection)
         {
-            _undoManager.template Create<Cs...>(selection);
+            _undoManager.template CaptureCreate<Cs...>(selection);
         }
 
-        void CreateAuto(const std::unordered_set<entt::entity>& selection)
+		// captures all component types in ComponentTypes tuple
+        void CaptureCreate(const std::unordered_set<entt::entity>& selection)
         {
-            CreateAutoImpl(selection, ComponentTypes{});
+			//impl with tuple unpacking of all ComponentTypes
+            CaptureCreateImpl(selection, ComponentTypes{});
         }
 
         // Begin recording patches for bundling into a single undo step
@@ -69,8 +72,8 @@ namespace Core {
 
         // Helper to unpack ComponentTypes tuple into variadic template parameters
         template<typename... Cs>
-        void CreateAutoImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
-            _undoManager.template Create<Cs...>(selection);
+        void CaptureCreateImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
+            _undoManager.template CaptureCreate<Cs...>(selection);
         }
 
         // Helper: Resolve component name hash to actual component type ID

@@ -38,7 +38,7 @@ namespace Core {
 
         // Create entities from selection snapshot
         template<typename... Cs>
-        void Create(const std::unordered_set<entt::entity>& selection);
+        void CaptureCreate(const std::unordered_set<entt::entity>& selection);
 
         // Begin recording patches for bundling
         void BeginUndo();

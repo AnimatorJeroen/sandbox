@@ -51,11 +51,12 @@ namespace Core {
 
     template<typename FieldTypes>
     template<typename... Cs>
-    void UndoManager<FieldTypes>::Create(const std::unordered_set<entt::entity>& selection)
+    void UndoManager<FieldTypes>::CaptureCreate(const std::unordered_set<entt::entity>& selection)
     {
         auto snapshot = Core::make_selection_snapshot<Cs...>(_registry, selection);
         auto op = std::make_unique<Core::CreateSelectionOp<Cs...>>(
             *_registry, std::move(snapshot));
+        _registry->remove<Cs...>(selection.begin(), selection.end());
 
         // Apply the change
         op->Apply();

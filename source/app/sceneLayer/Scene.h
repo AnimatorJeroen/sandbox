@@ -46,8 +46,11 @@ class Scene
 		template<class Archive>
 		void serialize(Archive& archive)
 		{
-			// 2. Serialize scene-level components 
+			//Serialize scene-level components 
 			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
+			// Serialize scene entities
+
+
 			archive(sceneData, _shapes);
 		}
 
@@ -80,7 +83,6 @@ class Scene
 		int a = 0;
 		entt::registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
-		int _entityCounter = 0; // Counter for generating unique entity names
 
 		SceneData& data() { return _registry.get<SceneData>(_sceneEntity); } // Updated return type to reference
 };

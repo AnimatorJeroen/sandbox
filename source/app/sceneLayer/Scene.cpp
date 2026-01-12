@@ -20,6 +20,7 @@ const String64& Scene::GetName()
 
 entt::entity Scene::CreateEntity()
 {
+	static int _entityCounter = 0;
 	// Generate unique name
 	std::string entityName = "Entity_" + std::to_string(_entityCounter++);
 	return CreateEntity(entityName);
