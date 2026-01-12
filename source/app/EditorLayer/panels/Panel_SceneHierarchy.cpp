@@ -3,7 +3,7 @@
 #include <app/sceneLayer/shape/Circle.h>
 #include <core/memory/SelectionArchive.h>
 
-Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppValueTypes>& applicator) : _scene(&scene), _applicator(applicator)
+Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppFieldTypes, AppComponentTypes>& applicator) : _scene(&scene), _applicator(applicator)
 {
 }
 

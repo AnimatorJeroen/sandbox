@@ -8,13 +8,13 @@
 #include <optional>
 
 // ===========================================================================
-// UndoManager: Manages undo/redo stacks (templated directly on ValueTypes)
+// UndoManager: Manages undo/redo stacks (templated directly on FieldTypes)
 // ===========================================================================
 
 namespace Core {
 
 
-    template<typename ValueTypes>
+    template<typename FieldTypes>
     class UndoManager {
     public:
         explicit UndoManager();
@@ -27,20 +27,18 @@ namespace Core {
         template<typename T>
         void SetField(entt::entity e, const reflection::FullPath& fullPath, T&& value) {
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
-            Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(value) });
+            Execute(e, actualComponentTypeId, fullPath.propertyPath, FieldTypes{ std::forward<T>(value) });
         }
 
         // Execute a change with Path (sentinel-terminated fixed-size array)
         void SetField(entt::entity e,
             entt::id_type compId,
             const reflection::Path& pathIds,
-            const ValueTypes& newVal);
+            const FieldTypes& newVal);
 
         // Create entities from selection snapshot
         template<typename... Cs>
         void Create(const std::unordered_set<entt::entity>& selection);
-
-		void CreateAuto(const std::unordered_set<entt::entity>& selection);
 
         // Begin recording patches for bundling
         void BeginUndo();

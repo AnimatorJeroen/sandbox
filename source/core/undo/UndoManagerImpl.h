@@ -14,20 +14,20 @@
 
 namespace Core {
 
-    template<typename ValueTypes>
-    UndoManager<ValueTypes>::UndoManager()
+    template<typename FieldTypes>
+    UndoManager<FieldTypes>::UndoManager()
         : _recording(false) {
     }
 
     // Execute a change and push it onto the undo stack
-    template<typename ValueTypes>
-	void UndoManager<ValueTypes>::SetField(
+    template<typename FieldTypes>
+	void UndoManager<FieldTypes>::SetField(
         entt::entity e,
         entt::id_type compId,
         const reflection::Path& pathIds,
-        const ValueTypes& newVal) {
+        const FieldTypes& newVal) {
         // Create SetFieldOp (captures old value)
-        auto op = std::make_unique<Core::SetFieldOp<ValueTypes>>(*_registry, e, compId, pathIds, newVal);
+        auto op = std::make_unique<Core::SetFieldOp<FieldTypes>>(*_registry, e, compId, pathIds, newVal);
 
         // Apply the change
         op->Apply();
@@ -49,9 +49,9 @@ namespace Core {
         }
     }
 
-    template<typename ValueTypes>
+    template<typename FieldTypes>
     template<typename... Cs>
-    void UndoManager<ValueTypes>::Create(const std::unordered_set<entt::entity>& selection)
+    void UndoManager<FieldTypes>::Create(const std::unordered_set<entt::entity>& selection)
     {
         auto snapshot = Core::make_selection_snapshot<Cs...>(_registry, selection);
         auto op = std::make_unique<Core::CreateSelectionOp<Cs...>>(
@@ -78,42 +78,9 @@ namespace Core {
 
 	}
 
-
-    template<typename ValueTypes>
-    inline void UndoManager<ValueTypes>::CreateAuto(const std::unordered_set<entt::entity>& selection)
-    {
-        //auto snapshot = Core::make_selection_snapshot_auto(_registry, selection);
-        //auto op = std::make_unique<Core::CreateSelectionOpAuto>(
-        //    *_registry, std::move(snapshot));
-
-        auto snapshot = Core::make_selection_snapshot<NameComponent, Transform>(_registry, selection);
-        auto op = std::make_unique<Core::CreateSelectionOp<NameComponent, Transform>>(
-            *_registry, std::move(snapshot));
-
-
-        // Apply the change
-        op->Apply();
-
-        // If we're recording, add to current command
-        if (_recording && _current_command.has_value()) {
-            _current_command->AddOp(std::move(op));
-        }
-        else {
-            // Otherwise, push as a single-op command to undo stack
-            UndoableCommand command;
-            command.AddOp(std::move(op));
-            _undo_stack.push(std::move(command));
-
-            // Clear redo stack when a new action is performed
-            while (!_redo_stack.empty()) {
-                _redo_stack.pop();
-            }
-        }
-    }
-
     // Begin recording operations for bundling
-    template<typename ValueTypes>
-    void UndoManager<ValueTypes>::BeginUndo() {
+    template<typename FieldTypes>
+    void UndoManager<FieldTypes>::BeginUndo() {
         if (_recording) {
             throw std::runtime_error("BeginUndo() called while already recording. Call EndUndo() first.");
         }
@@ -122,8 +89,8 @@ namespace Core {
     }
 
     // End recording and push all bundled operations as a single undo step
-    template<typename ValueTypes>
-    void UndoManager<ValueTypes>::EndUndo() {
+    template<typename FieldTypes>
+    void UndoManager<FieldTypes>::EndUndo() {
         if (!_recording) {
             throw std::runtime_error("EndUndo() called without matching BeginUndo()");
         }
@@ -146,14 +113,14 @@ namespace Core {
     }
 
     // Check if currently recording a bundle
-    template<typename ValueTypes>
-    bool UndoManager<ValueTypes>::IsRecording() const noexcept {
+    template<typename FieldTypes>
+    bool UndoManager<FieldTypes>::IsRecording() const noexcept {
         return _recording;
     }
 
     // Undo the last change
-    template<typename ValueTypes>
-    bool UndoManager<ValueTypes>::Undo() {
+    template<typename FieldTypes>
+    bool UndoManager<FieldTypes>::Undo() {
         if (_undo_stack.empty()) {
             return false;
         }
@@ -171,8 +138,8 @@ namespace Core {
     }
 
     // Redo the last undone change
-    template<typename ValueTypes>
-    bool UndoManager<ValueTypes>::Redo() {
+    template<typename FieldTypes>
+    bool UndoManager<FieldTypes>::Redo() {
         if (_redo_stack.empty()) {
             return false;
         }
@@ -190,32 +157,32 @@ namespace Core {
     }
 
     // Check if undo is available
-    template<typename ValueTypes>
-    bool UndoManager<ValueTypes>::CanUndo() const noexcept {
+    template<typename FieldTypes>
+    bool UndoManager<FieldTypes>::CanUndo() const noexcept {
         return !_undo_stack.empty();
     }
 
     // Check if redo is available
-    template<typename ValueTypes>
-    bool UndoManager<ValueTypes>::CanRedo() const noexcept {
+    template<typename FieldTypes>
+    bool UndoManager<FieldTypes>::CanRedo() const noexcept {
         return !_redo_stack.empty();
     }
 
     // Get the size of the undo stack
-    template<typename ValueTypes>
-    size_t UndoManager<ValueTypes>::UndoStackSize() const noexcept {
+    template<typename FieldTypes>
+    size_t UndoManager<FieldTypes>::UndoStackSize() const noexcept {
         return _undo_stack.size();
     }
 
     // Get the size of the redo stack
-    template<typename ValueTypes>
-    size_t UndoManager<ValueTypes>::RedoStackSize() const noexcept {
+    template<typename FieldTypes>
+    size_t UndoManager<FieldTypes>::RedoStackSize() const noexcept {
         return _redo_stack.size();
     }
 
     // Clear all history
-    template<typename ValueTypes>
-    void UndoManager<ValueTypes>::Clear() {
+    template<typename FieldTypes>
+    void UndoManager<FieldTypes>::Clear() {
         while (!_undo_stack.empty()) _undo_stack.pop();
         while (!_redo_stack.empty()) _redo_stack.pop();
         _recording = false;

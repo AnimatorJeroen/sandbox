@@ -16,7 +16,7 @@ namespace Core {
         static constexpr std::size_t size = N;
     };
 
-    template<typename ValueTypes>
+    template<typename ValueTypes, typename ComponentTypes>
     class Applicator {
     public:
         explicit Applicator(UndoManager<ValueTypes>& undoManager) : _undoManager(undoManager) {}
@@ -46,7 +46,7 @@ namespace Core {
 
         void CreateAuto(const std::unordered_set<entt::entity>& selection)
         {
-            _undoManager.CreateAuto(selection);
+            CreateAutoImpl(selection, ComponentTypes{});
         }
 
         // Begin recording patches for bundling into a single undo step
@@ -66,6 +66,12 @@ namespace Core {
 
     private:
         UndoManager<ValueTypes>& _undoManager;
+
+        // Helper to unpack ComponentTypes tuple into variadic template parameters
+        template<typename... Cs>
+        void CreateAutoImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
+            _undoManager.template Create<Cs...>(selection);
+        }
 
         // Helper: Resolve component name hash to actual component type ID
         static entt::id_type resolve_component_type(entt::id_type nameHash) {

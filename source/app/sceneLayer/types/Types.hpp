@@ -43,7 +43,7 @@ inline std::ostream& operator<<(std::ostream& os, const String64& str) {
 }
 
 // ----- Editor Value type (extend as needed)
-using AppValueTypes = std::variant<bool, int, float, double, String64, Vec3>;
+using AppFieldTypes = std::variant<bool, int, float, double, String64, Vec3>;
 
 
 
@@ -65,7 +65,7 @@ struct Transform {
 
 // Define all component types here as a tuple
 // Add ALL your component types to this list!
-using AllComponentTypesList = std::tuple<
+using AppComponentTypes = std::tuple<
     Transform,
     NameComponent
     // Add more component types here as comma-separated list

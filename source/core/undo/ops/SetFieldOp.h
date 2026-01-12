@@ -5,19 +5,19 @@
 #include "core/reflection/Reflection.h"
 
 // ===========================================================================
-// SetFieldOp: Operation that sets a field value (templated on ValueTypes)
+// SetFieldOp: Operation that sets a field value (templated on FieldTypes)
 // ===========================================================================
 
 namespace Core {
 
-    template<typename ValueTypes>
+    template<typename FieldTypes>
     class SetFieldOp : public IOp {
     public:
         SetFieldOp(entt::registry& reg,
             entt::entity e,
             entt::id_type compId,
             const reflection::Path& pathIds,
-            ValueTypes newVal);
+            FieldTypes newVal);
 
         void Apply() override;
         void Revert() override;
@@ -25,14 +25,14 @@ namespace Core {
     private:
 
         entt::meta_any resolve() const;
-        bool setField(const ValueTypes& value) const;
+        bool setField(const FieldTypes& value) const;
 
         entt::registry& _reg;
         entt::entity _entity;
         entt::id_type _componentType;
         reflection::Path _pathIds;
-        ValueTypes _oldValue;
-        ValueTypes _newValue;
+        FieldTypes _oldValue;
+        FieldTypes _newValue;
     };
 
 
@@ -41,13 +41,13 @@ namespace Core {
     // Template Implementation
     // ===========================================================================
 
-    template<typename ValueTypes>
-    SetFieldOp<ValueTypes>::SetFieldOp(
+    template<typename FieldTypes>
+    SetFieldOp<FieldTypes>::SetFieldOp(
         entt::registry& reg,
         entt::entity e,
         entt::id_type compId,
         const reflection::Path& pathIds,
-        ValueTypes newVal)
+        FieldTypes newVal)
         : _reg(reg)
         , _entity(e)
         , _componentType(compId)
@@ -56,25 +56,25 @@ namespace Core {
     {
         auto inst = resolve();
         if (!inst) throw std::runtime_error("Component instance not found for make_set_field_op");
-        _oldValue = GetByPath<ValueTypes>(inst, pathIds);
+        _oldValue = GetByPath<FieldTypes>(inst, pathIds);
     }
 
-    template<typename ValueTypes>
-    void SetFieldOp<ValueTypes>::Apply() {
+    template<typename FieldTypes>
+    void SetFieldOp<FieldTypes>::Apply() {
         if (!setField(_newValue)) {
             throw std::runtime_error("SetFieldOp::Apply failed - component instance not found");
         }
     }
 
-    template<typename ValueTypes>
-    void SetFieldOp<ValueTypes>::Revert() {
+    template<typename FieldTypes>
+    void SetFieldOp<FieldTypes>::Revert() {
         if (!setField(_oldValue)) {
             throw std::runtime_error("SetFieldOp::Revert failed - component instance not found");
         }
     }
 
-    template<typename ValueTypes>
-    entt::meta_any SetFieldOp<ValueTypes>::resolve() const {
+    template<typename FieldTypes>
+    entt::meta_any SetFieldOp<FieldTypes>::resolve() const {
         // Generic path using EnTT's storage system
         auto* storage = _reg.storage(_componentType);
         if (!storage) [[unlikely]] {
@@ -99,13 +99,13 @@ namespace Core {
         return meta_type.from_void(component_ptr);
     }
 
-    template<typename ValueTypes>
-    bool SetFieldOp<ValueTypes>::setField(const ValueTypes& value) const {
+    template<typename FieldTypes>
+    bool SetFieldOp<FieldTypes>::setField(const FieldTypes& value) const {
         auto inst = resolve();
         if (!inst) [[unlikely]] {
             return false;
         }
-        SetByPath<ValueTypes>(inst, _pathIds, value);
+        SetByPath<FieldTypes>(inst, _pathIds, value);
         return true;
     }
 }

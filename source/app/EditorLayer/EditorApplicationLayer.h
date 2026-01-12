@@ -45,6 +45,6 @@ private:
 	OpenDocumentsTopBar _openDocumentsTopBar;
 
 	Core::EventBus& _eventBus;
-	Core::Applicator<AppValueTypes> _applicator;
-	Core::UndoManager<AppValueTypes> _undoManager;
+	Core::Applicator<AppFieldTypes, AppComponentTypes> _applicator;
+	Core::UndoManager<AppFieldTypes> _undoManager;
 };
