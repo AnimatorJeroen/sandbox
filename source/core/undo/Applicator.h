@@ -25,7 +25,7 @@ namespace Core {
         void SetField(entt::entity e, T&& newVal) {
             constexpr auto fullPath = PATH_FULL_CONSTEXPR(PathStr.value);
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
-            _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
+            _undoManager.SetField(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
         }
 
         // SetField with runtime string (for variables)
@@ -33,7 +33,7 @@ namespace Core {
         void SetField(entt::entity e, const std::string& path_str, T&& newVal) {
             auto fullPath = reflection::ParseFullPathRuntime(path_str.c_str());
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
-            _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
+            _undoManager.SetField(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
         }
 
         // Begin recording patches for bundling into a single undo step

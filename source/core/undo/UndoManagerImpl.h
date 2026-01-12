@@ -19,7 +19,7 @@ namespace Core {
 
     // Execute a change and push it onto the undo stack
     template<typename ValueTypes>
-	void UndoManager<ValueTypes>::Execute(
+	void UndoManager<ValueTypes>::SetField(
         entt::entity e,
         entt::id_type compId,
         const reflection::Path& pathIds,

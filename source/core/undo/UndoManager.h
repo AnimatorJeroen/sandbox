@@ -25,13 +25,13 @@ namespace Core {
 
         // Execute a change with FullPath (component type extracted from path string)
         template<typename T>
-        void Execute(entt::entity e, const reflection::FullPath& fullPath, T&& value) {
+        void SetField(entt::entity e, const reflection::FullPath& fullPath, T&& value) {
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
             Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(value) });
         }
 
         // Execute a change with Path (sentinel-terminated fixed-size array)
-        void Execute(entt::entity e,
+        void SetField(entt::entity e,
             entt::id_type compId,
             const reflection::Path& pathIds,
             const ValueTypes& newVal);
