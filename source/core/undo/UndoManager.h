@@ -40,6 +40,8 @@ namespace Core {
         template<typename... Cs>
         void Create(const std::unordered_set<entt::entity>& selection);
 
+		void CreateAuto(const std::unordered_set<entt::entity>& selection);
+
         // Begin recording patches for bundling
         void BeginUndo();
 

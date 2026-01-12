@@ -78,6 +78,39 @@ namespace Core {
 
 	}
 
+
+    template<typename ValueTypes>
+    inline void UndoManager<ValueTypes>::CreateAuto(const std::unordered_set<entt::entity>& selection)
+    {
+        //auto snapshot = Core::make_selection_snapshot_auto(_registry, selection);
+        //auto op = std::make_unique<Core::CreateSelectionOpAuto>(
+        //    *_registry, std::move(snapshot));
+
+        auto snapshot = Core::make_selection_snapshot<NameComponent, Transform>(_registry, selection);
+        auto op = std::make_unique<Core::CreateSelectionOp<NameComponent, Transform>>(
+            *_registry, std::move(snapshot));
+
+
+        // Apply the change
+        op->Apply();
+
+        // If we're recording, add to current command
+        if (_recording && _current_command.has_value()) {
+            _current_command->AddOp(std::move(op));
+        }
+        else {
+            // Otherwise, push as a single-op command to undo stack
+            UndoableCommand command;
+            command.AddOp(std::move(op));
+            _undo_stack.push(std::move(command));
+
+            // Clear redo stack when a new action is performed
+            while (!_redo_stack.empty()) {
+                _redo_stack.pop();
+            }
+        }
+    }
+
     // Begin recording operations for bundling
     template<typename ValueTypes>
     void UndoManager<ValueTypes>::BeginUndo() {

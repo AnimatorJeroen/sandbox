@@ -13,13 +13,6 @@
 #include <core/renderer/DrawCommandRecorder.h>
 #include "types/Types.hpp"
 
-// Name component for entities
-struct NameComponent {
-    String64 name;
-    
-    NameComponent() = default;
-    NameComponent(const std::string& n) : name(n) {}
-};
 
 // Dummy component to track with the registry
 struct DummyComponent {

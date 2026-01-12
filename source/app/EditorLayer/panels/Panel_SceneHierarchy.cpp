@@ -65,11 +65,9 @@ void Panel_SceneHierarchy::Render()
 
          // Create a snapshot of entities to use as a template
          std::unordered_set<entt::entity> selection = {e1};
-         
-
 
         _applicator.BeginUndo();
-        _applicator.Create<NameComponent>(selection);
+        _applicator.CreateAuto(selection);
 
         reg.remove<NameComponent>(e1);
 

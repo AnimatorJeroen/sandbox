@@ -18,13 +18,6 @@ struct Matrix2x3 {
     std::array<std::array<float, 3>, 2> data = { { {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f} } };
 };
 
-struct Transform { 
-    Vec3 Position{}; 
-    Vec3 Scale{ 1.f, 1.f, 1.f };
-    std::vector<float> Weights{}; // Added: vector field for demonstrating index access
-    Matrix2x3 Matrix{};           // nested arrays for testing
-};
-
 struct String64 {
 
     char data[64];
@@ -51,3 +44,35 @@ inline std::ostream& operator<<(std::ostream& os, const String64& str) {
 
 // ----- Editor Value type (extend as needed)
 using AppValueTypes = std::variant<bool, int, float, double, String64, Vec3>;
+
+
+
+// Name component for entities
+struct NameComponent {
+    String64 name;
+
+    NameComponent() = default;
+    NameComponent(const std::string& n) : name(n) {}
+};
+
+struct Transform {
+    Vec3 Position{};
+    Vec3 Scale{ 1.f, 1.f, 1.f };
+    std::vector<float> Weights{}; // Added: vector field for demonstrating index access
+    Matrix2x3 Matrix{};           // nested arrays for testing
+};
+
+
+// Define all component types here as a tuple
+// Add ALL your component types to this list!
+using AllComponentTypesList = std::tuple<
+    Transform,
+    NameComponent
+    // Add more component types here as comma-separated list
+    // Example:
+    // Transform,
+    // String64,
+    // Sprite,
+    // RigidBody,
+    // etc...
+>;

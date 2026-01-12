@@ -44,6 +44,11 @@ namespace Core {
             _undoManager.template Create<Cs...>(selection);
         }
 
+        void CreateAuto(const std::unordered_set<entt::entity>& selection)
+        {
+            _undoManager.CreateAuto(selection);
+        }
+
         // Begin recording patches for bundling into a single undo step
         void BeginUndo() {
             _undoManager.BeginUndo();
