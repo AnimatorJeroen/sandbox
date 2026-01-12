@@ -1,11 +1,8 @@
 #pragma once
 
 #include "../vendor/include/entt/entt.hpp"
-#include "Patch.hpp"
-#include "UndoableCommand.hpp"
-#include "InternalApplicator.hpp"
-#include "core/reflection/reflectionPathParser.hpp"
-#include "core/reflection/Reflection.hpp"
+#include "UndoableCommand.h"
+#include "core/reflection/Reflection.h"
 #include <stack>
 #include <vector>
 #include <optional>
@@ -20,12 +17,7 @@ namespace Core {
     template<typename ValueTypes>
     class UndoManager {
     public:
-        using Patch = PatchT<ValueTypes>;
-        using InternalApplicator = InternalApplicatorT<ValueTypes>;
-
         explicit UndoManager();
-
-
         void SetContext(entt::registry& registry) {
             _registry = &registry;
         }
@@ -75,18 +67,6 @@ namespace Core {
         [[nodiscard]] bool IsRecording() const noexcept;
 
     private:
-        // Build a patch (capture old via meta)
-        Patch make_patch(entt::entity e,
-            entt::id_type compId,
-            const reflection::Path& pathIds,
-            const ValueTypes& newVal);
-
-        std::unique_ptr<IOp> make_set_field_op(entt::registry& reg,
-            entt::entity e,
-            entt::id_type compId,
-            const reflection::Path& pathIds,
-            const ValueTypes& newVal);
-
         // Helper: Resolve component name hash to actual component type ID
         static entt::id_type resolve_component_type(entt::id_type nameHash) {
             auto meta_type = entt::resolve(nameHash);
@@ -97,7 +77,6 @@ namespace Core {
         }
 
         entt::registry* _registry;
-        InternalApplicator _internalApplicator;
         std::stack<UndoableCommand> _undo_stack;
         std::stack<UndoableCommand> _redo_stack;
 
@@ -111,4 +90,4 @@ namespace Core {
 // Template Implementation
 // ===========================================================================
 
-#include "UndoManagerImpl.hpp"
+#include "UndoManagerImpl.h"

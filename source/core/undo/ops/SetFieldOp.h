@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../vendor/include/entt/entt.hpp"
-#include "IOp.hpp"
-#include "core/reflection/Reflection.hpp"
+#include "IOp.h"
+#include "core/reflection/Reflection.h"
 
 // ===========================================================================
 // SetFieldOp: Operation that sets a field value (templated on ValueTypes)

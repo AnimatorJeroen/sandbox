@@ -15,7 +15,7 @@
 // ----- Path element: either a field name (id_type) or an array/vector index (size_t)
 using PathElement = std::variant<entt::id_type, size_t>;
 // Include Path definition
-#include "reflectionPathParser.hpp"
+#include "reflectionPathParser.h"
 
 namespace Core {
 
@@ -44,4 +44,4 @@ namespace Core {
 // Template implementations must be in header for header-only library support
 // ===========================================================================
 
-#include "ReflectionImpl.hpp"
+#include "ReflectionImpl.h"

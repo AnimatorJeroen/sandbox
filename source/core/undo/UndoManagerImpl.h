@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../reflection/Reflection.hpp"
+#include "../reflection/Reflection.h"
 #include <iostream>
 #include <stdexcept>
 #include <memory>
-#include "ops/SetFieldOp.hpp"
+#include "ops/SetFieldOp.h"
 
 // ===========================================================================
 // Template Implementation for UndoManager

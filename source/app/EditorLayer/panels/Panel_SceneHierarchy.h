@@ -1,6 +1,6 @@
 #pragma once
 #include "app/sceneLayer/Scene.h"
-#include <core/undo/Applicator.hpp>
+#include <core/undo/Applicator.h>
 #include <memory>
 
 class Panel_SceneHierarchy
