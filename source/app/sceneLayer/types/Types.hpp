@@ -53,6 +53,11 @@ struct NameComponent {
 
     NameComponent() = default;
     NameComponent(const std::string& n) : name(n) {}
+
+    template<class Archive>
+    void serialize(Archive& ar) {
+        ar(name);
+    }
 };
 
 struct Transform {
