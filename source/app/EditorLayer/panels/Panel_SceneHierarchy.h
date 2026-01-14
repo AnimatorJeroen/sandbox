@@ -13,4 +13,5 @@ public:
 private:
 	Scene* _scene;
 	Core::Applicator<AppFieldTypes, AppComponentTypes>& _applicator;
+	entt::entity _selectedEntity = entt::null;
 };

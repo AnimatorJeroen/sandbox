@@ -40,6 +40,10 @@ namespace Core {
         template<typename... Cs>
         void CaptureCreate(const std::unordered_set<entt::entity>& selection);
 
+        // Delete entities from selection snapshot
+        template<typename... Cs>
+        void CaptureDelete(const std::unordered_set<entt::entity>& selection);
+
         // Begin recording patches for bundling
         void BeginUndo();
 

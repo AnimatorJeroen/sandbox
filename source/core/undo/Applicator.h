@@ -1,7 +1,7 @@
 #pragma once
 #include "UndoManager.h"
 #include <core/memory/SelectionArchive.h>
-#include "ops/CreateOp.h"
+#include "ops/StructuralOps.h"
 
 namespace Core {
 
@@ -52,6 +52,20 @@ namespace Core {
             CaptureCreateImpl(selection, ComponentTypes{});
         }
 
+        //captures specified component types
+        template<typename... Cs>
+        void CaptureDelete(const std::unordered_set<entt::entity>& selection)
+        {
+            _undoManager.template CaptureDelete<Cs...>(selection);
+        }
+
+        // captures all component types in ComponentTypes tuple
+        void CaptureDelete(const std::unordered_set<entt::entity>& selection)
+		{
+            //impl with tuple unpacking of all ComponentTypes
+            CaptureDeleteImpl(selection, ComponentTypes{});
+		}
+
         // Begin recording patches for bundling into a single undo step
         void BeginUndo() {
             _undoManager.BeginUndo();
@@ -70,10 +84,15 @@ namespace Core {
     private:
         UndoManager<ValueTypes>& _undoManager;
 
-        // Helper to unpack ComponentTypes tuple into variadic template parameters
+        // Helpers to unpack ComponentTypes tuple into variadic template parameters
         template<typename... Cs>
         void CaptureCreateImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
             _undoManager.template CaptureCreate<Cs...>(selection);
+        }
+
+        template<typename... Cs>
+        void CaptureDeleteImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
+            _undoManager.template CaptureDelete<Cs...>(selection);
         }
 
         // Helper: Resolve component name hash to actual component type ID

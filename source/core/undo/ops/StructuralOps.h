@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 // ===========================================================================
-// CreateSelectionOp and DestroySelectionOp
+// CaptureCreateOp and CaptureDeleteOp
 // ===========================================================================
 //
 // USAGE EXAMPLE:
@@ -25,7 +25,7 @@
 // auto snapshot = Core::make_selection_snapshot<Transform, Name>(registry, selection);
 //
 // // Create op for undo/redo
-// auto createOp = std::make_unique<Core::CreateSelectionOp<Transform, Name>>(
+// auto createOp = std::make_unique<Core::CaptureCreateOp<Transform, Name>>(
 //     registry, std::move(snapshot));
 //
 // // Apply: creates new entities
@@ -40,7 +40,7 @@
 //
 // // For destroying entities:
 // std::unordered_set<entt::entity> to_destroy = {e1};
-// auto destroyOp = std::make_unique<Core::DestroySelectionOp<Transform, Name>>(
+// auto destroyOp = std::make_unique<Core::CaptureDeleteOp<Transform, Name>>(
 //     registry, to_destroy);
 //
 // // Apply: destroys entities (snapshot already taken in constructor)
@@ -83,18 +83,18 @@ namespace Core {
         }
     }
 
-    // CreateSelectionOp: Captures entity creation for undo/redo
+    // CaptureCreateOp: Captures entity creation for undo/redo
     template<class... Cs>
-    class CreateSelectionOp : public IOp {
+    class CaptureCreateOp : public IOp {
     public:
         SelectionArchive<Cs...> archive;    // OWNED snapshot (e.g., prefab data)
         std::vector<entt::entity> created;  // filled on Apply
         entt::registry& _reg;
 
-        explicit CreateSelectionOp(entt::registry& reg) : _reg(reg) {}
+        explicit CaptureCreateOp(entt::registry& reg) : _reg(reg) {}
 
         // Constructor that takes an archive (for creating from snapshot)
-        CreateSelectionOp(entt::registry& reg, SelectionArchive<Cs...> arch) 
+        CaptureCreateOp(entt::registry& reg, SelectionArchive<Cs...> arch) 
             : _reg(reg), archive(std::move(arch)) {}
 
         void Apply() override {
@@ -134,21 +134,21 @@ namespace Core {
         }
     };
 
-    // DestroySelectionOp: Captures entity destruction for undo/redo
+    // CaptureDeleteOp: Captures entity destruction for undo/redo
     // On Apply: destroys entities and saves snapshot
     // On Revert: recreates entities from snapshot
     template<class... Cs>
-    class DestroySelectionOp : public IOp {
+    class CaptureDeleteOp : public IOp {
     public:
         SelectionArchive<Cs...> archive;    // Snapshot taken before destruction
         std::vector<entt::entity> destroyed; // Entities to destroy (original IDs)
         std::vector<entt::entity> recreated; // Entities recreated on Revert
         entt::registry& _reg;
 
-        explicit DestroySelectionOp(entt::registry& reg) : _reg(reg) {}
+        explicit CaptureDeleteOp(entt::registry& reg) : _reg(reg) {}
 
         // Constructor with entities to destroy (takes snapshot on construction)
-        DestroySelectionOp(entt::registry& reg, const std::unordered_set<entt::entity>& entities_to_destroy)
+        CaptureDeleteOp(entt::registry& reg, const std::unordered_set<entt::entity>& entities_to_destroy)
             : _reg(reg) 
         {
             // Take snapshot before destruction

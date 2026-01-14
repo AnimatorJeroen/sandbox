@@ -72,6 +72,7 @@ void Panel_SceneHierarchy::Render()
     auto& registry = _scene->GetRegistry();
     auto view = registry.view<NameComponent>();
     
+	entt::entity entityToDelete = entt::null;
     for (auto entity : view) {
         const auto& nameComp = view.get<NameComponent>(entity);
         
@@ -82,11 +83,32 @@ void Panel_SceneHierarchy::Render()
         // Display entity with its name
         ImGui::PushID(static_cast<int>(entt::to_integral(entity)));
         
+        // Determine tree node flags
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow 
+                                 | ImGuiTreeNodeFlags_SpanAvailWidth
+                                 | ImGuiTreeNodeFlags_Leaf;
+        
+        // Add selected flag if this entity is selected
+        if (_selectedEntity == entity) {
+            flags |= ImGuiTreeNodeFlags_Selected;
+        }
+        
         bool nodeOpen = ImGui::TreeNodeEx(
             nameComp.name.data, 
-            ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen
+            flags
         );
         
+        // Handle selection
+        if (ImGui::IsItemClicked()) {
+            _selectedEntity = entity;
+        }
+        
+        // Handle delete key
+        if (_selectedEntity == entity && ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
+        {
+            entityToDelete = entity;
+        }
+
         // Show entity ID in tooltip
         if (ImGui::IsItemHovered()) {
             ImGui::BeginTooltip();
@@ -99,8 +121,26 @@ void Panel_SceneHierarchy::Render()
             ImGui::EndTooltip();
         }
         
+        // If node was opened (for future children support)
+        if (nodeOpen) {
+            // Future: render child entities here
+            ImGui::TreePop();
+        }
+        
         ImGui::PopID();
     }
+
+    if(entityToDelete != entt::null)
+    {
+        _applicator.BeginUndo();
+        _applicator.CaptureDelete({ entityToDelete });
+        _applicator.EndUndo();
+        
+        // Clear selection if we deleted the selected entity
+        if (_selectedEntity == entityToDelete) {
+            _selectedEntity = entt::null;
+        }
+	}
 
     ImGui::End();
 }
