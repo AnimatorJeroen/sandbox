@@ -42,6 +42,7 @@ class Scene
 	public:
 		Scene() {
 			_sceneEntity = _registry.create(); 
+			_registry.emplace<Core::UUID>(_sceneEntity);
 			_registry.emplace<SceneData>(_sceneEntity, SceneData{});
 		}
 		~Scene() = default;

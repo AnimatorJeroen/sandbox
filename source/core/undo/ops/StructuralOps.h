@@ -120,9 +120,7 @@ namespace Core {
         void Revert() override {
             // Destroy all created entities
             for (auto id : createdIds) {
-                // Find entity by UUID and destroy it
-                auto view = _reg.view<UUID>();
-                for (auto e : view) {
+                for (auto e : _reg.view<UUID>()) {
                     if (_reg.get<UUID>(e).value == id.value) {
                         _reg.destroy(e);
                         break;
@@ -173,8 +171,7 @@ namespace Core {
             // Destroy all entities
             for (auto id : destroyedIds) {
                 // Find entity by UUID and destroy it
-                auto view = _reg.view<UUID>();
-                for (auto e : view) {
+                for (auto e : _reg.view<UUID>()) {
                     if (_reg.get<UUID>(e).value == id.value) {
                         _reg.destroy(e);
                         break;

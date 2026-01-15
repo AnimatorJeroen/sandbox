@@ -28,7 +28,7 @@ namespace Core {
         bool setField(const FieldTypes& value) const;
 
         entt::registry& _reg;
-        entt::entity _entity;
+        UUID _entityId;
         entt::id_type _componentType;
         reflection::Path _pathIds;
         FieldTypes _oldValue;
@@ -49,11 +49,11 @@ namespace Core {
         const reflection::Path& pathIds,
         FieldTypes newVal)
         : _reg(reg)
-        , _entity(e)
         , _componentType(compId)
         , _pathIds(pathIds)
         , _newValue(std::move(newVal))
     {
+		_entityId = _reg.get<Core::UUID>(e);
         auto inst = resolve();
         if (!inst) throw std::runtime_error("Component instance not found for make_set_field_op");
         _oldValue = GetByPath<FieldTypes>(inst, pathIds);
@@ -81,11 +81,19 @@ namespace Core {
             return entt::meta_any{};
         }
 
-        if (!storage->contains(_entity)) [[unlikely]] {
+		entt::entity entity = entt::null;
+        for (auto e : _reg.view<UUID>()) {
+            if (_reg.get<UUID>(e).value == _entityId.value) {
+				entity = e;
+                break;
+            }
+        }
+
+        if (!storage->contains(entity)) [[unlikely]] {
             return entt::meta_any{};
         }
 
-        void* component_ptr = const_cast<void*>(storage->value(_entity));
+        void* component_ptr = const_cast<void*>(storage->value(entity));
 
         // Get the type_info from the storage - this is the actual C++ type
         auto type_info = storage->info();
