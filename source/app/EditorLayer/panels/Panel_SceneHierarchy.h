@@ -2,6 +2,7 @@
 #include "app/sceneLayer/Scene.h"
 #include <core/undo/Applicator.h>
 #include <memory>
+#include <set>
 
 class Panel_SceneHierarchy
 {
@@ -13,5 +14,6 @@ public:
 private:
 	Scene* _scene;
 	Core::Applicator<AppFieldTypes, AppComponentTypes>& _applicator;
-	entt::entity _selectedEntity = entt::null;
+	std::set<entt::entity> _selectedEntities;
+	entt::entity _lastClickedEntity = entt::null;
 };

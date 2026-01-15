@@ -3,6 +3,7 @@
 #include <app/sceneLayer/shape/Circle.h>
 #include <core/memory/SelectionArchive.h>
 #include <core/UUID.h>
+#include <algorithm>
 
 Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppFieldTypes, AppComponentTypes>& applicator) : _scene(&scene), _applicator(applicator)
 {
@@ -80,8 +81,11 @@ void Panel_SceneHierarchy::Render()
         return uuidA.value < uuidB.value;
 		});
 
-    entt::entity entityToDelete = entt::null;
-    for (auto entity : entities) {
+    std::vector<entt::entity> entitiesToDelete;
+    
+	bool deleteEntitiesPressed = false;
+    for (size_t i = 0; i < entities.size(); ++i) {
+        auto entity = entities[i];
         const auto& nameComp = registry.try_get<NameComponent>(entity);
         
         // Skip the scene entity
@@ -97,7 +101,7 @@ void Panel_SceneHierarchy::Render()
                                  | ImGuiTreeNodeFlags_Leaf;
         
         // Add selected flag if this entity is selected
-        if (_selectedEntity == entity) {
+        if (_selectedEntities.find(entity) != _selectedEntities.end()) {
             flags |= ImGuiTreeNodeFlags_Selected;
         }
         
@@ -108,13 +112,54 @@ void Panel_SceneHierarchy::Render()
         
         // Handle selection
         if (ImGui::IsItemClicked()) {
-            _selectedEntity = entity;
+            bool isShiftDown = ImGui::GetIO().KeyShift;
+            bool isCtrlDown = ImGui::GetIO().KeyCtrl;
+            
+            if (isShiftDown && _lastClickedEntity != entt::null) {
+                // Shift+Click: Select range from last clicked to current
+                // Find indices of last clicked and current entity
+                auto lastIt = std::find(entities.begin(), entities.end(), _lastClickedEntity);
+                auto currentIt = entities.begin() + i;
+                
+                if (lastIt != entities.end()) {
+                    // Determine range direction
+                    auto startIt = (lastIt < currentIt) ? lastIt : currentIt;
+                    auto endIt = (lastIt < currentIt) ? currentIt : lastIt;
+                    
+                    // Clear selection if not holding ctrl
+                    if (!isCtrlDown) {
+                        _selectedEntities.clear();
+                    }
+                    
+                    // Select all entities in range
+                    for (auto it = startIt; it <= endIt; ++it) {
+                        if (*it != _scene->GetSceneEntity()) {
+                            _selectedEntities.insert(*it);
+                        }
+                    }
+                }
+            }
+            else if (isCtrlDown) {
+                // Ctrl+Click: Toggle selection
+                if (_selectedEntities.find(entity) != _selectedEntities.end()) {
+                    _selectedEntities.erase(entity);
+                } else {
+                    _selectedEntities.insert(entity);
+                }
+                _lastClickedEntity = entity;
+            }
+            else {
+                // Normal click: Replace selection
+                _selectedEntities.clear();
+                _selectedEntities.insert(entity);
+                _lastClickedEntity = entity;
+            }
         }
         
-        // Handle delete key
-        if (_selectedEntity == entity && ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
+        // Handle delete key - check once per frame, not per entity
+        if (!ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
         {
-            entityToDelete = entity;
+            deleteEntitiesPressed = true;
         }
 
         // Show entity ID in tooltip
@@ -131,6 +176,11 @@ void Panel_SceneHierarchy::Render()
             if (auto* dummy = registry.try_get<DummyComponent>(entity)) {
                 ImGui::Text("Value: %.2f", dummy->value);
             }
+            
+            // Show selection info
+            if (_selectedEntities.size() > 1) {
+                ImGui::Text("(%zu entities selected)", _selectedEntities.size());
+            }
             ImGui::EndTooltip();
         }
         
@@ -143,15 +193,23 @@ void Panel_SceneHierarchy::Render()
         ImGui::PopID();
     }
 
-    if(entityToDelete != entt::null)
+    if(deleteEntitiesPressed)
     {
+        // Convert vector to unordered_set for CaptureDelete
+        std::unordered_set<entt::entity> entitiesToDeleteSet(_selectedEntities.begin(), _selectedEntities.end());
+
         _applicator.BeginUndo();
-        _applicator.CaptureDelete({ entityToDelete });
+        _applicator.CaptureDelete(entitiesToDeleteSet);
         _applicator.EndUndo();
         
-        // Clear selection if we deleted the selected entity
-        if (_selectedEntity == entityToDelete) {
-            _selectedEntity = entt::null;
+        // Clear selection for deleted entities
+        for (auto entity : entitiesToDelete) {
+            _selectedEntities.erase(entity);
+        }
+        
+        // Clear last clicked if it was deleted
+        if (std::find(entitiesToDelete.begin(), entitiesToDelete.end(), _lastClickedEntity) != entitiesToDelete.end()) {
+            _lastClickedEntity = entt::null;
         }
 	}
 
