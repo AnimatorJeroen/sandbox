@@ -71,11 +71,18 @@ void Panel_SceneHierarchy::Render()
     
     // Display all entities in the registry (except the scene entity itself)
     auto& registry = _scene->GetRegistry();
-    auto view = registry.view<NameComponent>();
-    
-	entt::entity entityToDelete = entt::null;
-    for (auto entity : view) {
-        const auto& nameComp = view.get<NameComponent>(entity);
+    auto view = registry.view<Core::UUID>();
+
+    std::vector<entt::entity> entities(view.begin(), view.end());
+    std::sort(entities.begin(), entities.end(), [&registry](entt::entity a, entt::entity b) {
+        const auto& uuidA = registry.get<Core::UUID>(a);
+        const auto& uuidB = registry.get<Core::UUID>(b);
+        return uuidA.value < uuidB.value;
+		});
+
+    entt::entity entityToDelete = entt::null;
+    for (auto entity : entities) {
+        const auto& nameComp = registry.try_get<NameComponent>(entity);
         
         // Skip the scene entity
         if (entity == _scene->GetSceneEntity())
@@ -95,7 +102,7 @@ void Panel_SceneHierarchy::Render()
         }
         
         bool nodeOpen = ImGui::TreeNodeEx(
-            nameComp.name.data, 
+            nameComp ? nameComp->name.data : "Unnamed",
             flags
         );
         

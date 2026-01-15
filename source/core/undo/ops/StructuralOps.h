@@ -89,14 +89,24 @@ namespace Core {
     class CaptureCreateOp : public IOp {
     public:
         SelectionArchive<Cs...> archive;    // OWNED snapshot (e.g., prefab data)
-        std::vector<entt::entity> created;  // filled on Apply
+        std::vector<UUID> createdIds;  // filled on Apply
         entt::registry& _reg;
 
         explicit CaptureCreateOp(entt::registry& reg) : _reg(reg) {}
 
         // Constructor that takes an archive (for creating from snapshot)
-        CaptureCreateOp(entt::registry& reg, SelectionArchive<Cs...> arch) 
-            : _reg(reg), archive(std::move(arch)) {}
+        CaptureCreateOp(entt::registry& reg, const std::unordered_set<entt::entity>& entities_to_create)
+            : _reg(reg) {
+        
+            // create snapshot of current selection
+            archive = make_selection_snapshot<Cs...>(reg, entities_to_create);
+
+            // Store entity list
+            createdIds.reserve(entities_to_create.size());
+            for (auto e : entities_to_create) {
+                createdIds.push_back(_reg.get<UUID>(e));
+            }
+        }
 
         void Apply() override {
             // Create new entities and build old->new map
@@ -105,22 +115,20 @@ namespace Core {
             // Restore all components using fold expression over the tuple
             restore_all_components(remap, std::index_sequence_for<Cs...>{});
 
-            // Keep created list (order preserved)
-            created.clear(); 
-            created.reserve(archive.entities.size());
-            for (auto old : archive.entities) {
-                created.push_back(remap[old]);
-            }
         }
 
         void Revert() override {
             // Destroy all created entities
-            for (auto e : created) {
-                if (_reg.valid(e)) {
-                    _reg.destroy(e);
+            for (auto id : createdIds) {
+                // Find entity by UUID and destroy it
+                auto view = _reg.view<UUID>();
+                for (auto e : view) {
+                    if (_reg.get<UUID>(e).value == id.value) {
+                        _reg.destroy(e);
+                        break;
+                    }
                 }
             }
-            created.clear();
         }
 
     private:
@@ -142,7 +150,7 @@ namespace Core {
     class CaptureDeleteOp : public IOp {
     public:
         SelectionArchive<Cs...> archive;    // Snapshot taken before destruction
-        std::vector<entt::entity> destroyed; // Entities to destroy
+        std::vector<UUID> destroyedIds; // Entities to destroy
         entt::registry& _reg;
 
         explicit CaptureDeleteOp(entt::registry& reg) : _reg(reg) {}
@@ -155,17 +163,22 @@ namespace Core {
             archive = make_selection_snapshot<Cs...>(reg, entities_to_destroy);
             
             // Store entity list
-            destroyed.reserve(entities_to_destroy.size());
+            destroyedIds.reserve(entities_to_destroy.size());
             for (auto e : entities_to_destroy) {
-                destroyed.push_back(e);
+                destroyedIds.push_back(_reg.get<UUID>(e));
             }
         }
 
         void Apply() override {
             // Destroy all entities
-            for (auto e : destroyed) {
-                if (_reg.valid(e)) {
-                    _reg.destroy(e);
+            for (auto id : destroyedIds) {
+                // Find entity by UUID and destroy it
+                auto view = _reg.view<UUID>();
+                for (auto e : view) {
+                    if (_reg.get<UUID>(e).value == id.value) {
+                        _reg.destroy(e);
+                        break;
+                    }
                 }
             }
         }
@@ -177,12 +190,6 @@ namespace Core {
             // Restore all components
             restore_all_components(remap, std::index_sequence_for<Cs...>{});
 
-            // Store recreated entities for potential re-apply
-            destroyed.clear();
-            destroyed.reserve(archive.entities.size());
-            for (auto old : archive.entities) {
-                destroyed.push_back(remap[old]);
-            }
         }
 
     private:
