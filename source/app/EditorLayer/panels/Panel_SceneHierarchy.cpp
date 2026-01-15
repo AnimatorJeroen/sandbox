@@ -2,6 +2,7 @@
 #include <imgui/imgui.h>
 #include <app/sceneLayer/shape/Circle.h>
 #include <core/memory/SelectionArchive.h>
+#include <core/UUID.h>
 
 Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppFieldTypes, AppComponentTypes>& applicator) : _scene(&scene), _applicator(applicator)
 {
@@ -113,6 +114,11 @@ void Panel_SceneHierarchy::Render()
         if (ImGui::IsItemHovered()) {
             ImGui::BeginTooltip();
             ImGui::Text("Entity ID: %u", entt::to_integral(entity));
+            
+            // Show UUID if present
+            if (auto* uuid = registry.try_get<Core::UUID>(entity)) {
+                ImGui::Text("UUID: %llu", uuid->value);
+            }
             
             // Show component info
             if (auto* dummy = registry.try_get<DummyComponent>(entity)) {

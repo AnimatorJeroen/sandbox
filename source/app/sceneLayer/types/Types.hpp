@@ -7,6 +7,7 @@
 #include <iostream> // Added for std::ostream
 
 #include <cereal/archives/binary.hpp>
+#include "core/UUID.h"
 
 // ----- Minimal data types
 struct Vec3 { 
@@ -71,12 +72,11 @@ struct Transform {
 // Define all component types here as a tuple
 // Add ALL your component types to this list!
 using AppComponentTypes = std::tuple<
+    Core::UUID,
     Transform,
     NameComponent
     // Add more component types here as comma-separated list
     // Example:
-    // Transform,
-    // String64,
     // Sprite,
     // RigidBody,
     // etc...

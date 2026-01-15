@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include <random>
+#include "core/UUID.h"
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
@@ -29,6 +30,8 @@ entt::entity Scene::CreateEntity()
 entt::entity Scene::CreateEntity(const std::string& name)
 {
 	entt::entity e = _registry.create();
+
+	_registry.emplace<Core::UUID>(e);
 	
 	// Add name component
 	_registry.emplace<NameComponent>(e, name);

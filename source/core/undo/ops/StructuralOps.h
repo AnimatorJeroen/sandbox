@@ -17,15 +17,16 @@
 // // Create entities with components
 // entt::registry registry;
 // auto e1 = registry.create();
+// registry.emplace<Core::UUID>(e1);  // Always add UUID as base component
 // registry.emplace<Transform>(e1, Vec3{1,2,3}, Vec3{1,1,1});
 // registry.emplace<Name>(e1, "Entity1");
 //
 // // Create a snapshot of entities to use as a template
 // std::unordered_set<entt::entity> selection = {e1};
-// auto snapshot = Core::make_selection_snapshot<Transform, Name>(registry, selection);
+// auto snapshot = Core::make_selection_snapshot<Core::UUID, Transform, Name>(registry, selection);
 //
-// // Create op for undo/redo
-// auto createOp = std::make_unique<Core::CaptureCreateOp<Transform, Name>>(
+// // Create op for undo/redo (IMPORTANT: Include Core::UUID in template parameters)
+// auto createOp = std::make_unique<Core::CaptureCreateOp<Core::UUID, Transform, Name>>(
 //     registry, std::move(snapshot));
 //
 // // Apply: creates new entities
@@ -40,7 +41,7 @@
 //
 // // For destroying entities:
 // std::unordered_set<entt::entity> to_destroy = {e1};
-// auto destroyOp = std::make_unique<Core::CaptureDeleteOp<Transform, Name>>(
+// auto destroyOp = std::make_unique<Core::CaptureDeleteOp<Core::UUID, Transform, Name>>(
 //     registry, to_destroy);
 //
 // // Apply: destroys entities (snapshot already taken in constructor)
@@ -141,8 +142,7 @@ namespace Core {
     class CaptureDeleteOp : public IOp {
     public:
         SelectionArchive<Cs...> archive;    // Snapshot taken before destruction
-        std::vector<entt::entity> destroyed; // Entities to destroy (original IDs)
-        std::vector<entt::entity> recreated; // Entities recreated on Revert
+        std::vector<entt::entity> destroyed; // Entities to destroy
         entt::registry& _reg;
 
         explicit CaptureDeleteOp(entt::registry& reg) : _reg(reg) {}
@@ -178,10 +178,10 @@ namespace Core {
             restore_all_components(remap, std::index_sequence_for<Cs...>{});
 
             // Store recreated entities for potential re-apply
-            recreated.clear();
-            recreated.reserve(archive.entities.size());
+            destroyed.clear();
+            destroyed.reserve(archive.entities.size());
             for (auto old : archive.entities) {
-                recreated.push_back(remap[old]);
+                destroyed.push_back(remap[old]);
             }
         }
 

@@ -11,6 +11,7 @@
 #include "shape/IShape.h"
 #include <entt/entt.hpp>
 #include <core/renderer/DrawCommandRecorder.h>
+#include <core/UUID.h>
 #include "types/Types.hpp"
 
 
@@ -55,46 +56,56 @@ class Scene
 			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
 			
 			// Collect entity data for saving
+			std::vector<Core::UUID> uuids;
 			std::vector<NameComponent> names;
 			std::vector<DummyComponent> dummies;
 
 			for (auto entity : _registry.view<NameComponent>()) {
 				if (entity != _sceneEntity) {
-					names.push_back(_registry.get<NameComponent>(entity));
+
+					uuids.push_back(_registry.get<Core::UUID>(entity));
+
+					if (_registry.all_of<NameComponent>(entity)) {
+						names.push_back(_registry.get<NameComponent>(entity));
+					} else {
+						names.push_back(NameComponent{}); // Generate new if missing
+					}
+					
 					// Only add DummyComponent if the entity has one
 					if (_registry.all_of<DummyComponent>(entity)) {
 						dummies.push_back(_registry.get<DummyComponent>(entity));
-					} else {
-						dummies.push_back(DummyComponent{}); // Default if missing
 					}
 				}
 			}
 
 			// Serialize the data
-			archive(sceneData, _shapes, names, dummies);
-
+			archive(sceneData, _shapes, uuids, names, dummies);
 		}
 
 		template<class Archive>
 		void load(Archive& archive)
 		{
 			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
+			std::vector<Core::UUID> uuids;
 			std::vector<NameComponent> names;
 			std::vector<DummyComponent> dummies;
 
-			archive(sceneData, _shapes, names, dummies);
+			archive(sceneData, _shapes, uuids, names, dummies);
 
 			// Recreate entities from loaded data
-			for (size_t i = 0; i < names.size(); ++i) {
+			for (size_t i = 0; i < uuids.size(); ++i) {
 				entt::entity newEntity = _registry.create();
-				_registry.emplace<NameComponent>(newEntity, names[i]);
+				_registry.emplace<Core::UUID>(newEntity, uuids[i]);
 
+				if (i < names.size()) {
+					_registry.emplace<NameComponent>(newEntity, names[i]);
+				} else {
+					_registry.emplace<NameComponent>(newEntity); // Generate new if missing
+				}
 				if (i < dummies.size()) {
 					_registry.emplace<DummyComponent>(newEntity, dummies[i]);
 				}
 			}
-
-			
 		}
 
 		inline std::vector<std::shared_ptr<IShape>>& GetShapes() { return _shapes; }
