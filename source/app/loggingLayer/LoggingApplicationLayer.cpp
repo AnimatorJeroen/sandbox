@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "LoggingApplicationLayer.h"
 #include <iostream>
 #include <imgui/imgui.h>

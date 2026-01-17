@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "BrowserWindow.h"
 
 #ifdef _WIN32

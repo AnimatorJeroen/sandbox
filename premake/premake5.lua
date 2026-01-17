@@ -15,7 +15,7 @@ project "Sandbox"
 
     -- Precompiled header configuration
     pchheader "pch.h"
-    pchsource "../source/app/pch.cpp"
+    pchsource "../source/pch.cpp"
 
     files {
         "../source/**.h",
@@ -23,6 +23,11 @@ project "Sandbox"
         "../vendor/**.h",
         "../vendor/**.cpp"
     }
+
+    -- Exclude vendor files from using precompiled header
+    filter "files:../vendor/**"
+        flags { "NoPCH" }
+    filter {}
 
     includedirs {
         "../vendor/include/",

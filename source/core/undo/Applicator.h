@@ -1,7 +1,6 @@
 #pragma once
 #include "UndoManager.h"
 #include <core/memory/SelectionArchive.h>
-#include "ops/StructuralOps.h"
 #include "Clipboard.h"
 #include <memory>
 #include <optional>
@@ -14,7 +13,6 @@ namespace Core {
         constexpr CompileTimeString(const char (&str)[N]) {
             std::copy_n(str, N, value);
         }
-        
         char value[N];
         static constexpr std::size_t size = N;
     };

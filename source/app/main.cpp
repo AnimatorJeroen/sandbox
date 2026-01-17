@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "core/Application.h"
 #include "app/sceneLayer/SceneApplicationLayer.h"
 #include "app/editorLayer/EditorApplicationLayer.h"

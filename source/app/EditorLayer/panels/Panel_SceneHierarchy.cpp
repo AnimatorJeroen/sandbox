@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Panel_SceneHierarchy.h"
 #include <imgui/imgui.h>
 #include <app/sceneLayer/shape/Circle.h>
