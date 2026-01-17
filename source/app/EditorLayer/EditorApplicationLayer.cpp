@@ -116,7 +116,7 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	//	{
 	//		_applicator.CopyActiveSelectionToClipboard();
 	//	}
-	}
+	//}
 
 	return true;
 }
