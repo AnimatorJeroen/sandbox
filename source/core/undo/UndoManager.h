@@ -1,50 +1,48 @@
 #pragma once
 
 #include "../vendor/include/entt/entt.hpp"
-#include "Patch.hpp"
-#include "InternalApplicator.hpp"
-#include "core/reflection/reflectionPathParser.hpp"
-#include "core/reflection/Reflection.hpp"
+#include "UndoableCommand.h"
+#include "core/reflection/Reflection.h"
 #include <stack>
 #include <vector>
-#include <type_traits>
-#include <concepts>
 #include <optional>
 
 // ===========================================================================
-// UndoManager: Manages undo/redo stacks (templated directly on ValueTypes)
+// UndoManager: Manages undo/redo stacks (templated directly on FieldTypes)
 // ===========================================================================
 
 namespace Core {
 
 
-    template<typename ValueTypes>
+    template<typename FieldTypes>
     class UndoManager {
     public:
-        using Patch = PatchT<ValueTypes>;
-        using PatchGroup = PatchGroupT<ValueTypes>;
-        using InternalApplicator = InternalApplicatorT<ValueTypes>;
-
         explicit UndoManager();
-
-
         void SetContext(entt::registry& registry) {
-            _internalApplicator.SetContext(registry);
+            _registry = &registry;
         }
 
 
         // Execute a change with FullPath (component type extracted from path string)
         template<typename T>
-        void Execute(entt::entity e, const reflection::FullPath& fullPath, T&& value) {
+        void SetField(entt::entity e, const reflection::FullPath& fullPath, T&& value) {
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
-            Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(value) });
+            Execute(e, actualComponentTypeId, fullPath.propertyPath, FieldTypes{ std::forward<T>(value) });
         }
 
         // Execute a change with Path (sentinel-terminated fixed-size array)
-        void Execute(entt::entity e,
+        void SetField(entt::entity e,
             entt::id_type compId,
             const reflection::Path& pathIds,
-            const ValueTypes& newVal);
+            const FieldTypes& newVal);
+
+        // Create entities from selection snapshot
+        template<typename... Cs>
+        void CaptureCreate(const std::unordered_set<entt::entity>& selection);
+
+        // Delete entities from selection snapshot
+        template<typename... Cs>
+        void CaptureDelete(const std::unordered_set<entt::entity>& selection);
 
         // Begin recording patches for bundling
         void BeginUndo();
@@ -77,12 +75,6 @@ namespace Core {
         [[nodiscard]] bool IsRecording() const noexcept;
 
     private:
-        // Build a patch (capture old via meta)
-        Patch make_patch(entt::entity e,
-            entt::id_type compId,
-            const reflection::Path& pathIds,
-            const ValueTypes& newVal);
-
         // Helper: Resolve component name hash to actual component type ID
         static entt::id_type resolve_component_type(entt::id_type nameHash) {
             auto meta_type = entt::resolve(nameHash);
@@ -92,13 +84,14 @@ namespace Core {
             return meta_type.info().hash();
         }
 
-        InternalApplicator _internalApplicator;
-        std::stack<PatchGroup> _undo_stack;
-        std::stack<PatchGroup> _redo_stack;
+        entt::registry* _registry;
+        std::stack<UndoableCommand> _undo_stack;
+        std::stack<UndoableCommand> _redo_stack;
 
         // Recording state for bundling patches
         bool _recording = false;
-        std::optional<PatchGroup> _current_group;
+        std::optional<UndoableCommand> _current_command;
+
     };
 
 }
@@ -106,4 +99,4 @@ namespace Core {
 // Template Implementation
 // ===========================================================================
 
-#include "UndoManagerImpl.hpp"
+#include "UndoManagerImpl.h"

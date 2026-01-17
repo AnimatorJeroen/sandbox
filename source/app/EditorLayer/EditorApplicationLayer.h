@@ -7,8 +7,8 @@
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
 #include "app/event/UndoEvent.h"
-#include "core/undo/Applicator.hpp"
-#include "core/undo/UndoManager.hpp"
+#include "core/undo/Applicator.h"
+#include "core/undo/UndoManager.h"
 
 #include "app/sceneLayer/types/Types.hpp"
 #include "OpenDocumentsTopBar.h"
@@ -45,6 +45,6 @@ private:
 	OpenDocumentsTopBar _openDocumentsTopBar;
 
 	Core::EventBus& _eventBus;
-	Core::Applicator<AppValueTypes> _applicator;
-	Core::UndoManager<AppValueTypes> _undoManager;
+	Core::Applicator<AppFieldTypes, AppComponentTypes> _applicator;
+	Core::UndoManager<AppFieldTypes> _undoManager;
 };

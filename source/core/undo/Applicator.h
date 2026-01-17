@@ -1,5 +1,7 @@
 #pragma once
-#include "UndoManager.hpp"
+#include "UndoManager.h"
+#include <core/memory/SelectionArchive.h>
+#include "ops/StructuralOps.h"
 
 namespace Core {
 
@@ -14,7 +16,7 @@ namespace Core {
         static constexpr std::size_t size = N;
     };
 
-    template<typename ValueTypes>
+    template<typename ValueTypes, typename ComponentTypes>
     class Applicator {
     public:
         explicit Applicator(UndoManager<ValueTypes>& undoManager) : _undoManager(undoManager) {}
@@ -25,7 +27,7 @@ namespace Core {
         void SetField(entt::entity e, T&& newVal) {
             constexpr auto fullPath = PATH_FULL_CONSTEXPR(PathStr.value);
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
-            _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
+            _undoManager.SetField(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
         }
 
         // SetField with runtime string (for variables)
@@ -33,8 +35,36 @@ namespace Core {
         void SetField(entt::entity e, const std::string& path_str, T&& newVal) {
             auto fullPath = reflection::ParseFullPathRuntime(path_str.c_str());
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
-            _undoManager.Execute(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
+            _undoManager.SetField(e, actualComponentTypeId, fullPath.propertyPath, ValueTypes{ std::forward<T>(newVal) });
         }
+
+		//captures specified component types
+        template<typename... Cs>
+        void CaptureCreate(const std::unordered_set<entt::entity>& selection)
+        {
+            _undoManager.template CaptureCreate<Cs...>(selection);
+        }
+
+		// captures all component types in ComponentTypes tuple
+        void CaptureCreate(const std::unordered_set<entt::entity>& selection)
+        {
+			//impl with tuple unpacking of all ComponentTypes
+            CaptureCreateImpl(selection, ComponentTypes{});
+        }
+
+        //captures specified component types
+        template<typename... Cs>
+        void CaptureDelete(const std::unordered_set<entt::entity>& selection)
+        {
+            _undoManager.template CaptureDelete<Cs...>(selection);
+        }
+
+        // captures all component types in ComponentTypes tuple
+        void CaptureDelete(const std::unordered_set<entt::entity>& selection)
+		{
+            //impl with tuple unpacking of all ComponentTypes
+            CaptureDeleteImpl(selection, ComponentTypes{});
+		}
 
         // Begin recording patches for bundling into a single undo step
         void BeginUndo() {
@@ -53,6 +83,17 @@ namespace Core {
 
     private:
         UndoManager<ValueTypes>& _undoManager;
+
+        // Helpers to unpack ComponentTypes tuple into variadic template parameters
+        template<typename... Cs>
+        void CaptureCreateImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
+            _undoManager.template CaptureCreate<Cs...>(selection);
+        }
+
+        template<typename... Cs>
+        void CaptureDeleteImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
+            _undoManager.template CaptureDelete<Cs...>(selection);
+        }
 
         // Helper: Resolve component name hash to actual component type ID
         static entt::id_type resolve_component_type(entt::id_type nameHash) {

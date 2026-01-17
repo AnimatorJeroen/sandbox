@@ -3,11 +3,17 @@
 #include "../vendor/include/entt/entt.hpp"
 #include "../vendor/include/entt/meta/meta.hpp"
 #include "Types.hpp"
+#include "core/UUID.h"
 #include <app/sceneLayer/Scene.h>
 
 // ----- Meta registration (call once before usage)
 void ReflectTypes() {
     using namespace entt::literals;
+
+    // Reflect Core::UUID
+    entt::meta_factory<Core::UUID>()
+        .type("UUID"_hs)  // Register type name
+        .data<&Core::UUID::value, entt::as_ref_t>("value"_hs);
 
     // Reflect Vec3 fields with as_ref policy
     entt::meta_factory<Vec3>()
@@ -38,4 +44,8 @@ void ReflectTypes() {
         .type("DummyComponent"_hs)  // Register type name
         .data<&DummyComponent::value, entt::as_ref_t>("value"_hs);
     
+    // Reflect NameComponent
+    entt::meta_factory<NameComponent>()
+        .type("NameComponent"_hs)  // Register type name
+        .data<&NameComponent::name, entt::as_ref_t>("name"_hs);
 }
