@@ -13,6 +13,10 @@ project "Sandbox"
     targetdir ("../build/bin/" .. "%{cfg.buildcfg}")
     objdir ("../build/bin-int/" .. "%{cfg.buildcfg}")
 
+    -- Precompiled header configuration
+    pchheader "pch.h"
+    pchsource "../source/app/pch.cpp"
+
     files {
         "../source/**.h",
         "../source/**.cpp",
