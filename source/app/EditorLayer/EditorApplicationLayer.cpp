@@ -111,12 +111,30 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 			_eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent("saved files/scene.dat"));
 		}
 	}
-	//else if (e.key == 'C' && !e.repeated) {
-	//	if (e.mods & Core::KMOD_CONTROL)
-	//	{
-	//		_applicator.CopyActiveSelectionToClipboard();
-	//	}
-	//}
+	else if (e.key == 'C' && !e.repeated) {
+		if (e.mods & Core::KMOD_CONTROL)
+		{
+			_applicator.CopyToClipboard(_sceneHierarchyPanel.GetSelectedEntities());
+		}
+	}
+	else if (e.key == 'X' && !e.repeated) {
+		if (e.mods & Core::KMOD_CONTROL)
+		{
+			_applicator.CopyToClipboard(_sceneHierarchyPanel.GetSelectedEntities());
+
+			_applicator.BeginUndo();
+			_applicator.CaptureDelete(_sceneHierarchyPanel.GetSelectedEntities());
+			_applicator.EndUndo();
+		}
+	}
+	else if (e.key == 'V' && !e.repeated) {
+		if (e.mods & Core::KMOD_CONTROL)
+		{
+			_applicator.BeginUndo();
+			_applicator.PasteFromClipboard(Core::ClipboardType::Entities);
+			_applicator.EndUndo();
+		}
+	}
 
 	return true;
 }

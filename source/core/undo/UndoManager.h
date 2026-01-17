@@ -74,6 +74,11 @@ namespace Core {
         // Check if currently recording a bundle
         [[nodiscard]] bool IsRecording() const noexcept;
 
+        // Get the registry pointer
+        [[nodiscard]] entt::registry* GetRegistry() const noexcept {
+            return _registry;
+        }
+
     private:
         // Helper: Resolve component name hash to actual component type ID
         static entt::id_type resolve_component_type(entt::id_type nameHash) {

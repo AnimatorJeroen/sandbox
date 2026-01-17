@@ -11,6 +11,7 @@ public:
 	~Panel_SceneHierarchy() = default;
 	void Render();
 	void SetContext(Scene& scene);
+	const std::set<entt::entity>& GetSelectedEntities() const { return _selectedEntities; }
 private:
 	Scene* _scene;
 	Core::Applicator<AppFieldTypes, AppComponentTypes>& _applicator;

@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <vector>
 #include <tuple>
+#include <unordered_map>
 
 namespace Core {
 
@@ -70,48 +71,76 @@ namespace Core {
         }
     };
 
-    // Helper to create a snapshot of selected entities with specified components
-    template<class... Cs>
-    SelectionArchive<Cs...> make_selection_snapshot(
-        entt::registry& reg,
-        const std::unordered_set<entt::entity>& sel)
+    namespace ArchiveHelpers
     {
-        SelectionArchive<Cs...> archive{ sel };
+        // Helper to create a snapshot of selected entities with specified components
+        template<class... Cs>
+        SelectionArchive<Cs...> MakeSnapshot(
+            entt::registry& reg,
+            const std::unordered_set<entt::entity>& sel)
+        {
+            SelectionArchive<Cs...> archive{ sel };
 
-        // Manually iterate and capture entities with their components
-        for (auto entity : sel) {
-            if (reg.valid(entity)) {
-                archive.entities.push_back(entity);
-                
-                // Capture each component type
-                ((reg.all_of<Cs>(entity) ? archive.template capture<Cs>(entity, reg.get<Cs>(entity)) : void()), ...);
+            // Manually iterate and capture entities with their components
+            for (auto entity : sel) {
+                if (reg.valid(entity)) {
+                    archive.entities.push_back(entity);
+
+                    // Capture each component type
+                    ((reg.all_of<Cs>(entity) ? archive.template capture<Cs>(entity, reg.get<Cs>(entity)) : void()), ...);
+                }
+            }
+
+            return archive;
+        }
+
+        // Helper: Restore a single component type using the remap table
+        template<typename C>
+        void restore_component_set(
+            entt::registry& reg,
+            const std::vector<std::pair<entt::entity, C>>& components,
+            const std::unordered_map<entt::entity, entt::entity>& remap)
+        {
+            for (const auto& [old_e, component] : components) {
+                auto it = remap.find(old_e);
+                if (it != remap.end()) {
+                    entt::entity new_e = it->second;
+                    reg.emplace<C>(new_e, component);
+                }
             }
         }
 
-        return archive;
-    }
+        // Unified helper: Restore entities and all their components from a SelectionArchive
+        // Creates new entities, builds remap table, and restores all component types
+		// Returns the new entities created
+        template<class... Cs>
+        std::unordered_set<entt::entity> RestoreEntitiesAndComponents(
+            entt::registry& reg,
+            const SelectionArchive<Cs...>& archive)
+        {
+            // Create new entities and build remap table
+            std::unordered_map<entt::entity, entt::entity> remap;
+            remap.reserve(archive.entities.size());
 
-    // Helper to create a snapshot of selected entities with specified components (pointer overload)
-    template<class... Cs>
-    SelectionArchive<Cs...> make_selection_snapshot(
-        entt::registry* reg,
-        const std::unordered_set<entt::entity>& sel)
-    {
-        return make_selection_snapshot<Cs...>(*reg, sel);
-    }
+            for (auto old_e : archive.entities) {
+                entt::entity new_e = reg.create();
+                remap[old_e] = new_e;
+            }
 
-    // Helper to create a full snapshot of all entities with specified components
-    template<class... Cs>
-    SelectionArchive<Cs...> make_full_snapshot(entt::registry& reg)
-    {
-        SelectionArchive<Cs...> archive;
-        archive.sel = nullptr; // No filter - capture all
+            // Restore all component types using fold expression
+            auto restore_all = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+                (restore_component_set(reg, std::get<Is>(archive.storages), remap), ...);
+            };
+            restore_all(std::index_sequence_for<Cs...>{});
 
-        entt::snapshot snap{ reg };
-        snap.get<entt::entity>(archive);
-        (snap.template get<Cs>(archive), ...);
+            // Collect the new entities
+            std::unordered_set<entt::entity> newEntities;
+            for (const auto& [oldEntity, newEntity] : remap) {
+                newEntities.insert(newEntity);
+            }
 
-        return archive;
+            return newEntities;
+        }
     }
 
 } // namespace Core
