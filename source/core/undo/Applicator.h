@@ -2,6 +2,9 @@
 #include "UndoManager.h"
 #include <core/memory/SelectionArchive.h>
 #include "ops/StructuralOps.h"
+#include "Clipboard.h"
+#include <memory>
+#include <optional>
 
 namespace Core {
 
@@ -16,10 +19,14 @@ namespace Core {
         static constexpr std::size_t size = N;
     };
 
+
+
+
     template<typename ValueTypes, typename ComponentTypes>
     class Applicator {
     public:
-        explicit Applicator(UndoManager<ValueTypes>& undoManager) : _undoManager(undoManager) {}
+        explicit Applicator(UndoManager<ValueTypes>& undoManager) 
+            : _undoManager(undoManager), _clipboard() {}
 
         // SetField with compile-time string literal (C++20)
         // Usage: applicator.SetField<"Transform.Position.x">(entity, value);
@@ -66,6 +73,24 @@ namespace Core {
             CaptureDeleteImpl(selection, ComponentTypes{});
 		}
 
+        // Copy selection to clipboard
+        template<typename SelectionContainer>
+        void CopyToClipboard(const SelectionContainer& selection) {
+            // Convert selection to unordered_set
+            std::unordered_set<entt::entity> selectionSet(selection.begin(), selection.end());
+
+            // Call the implementation with ComponentTypes tuple
+            CopyToClipboardImpl(selectionSet, ComponentTypes{});
+        }
+
+        // Paste from clipboard
+        void PasteFromClipboard(ClipboardType type) {
+            if (type == ClipboardType::Entities) {
+                // Call the implementation with ComponentTypes tuple
+                PasteFromEntitiesClipboardImpl(ComponentTypes{});
+            }
+        }
+
         // Begin recording patches for bundling into a single undo step
         void BeginUndo() {
             _undoManager.BeginUndo();
@@ -81,8 +106,14 @@ namespace Core {
             return _undoManager.IsRecording();
         }
 
+        // Get the clipboard (for future paste operations)
+        [[nodiscard]] const Clipboard<ComponentTypes>& GetClipboard() const noexcept {
+            return _clipboard;
+        }
+
     private:
         UndoManager<ValueTypes>& _undoManager;
+        Clipboard<ComponentTypes> _clipboard;
 
         // Helpers to unpack ComponentTypes tuple into variadic template parameters
         template<typename... Cs>
@@ -93,6 +124,79 @@ namespace Core {
         template<typename... Cs>
         void CaptureDeleteImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
             _undoManager.template CaptureDelete<Cs...>(selection);
+        }
+
+        // Helper for CopyToClipboard with tuple unpacking
+        template<typename... Cs>
+        void CopyToClipboardImpl(const std::unordered_set<entt::entity>& selection, std::tuple<Cs...>) {
+            auto* registry = _undoManager.GetRegistry();
+            if (!registry) {
+                throw std::runtime_error("Registry not set in UndoManager");
+            }
+
+            // Create a snapshot of the selection with all component types
+            auto archive = make_selection_snapshot<Cs...>(*registry, selection);
+            
+            // Store in clipboard
+            _clipboard.StoreEntities(std::move(archive));
+        }
+
+        // Helper for PasteFromClipboard with tuple unpacking
+        template<typename... Cs>
+        void PasteFromEntitiesClipboardImpl(std::tuple<Cs...>) {
+            // Check if clipboard has entities
+            if (!_clipboard.HasEntities()) {
+                return; // Nothing to paste
+            }
+
+            auto* registry = _undoManager.GetRegistry();
+            if (!registry) {
+                throw std::runtime_error("Registry not set in UndoManager");
+            }
+
+            // Get the archive from clipboard
+            const auto* archive = _clipboard.GetEntitiesArchive<Cs...>();
+            if (!archive || archive->entities.empty()) {
+                return; // Nothing to paste
+            }
+
+            // Create new entities (one for each entity in clipboard)
+            std::unordered_set<entt::entity> newEntities;
+            std::unordered_map<entt::entity, entt::entity> remap;
+            
+            for (auto oldEntity : archive->entities) {
+                entt::entity newEntity = registry->create();
+                newEntities.insert(newEntity);
+                remap[oldEntity] = newEntity;
+            }
+
+            // Restore all components from archive using the remap table
+            RestoreComponentsFromArchive(*archive, remap, std::index_sequence_for<Cs...>{});
+
+            // Generate NEW UUIDs for all pasted entities (don't copy old UUIDs)
+            for (auto entity : newEntities) {
+                // Remove the old UUID if it was copied
+                if (registry->all_of<UUID>(entity)) {
+                    registry->remove<UUID>(entity);
+                }
+                // Add a fresh UUID
+                registry->emplace<UUID>(entity);
+            }
+
+            // Capture the creation for undo/redo
+            CaptureCreate(newEntities);
+        }
+
+        // Helper to restore components from archive
+        template<typename... Cs, std::size_t... Is>
+        void RestoreComponentsFromArchive(
+            const SelectionArchive<Cs...>& archive,
+            const std::unordered_map<entt::entity, entt::entity>& remap,
+            std::index_sequence<Is...>)
+        {
+            auto* registry = _undoManager.GetRegistry();
+            // Restore each component type using fold expression
+            (restore_component_set(*registry, std::get<Is>(archive.storages), remap), ...);
         }
 
         // Helper: Resolve component name hash to actual component type ID
