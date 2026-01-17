@@ -111,6 +111,12 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 			_eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent("saved files/scene.dat"));
 		}
 	}
+	//else if (e.key == 'C' && !e.repeated) {
+	//	if (e.mods & Core::KMOD_CONTROL)
+	//	{
+	//		_applicator.CopyActiveSelectionToClipboard();
+	//	}
+	}
 
 	return true;
 }
