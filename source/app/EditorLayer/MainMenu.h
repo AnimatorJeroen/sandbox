@@ -22,10 +22,6 @@ public:
         {
             if (ImGui::BeginMenu("File"))
             {
-                if(ImGui::MenuItem("Save"))
-                {
-					_eventBus.PushEvent<RequestSaveSceneEvent>(RequestSaveSceneEvent("saved files/scene.dat"));
-                }
                 if(ImGui::MenuItem("Save Scene As..."))
                 {
                     auto result = _browserWindow.SaveFile(
