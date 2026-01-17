@@ -52,6 +52,11 @@ project "Sandbox"
         "GLEW_STATIC"
     }
 
+    -- Enable multiprocessor compilation for Visual Studio
+    filter "action:vs*"
+        buildoptions { "/MP" }
+    filter {}
+
     filter "configurations:Debug"
         symbols "on"
 
