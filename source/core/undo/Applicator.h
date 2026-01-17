@@ -87,7 +87,7 @@ namespace Core {
         void PasteFromClipboard(ClipboardType type) {
             if (type == ClipboardType::Entities) {
                 // Call the implementation with ComponentTypes tuple
-                PasteFromEntitiesClipboardImpl(ComponentTypes{});
+                PasteFromClipboardImpl(ComponentTypes{});
             }
         }
 
@@ -135,15 +135,15 @@ namespace Core {
             }
 
             // Create a snapshot of the selection with all component types
-            auto archive = make_selection_snapshot<Cs...>(*registry, selection);
-            
+            auto archive = ArchiveHelpers::MakeSnapshot<Cs...>(*registry, selection);
+
             // Store in clipboard
             _clipboard.StoreEntities(std::move(archive));
         }
 
         // Helper for PasteFromClipboard with tuple unpacking
         template<typename... Cs>
-        void PasteFromEntitiesClipboardImpl(std::tuple<Cs...>) {
+        void PasteFromClipboardImpl(std::tuple<Cs...>) {
             // Check if clipboard has entities
             if (!_clipboard.HasEntities()) {
                 return; // Nothing to paste
@@ -160,18 +160,8 @@ namespace Core {
                 return; // Nothing to paste
             }
 
-            // Create new entities (one for each entity in clipboard)
-            std::unordered_set<entt::entity> newEntities;
-            std::unordered_map<entt::entity, entt::entity> remap;
-            
-            for (auto oldEntity : archive->entities) {
-                entt::entity newEntity = registry->create();
-                newEntities.insert(newEntity);
-                remap[oldEntity] = newEntity;
-            }
-
-            // Restore all components from archive using the remap table
-            RestoreComponentsFromArchive(*archive, remap, std::index_sequence_for<Cs...>{});
+            // Use unified restore function to create entities and restore components
+            auto newEntities = ArchiveHelpers::RestoreEntitiesAndComponents(*registry, *archive);
 
             // Generate NEW UUIDs for all pasted entities (don't copy old UUIDs)
             for (auto entity : newEntities) {
@@ -185,18 +175,6 @@ namespace Core {
 
             // Capture the creation for undo/redo
             CaptureCreate(newEntities);
-        }
-
-        // Helper to restore components from archive
-        template<typename... Cs, std::size_t... Is>
-        void RestoreComponentsFromArchive(
-            const SelectionArchive<Cs...>& archive,
-            const std::unordered_map<entt::entity, entt::entity>& remap,
-            std::index_sequence<Is...>)
-        {
-            auto* registry = _undoManager.GetRegistry();
-            // Restore each component type using fold expression
-            (restore_component_set(*registry, std::get<Is>(archive.storages), remap), ...);
         }
 
         // Helper: Resolve component name hash to actual component type ID
