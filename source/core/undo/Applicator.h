@@ -53,6 +53,7 @@ namespace Core {
         }
 
 		// captures all component types in ComponentTypes tuple
+
         void CaptureCreate(const std::unordered_set<entt::entity>& selection)
         {
 			//impl with tuple unpacking of all ComponentTypes
@@ -67,10 +68,12 @@ namespace Core {
         }
 
         // captures all component types in ComponentTypes tuple
-        void CaptureDelete(const std::unordered_set<entt::entity>& selection)
+        template<typename SelectionContainer>
+        void CaptureDelete(const SelectionContainer& selection)
 		{
+            std::unordered_set<entt::entity> selectionSet(selection.begin(), selection.end());
             //impl with tuple unpacking of all ComponentTypes
-            CaptureDeleteImpl(selection, ComponentTypes{});
+            CaptureDeleteImpl(selectionSet, ComponentTypes{});
 		}
 
         // Copy selection to clipboard

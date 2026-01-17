@@ -117,6 +117,16 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 			_applicator.CopyToClipboard(_sceneHierarchyPanel.GetSelectedEntities());
 		}
 	}
+	else if (e.key == 'X' && !e.repeated) {
+		if (e.mods & Core::KMOD_CONTROL)
+		{
+			_applicator.CopyToClipboard(_sceneHierarchyPanel.GetSelectedEntities());
+
+			_applicator.BeginUndo();
+			_applicator.CaptureDelete(_sceneHierarchyPanel.GetSelectedEntities());
+			_applicator.EndUndo();
+		}
+	}
 	else if (e.key == 'V' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
