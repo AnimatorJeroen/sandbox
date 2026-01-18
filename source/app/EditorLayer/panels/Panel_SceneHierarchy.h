@@ -1,8 +1,13 @@
 #pragma once
-#include "app/sceneLayer/Scene.h"
-#include <core/applicator/Applicator.h>
 #include <memory>
 #include <set>
+
+class Scene;
+namespace MyNamespace
+{
+	template<typename T1, typename T2>
+	class Applicator;
+}
 
 class Panel_SceneHierarchy
 {

@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Panel_SceneHierarchy.h"
+#include <core/applicator/Applicator.h>
+#include "app/sceneLayer/Scene.h"
 #include <imgui/imgui.h>
 #include <core/UUID.h>
 #include <algorithm>

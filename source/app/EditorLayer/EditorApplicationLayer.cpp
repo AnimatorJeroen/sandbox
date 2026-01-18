@@ -116,16 +116,23 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	else if (e.key == 'C' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
-			_applicator.CopyToClipboard(_sceneHierarchyPanel.GetSelectedEntities());
+			auto sel = _sceneHierarchyPanel.GetSelectedEntities();
+			if (sel.empty())
+				return true;
+			_applicator.CopyToClipboard(sel);
 		}
 	}
 	else if (e.key == 'X' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
-			_applicator.CopyToClipboard(_sceneHierarchyPanel.GetSelectedEntities());
+			auto sel = _sceneHierarchyPanel.GetSelectedEntities();
+			if(sel.empty())
+				return true;
+
+			_applicator.CopyToClipboard(sel);
 
 			_applicator.BeginUndo();
-			_applicator.CaptureDelete(_sceneHierarchyPanel.GetSelectedEntities());
+			_applicator.CaptureDelete(sel);
 			_applicator.EndUndo();
 		}
 	}
