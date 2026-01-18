@@ -1,6 +1,5 @@
 #pragma once
 #include "core/renderer/DrawCommandRecorder.h"
-#include <cereal/archives/binary.hpp>
 
 class IShape
 {

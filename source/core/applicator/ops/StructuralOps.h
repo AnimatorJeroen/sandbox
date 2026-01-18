@@ -1,6 +1,6 @@
 #pragma once
-#include "core/memory/SelectionArchive.h"
-#include "../vendor/include/entt/entt.hpp"
+#include "core/applicator/SelectionArchive.h"
+#include <entt/entt.hpp>
 #include "IOp.h"
 #include <unordered_map>
 #include "core/UUID.h"

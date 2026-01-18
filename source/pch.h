@@ -14,11 +14,14 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <cstdint>
+#include <array>
 
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
+#include <cereal/types/polymorphic.hpp>
 
 #include <entt/entt.hpp>
 #include <entt/meta/meta.hpp>
@@ -31,4 +34,12 @@
 
 #include "core/Logger.h"
 #include "core/UUID.h"
-//#include <core/undo/Applicator.h>
+#include "core/Application.h"
+#include "core/event/EventBus.h"
+#include "core/renderer/DrawCommandRecorder.h"
+#include "core/serializer/Serializer.h"
+#include "core/reflection/Reflection.h"
+#include "core/applicator/Applicator.h"
+
+#include "app/sceneLayer/types/Types.h"
+#include "app/sceneLayer/components/Components.h"

@@ -1,10 +1,10 @@
 #include "pch.h"
 #include "Panel_SceneHierarchy.h"
 #include <imgui/imgui.h>
-#include <app/sceneLayer/shape/Circle.h>
-#include <core/memory/SelectionArchive.h>
 #include <core/UUID.h>
 #include <algorithm>
+
+#include <app/sceneLayer/shape/Circle.h>
 
 Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppFieldTypes, AppComponentTypes>& applicator) : _scene(&scene), _applicator(applicator)
 {
@@ -172,12 +172,7 @@ void Panel_SceneHierarchy::Render()
             if (auto* uuid = registry.try_get<Core::UUID>(entity)) {
                 ImGui::Text("UUID: %llu", uuid->value);
             }
-            
-            // Show component info
-            if (auto* dummy = registry.try_get<DummyComponent>(entity)) {
-                ImGui::Text("Value: %.2f", dummy->value);
-            }
-            
+
             // Show selection info
             if (_selectedEntities.size() > 1) {
                 ImGui::Text("(%zu entities selected)", _selectedEntities.size());

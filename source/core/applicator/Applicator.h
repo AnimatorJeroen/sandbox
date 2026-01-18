@@ -1,6 +1,6 @@
 #pragma once
 #include "UndoManager.h"
-#include <core/memory/SelectionArchive.h>
+#include "SelectionArchive.h"
 #include "Clipboard.h"
 #include <memory>
 #include <optional>

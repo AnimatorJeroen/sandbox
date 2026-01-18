@@ -14,7 +14,6 @@ struct Vec3 {
     float x{}, y{}, z{}; 
 };
 
-// NEW: Nested structure for testing array inside array
 struct Matrix2x3 {
     std::array<std::array<float, 3>, 2> data = { { {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f} } };
 };
@@ -48,36 +47,4 @@ using AppFieldTypes = std::variant<bool, int, float, double, String64, Vec3>;
 
 
 
-// Name component for entities
-struct NameComponent {
-    String64 name;
 
-    NameComponent() = default;
-    NameComponent(const std::string& n) : name(n) {}
-
-    template<class Archive>
-    void serialize(Archive& ar) {
-        ar(name);
-    }
-};
-
-struct Transform {
-    Vec3 Position{};
-    Vec3 Scale{ 1.f, 1.f, 1.f };
-    std::vector<float> Weights{}; // Added: vector field for demonstrating index access
-    Matrix2x3 Matrix{};           // nested arrays for testing
-};
-
-
-// Define all component types here as a tuple
-// Add ALL your component types to this list!
-using AppComponentTypes = std::tuple<
-    Core::UUID,
-    Transform,
-    NameComponent
-    // Add more component types here as comma-separated list
-    // Example:
-    // Sprite,
-    // RigidBody,
-    // etc...
->;

@@ -10,7 +10,7 @@
 #include <entt/meta/meta.hpp>
 
 #include "app/sceneLayer/Scene.h"
-#include "app/sceneLayer/types/ReflectTypes.hpp"
+#include "app/sceneLayer/types/ReflectTypes.h"
 
 int main() {
 

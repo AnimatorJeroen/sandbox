@@ -1,8 +1,9 @@
 #pragma once
-#include "event/EventBus.h"
 
 namespace Core
 {
+	class EventBus;
+
 	class Window
 	{
 	public:
@@ -19,6 +20,6 @@ namespace Core
 		void* GetNativeWindowHandle() const; // Get platform-specific window handle (HWND on Windows)
 	private:
 		void* _glfwWindow;
-		EventBus& _eventBus;
+		EventBus* _eventBus;
 	};
 }
