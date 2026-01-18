@@ -20,6 +20,11 @@ const String64& Scene::GetName()
 	return data()._name;
 }
 
+const std::string& Scene::GetFileName()
+{
+	return _fileName;
+}
+
 entt::entity Scene::CreateEntity()
 {
 	static int _entityCounter = 0;

@@ -103,11 +103,14 @@ class Scene
 
 		void SetName(const std::string& name);
 		const String64& GetName();
+		const std::string& GetFileName();
 		inline const float GetSceneColor() { return data().sceneColor; }
 		inline void SetSceneColor(float color) { data().sceneColor = color; }
 
 		// Filepath management
-		void SetFilepath(const std::string& filepath) { _filepath = filepath; }
+		void SetFilepath(const std::string& filepath) {
+			_filepath = filepath; _fileName = std::filesystem::path(filepath).filename().string();
+		}
 		const std::string& GetFilepath() const { return _filepath; }
 
 	private:
@@ -116,6 +119,7 @@ class Scene
 		int a = 0;
 		entt::registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
+		std::string _fileName;
 
 		SceneData& data() { return _registry.get<SceneData>(_sceneEntity); } // Updated return type to reference
 };

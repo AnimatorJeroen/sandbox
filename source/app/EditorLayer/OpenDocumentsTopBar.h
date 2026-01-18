@@ -55,12 +55,12 @@ public:
                     continue;
 
                 // Get scene name - String64 has conversion operator to std::string
-                auto sceneName = scene->GetName();
+                auto sceneName = scene->GetFileName();
                 if (sceneName.empty())
                     sceneName = "Untitled";
 
                 // Create unique ID for each tab
-                std::string tabId = sceneName.to_string() + "##" + std::to_string(i);
+                std::string tabId = sceneName + "##" + std::to_string(i);
 
                 // Force this tab to be selected if it's the active scene and active scene changed externally
                 ImGuiTabItemFlags tabFlags = 0;
@@ -69,9 +69,7 @@ public:
                 }
 
                 bool tabOpen = true;
-                if (ImGui::BeginTabItem(tabId.c_str(),
-                    scenes.size() > 1 ? &tabOpen : nullptr,
-                    tabFlags))
+                if (ImGui::BeginTabItem(tabId.c_str(), &tabOpen, tabFlags))
                 {
                     // This tab is currently selected by ImGui
                     currentlySelectedTab = i;
@@ -92,7 +90,7 @@ public:
                 }
 
                 // Check if tab was closed
-                if (!tabOpen && scenes.size() > 1)
+                if (!tabOpen)
                 {
                     sceneToClose = static_cast<int>(i);
                 }

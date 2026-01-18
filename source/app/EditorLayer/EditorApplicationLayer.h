@@ -28,6 +28,7 @@ public:
 	bool OnMouseMoveEvent(const Core::MouseMoveEvent& e);
 	bool OnMouseScrollEvent(const Core::MouseScrollEvent& e);
 	bool OnKeyDownEvent(const Core::KeyDownEvent& e);
+	
 	bool OnKeyUpEvent(const Core::KeyUpEvent& e);
 	bool OnKeyCharacterEvent(const Core::KeyCharacterEvent& e);
 
@@ -38,6 +39,11 @@ public:
 	bool OnRequestUndo(const RequestUndoEvent& e);
 	bool OnRequestRedo(const RequestRedoEvent& e);
 
+	static void SaveScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
+	static void SaveSceneAs(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
+	static void OpenScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
+	static void RevertScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
+
 private:
 	std::shared_ptr<SceneManager> _sceneManager;
 	Panel_SceneHierarchy _sceneHierarchyPanel;
@@ -47,4 +53,5 @@ private:
 	Core::EventBus& _eventBus;
 	Core::Applicator<AppFieldTypes, AppComponentTypes> _applicator;
 	Core::UndoManager<AppFieldTypes> _undoManager;
+	void* _windowHandle;
 };

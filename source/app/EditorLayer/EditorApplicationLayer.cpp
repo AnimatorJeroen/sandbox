@@ -6,16 +6,19 @@
 #include <core/event/EventBus.h>
 #include <core/Logger.h>
 #include <core/Window.h>
+#include <core/BrowserWindow.h>
+
 #include <random>
 
 EditorApplicationLayer::EditorApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 //services
+_windowHandle(ctx.Get<Core::Window>()->GetNativeWindowHandle()),
 _sceneManager(ctx.Get<SceneManager>()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
 _undoManager(),
 _applicator(_undoManager),
 //ui panels
-_mainMenu(*ctx.Get<Core::EventBus>().get(), ctx.Get<Core::Window>()->GetNativeWindowHandle()),
+_mainMenu(*ctx.Get<Core::EventBus>().get(), ctx.Get<Core::Window>()->GetNativeWindowHandle(), ctx.Get<SceneManager>().get()),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _applicator),
 _openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get())
 {
@@ -102,15 +105,19 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 		}
 	}
 	else if (e.key == 'S' && !e.repeated) {
-		if (e.mods & Core::KMOD_CONTROL)
+		if ((e.mods & Core::KMOD_CONTROL) && (e.mods & Core::KMOD_SHIFT))
 		{
-			_eventBus.PushEvent<RequestSaveSceneEvent>(RequestSaveSceneEvent("saved files/scene.dat"));
+			SaveSceneAs(_sceneManager.get(), _eventBus, _windowHandle);
+		}
+		else if (e.mods & Core::KMOD_CONTROL)
+		{
+			SaveScene(_sceneManager.get(), _eventBus, _windowHandle);
 		}
 	}
 	else if (e.key == 'O' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
-			_eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent("saved files/scene.dat"));
+			OpenScene(_sceneManager.get(), _eventBus, _windowHandle);
 		}
 	}
 	else if (e.key == 'C' && !e.repeated) {
@@ -146,6 +153,80 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	}
 
 	return true;
+}
+
+void EditorApplicationLayer::SaveScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
+{
+	auto scene = sceneManager->GetActiveScene();
+	if (scene && !scene->GetFilepath().empty())
+	{
+		// Save to current filepath
+		eventBus.PushEvent<RequestSaveSceneEvent>(
+			RequestSaveSceneEvent(scene->GetFilepath()));
+	}
+	else
+	{
+		SaveSceneAs(sceneManager, eventBus, windowHandle);
+	}
+}
+
+void EditorApplicationLayer::SaveSceneAs(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
+{
+	auto scene = sceneManager->GetActiveScene();
+	if (scene == nullptr)
+		return;
+
+	Core::BrowserWindow browserWindow(windowHandle);
+	auto result = browserWindow.SaveFile(
+		"Save Scene As",
+		{
+			Core::FileFilter("Scene Files", "*.scene"),
+			Core::FileFilter("Binary Files", "*.dat"),
+			Core::FileFilter("All Files", "*.*")
+		},
+		"",
+		"scene");
+
+	if (result.has_value())
+	{
+		eventBus.PushEvent<RequestSaveSceneEvent>(
+			RequestSaveSceneEvent(result.value()));
+	}
+}
+
+void EditorApplicationLayer::OpenScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
+{
+	Core::BrowserWindow browserWindow(windowHandle);
+	auto result = browserWindow.OpenFile(
+		"Open Scene",
+		{
+			Core::FileFilter("Scene Files", "*.scene"),
+			Core::FileFilter("Binary Files", "*.dat"),
+			Core::FileFilter("All Files", "*.*")
+		});
+
+	if (result.has_value())
+	{
+		eventBus.PushEvent<RequestLoadSceneEvent>(
+			RequestLoadSceneEvent(result.value()));
+	}
+}
+
+void EditorApplicationLayer::RevertScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
+{
+	auto scene = sceneManager->GetActiveScene();
+	if (scene == nullptr)
+		return;
+
+	auto filePath = scene->GetFilepath();
+	if (filePath.empty())
+		return;
+
+	eventBus.PushImmediateEvent<RequestCloseSceneEvent>(
+		RequestCloseSceneEvent(sceneManager->GetActiveSceneIndex()));
+
+	eventBus.PushImmediateEvent<RequestLoadSceneEvent>(
+		RequestLoadSceneEvent(filePath));
 }
 
 bool EditorApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)

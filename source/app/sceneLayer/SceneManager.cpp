@@ -60,11 +60,6 @@ void SceneManager::SetActiveScene(size_t index)
 
 void SceneManager::CloseScene(size_t index)
 {
-    if (_scenes.size() <= 1) {
-        // Always keep at least one scene open
-        return;
-    }
-    
     if (index >= _scenes.size()) return;
     
     _scenes.erase(_scenes.begin() + index);

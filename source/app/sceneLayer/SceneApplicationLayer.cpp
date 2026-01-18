@@ -102,6 +102,7 @@ bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent&
 bool SceneApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
 	LOG_TRACE() << e.GetName() << " received in scene layer.";
-    _sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
+	if(_sceneManager->GetActiveScene())
+		_sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
 	return false; // Let other layers handle it too
 }
