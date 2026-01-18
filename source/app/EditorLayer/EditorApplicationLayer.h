@@ -2,7 +2,6 @@
 #include "core/IApplicationLayer.h"
 #include "panels/Panel_SceneHierarchy.h"
 #include "MainMenu.h"
-#include <core/event/EventBus.h>
 #include "core/event/MouseEvent.h"
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
@@ -14,6 +13,7 @@
 #include "OpenDocumentsTopBar.h"
 
 class SceneManager;
+class EventBus;
 
 class EditorApplicationLayer : public Core::IApplicationLayer
 {

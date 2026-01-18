@@ -3,6 +3,7 @@
 #include <imgui/imgui.h>
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
+#include <core/event/EventBus.h>
 #include <core/Logger.h>
 #include <core/Window.h>
 #include <random>

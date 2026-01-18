@@ -31,7 +31,7 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
 
 	private:
-	Core::EventBus* _eventBus;
+	Core::EventBus& _eventBus;
 	std::shared_ptr<SceneManager> _sceneManager;
 	TestScene1 _testScene;
 };
