@@ -7,10 +7,10 @@
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
 #include "app/event/UndoEvent.h"
-#include "core/undo/Applicator.h"
-#include "core/undo/UndoManager.h"
+#include "core/applicator/Applicator.h"
+#include "core/applicator/UndoManager.h"
 
-#include "app/sceneLayer/types/Types.hpp"
+#include "app/sceneLayer/types/Types.h"
 #include "OpenDocumentsTopBar.h"
 
 class SceneManager;

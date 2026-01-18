@@ -59,93 +59,7 @@ namespace Core {
             }
         };
 
-        // ===== COMPILE-TIME PATH PARSING (C++20) =====
 
-        // ===== COMPILE-TIME PATH PARSER =====
-        // This struct parses path strings at compile-time using consteval
-        // Now extracts component type from first element
-
-        template<size_t N>
-        struct CTPath {
-            static constexpr size_t max_elements = MAX_PATH_ELEMENTS;
-            entt::id_type componentType{};
-            PathElement elements[max_elements]{};  // Default-initialized (all sentinels)
-            size_t count = 0;
-
-            // consteval forces compile-time evaluation
-            consteval CTPath(const char(&str)[N]) {
-                const char* p = str;
-                bool firstElement = true;
-
-                while (*p && count < max_elements) {
-                    // Skip dots
-                    if (*p == '.') {
-                        ++p;
-                        continue;
-                    }
-
-                    // Check if this is an index [N]
-                    if (*p == '[') {
-                        ++p;
-                        size_t idx = 0;
-                        while (*p >= '0' && *p <= '9') {
-                            idx = idx * 10 + (*p - '0');
-                            ++p;
-                        }
-                        if (*p == ']') ++p;
-                        elements[count++] = PathElement{ idx };
-                        firstElement = false;
-                    }
-                    // Otherwise it's a field name
-                    else {
-                        const char* start = p;
-                        while (*p && *p != '.' && *p != '[') {
-                            ++p;
-                        }
-
-                        // Extract field name
-                        char field_name[64]{};
-                        size_t len = 0;
-                        for (const char* s = start; s < p && len < 63; ++s, ++len) {
-                            field_name[len] = *s;
-                        }
-                        field_name[len] = '\0';
-
-                        // Hash at compile-time using entt::hashed_string
-                        auto hash = entt::hashed_string{ field_name }.value();
-
-                        if (firstElement) {
-                            // First element is the component type
-                            componentType = hash;
-                            firstElement = false;
-                        }
-                        else {
-                            // Subsequent elements are property path
-                            elements[count++] = PathElement{ hash };
-                        }
-                    }
-                }
-                // Remaining elements are already default-initialized (sentinels)
-            }
-
-            // Convert to FullPath
-            constexpr FullPath to_full_path() const {
-                Path result{};
-                for (size_t i = 0; i < max_elements; ++i) {
-                    result[i] = elements[i];
-                }
-                return FullPath{ componentType, result };
-            }
-
-            // Legacy: Convert to Path (just copy the property path array)
-            constexpr Path to_path() const {
-                Path result{};
-                for (size_t i = 0; i < max_elements; ++i) {
-                    result[i] = elements[i];
-                }
-                return result;
-            }
-        };
 
         // ===== RUNTIME PATH PARSING =====
 
@@ -279,35 +193,7 @@ namespace Core {
     // PATH PARSING MACROS
     // ===========================================================================
 
-    // ===========================================================================
-    // COMPILE-TIME PATH MACROS (C++20)
-    // ===========================================================================
 
-    // COMPILE-TIME FULL PATH PARSING with component type extraction
-    // Parses strings like "Transform.Position.x" at compile-time with ZERO runtime cost!
-    // Returns FullPath with componentType and propertyPath separated
-    //
-    // Usage: PATH_FULL_CONSTEXPR("Transform.Position.x")
-    //        PATH_FULL_CONSTEXPR("Transform.Weights[1]")
-    //        PATH_FULL_CONSTEXPR("Transform.Matrix.data[1][2]")
-#define PATH_FULL_CONSTEXPR(path_str) \
-    ([]() constexpr { \
-        constexpr Core::reflection::CTPath path{path_str}; \
-        return path.to_full_path(); \
-    }())
-
-// COMPILE-TIME PATH PARSING using fixed-size sentinel-terminated array
-// Parses strings like "Weights[1].x" at compile-time with ZERO runtime cost!
-// Returns std::array<PathElement, 16> (sentinel-terminated like C strings)
-//
-// Usage: PATH_CONSTEXPR("Position.x")
-//        PATH_CONSTEXPR("Weights[1]")
-//        PATH_CONSTEXPR("Matrix.data[1][2]")
-#define PATH_CONSTEXPR(path_str) \
-    ([]() constexpr { \
-        constexpr Core::reflection::CTPath path{path_str}; \
-        return path.to_path(); \
-    }())
 
 // ===========================================================================
 // RUNTIME PATH PARSING
@@ -332,3 +218,128 @@ namespace Core {
     (Core::reflection::ParsePathRuntime(path_str))
 
 }
+
+
+
+
+
+
+
+
+//// ===== COMPILE-TIME PATH PARSING (C++20) =====
+//
+//// ===== COMPILE-TIME PATH PARSER =====
+//// This struct parses path strings at compile-time using consteval
+//// Now extracts component type from first element
+//
+//template<size_t N>
+//struct CTPath {
+//    static constexpr size_t max_elements = MAX_PATH_ELEMENTS;
+//    entt::id_type componentType{};
+//    PathElement elements[max_elements]{};  // Default-initialized (all sentinels)
+//    size_t count = 0;
+//
+//    // consteval forces compile-time evaluation
+//    consteval CTPath(const char(&str)[N]) {
+//        const char* p = str;
+//        bool firstElement = true;
+//
+//        while (*p && count < max_elements) {
+//            // Skip dots
+//            if (*p == '.') {
+//                ++p;
+//                continue;
+//            }
+//
+//            // Check if this is an index [N]
+//            if (*p == '[') {
+//                ++p;
+//                size_t idx = 0;
+//                while (*p >= '0' && *p <= '9') {
+//                    idx = idx * 10 + (*p - '0');
+//                    ++p;
+//                }
+//                if (*p == ']') ++p;
+//                elements[count++] = PathElement{ idx };
+//                firstElement = false;
+//            }
+//            // Otherwise it's a field name
+//            else {
+//                const char* start = p;
+//                while (*p && *p != '.' && *p != '[') {
+//                    ++p;
+//                }
+//
+//                // Extract field name
+//                char field_name[64]{};
+//                size_t len = 0;
+//                for (const char* s = start; s < p && len < 63; ++s, ++len) {
+//                    field_name[len] = *s;
+//                }
+//                field_name[len] = '\0';
+//
+//                // Hash at compile-time using entt::hashed_string
+//                auto hash = entt::hashed_string{ field_name }.value();
+//
+//                if (firstElement) {
+//                    // First element is the component type
+//                    componentType = hash;
+//                    firstElement = false;
+//                }
+//                else {
+//                    // Subsequent elements are property path
+//                    elements[count++] = PathElement{ hash };
+//                }
+//            }
+//        }
+//        // Remaining elements are already default-initialized (sentinels)
+//    }
+//
+//    // Convert to FullPath
+//    constexpr FullPath to_full_path() const {
+//        Path result{};
+//        for (size_t i = 0; i < max_elements; ++i) {
+//            result[i] = elements[i];
+//        }
+//        return FullPath{ componentType, result };
+//    }
+//
+//    // Legacy: Convert to Path (just copy the property path array)
+//    constexpr Path to_path() const {
+//        Path result{};
+//        for (size_t i = 0; i < max_elements; ++i) {
+//            result[i] = elements[i];
+//        }
+//        return result;
+//    }
+//};
+
+//    // ===========================================================================
+//    // COMPILE-TIME PATH MACROS (C++20)
+//    // ===========================================================================
+//
+//    // COMPILE-TIME FULL PATH PARSING with component type extraction
+//    // Parses strings like "Transform.Position.x" at compile-time with ZERO runtime cost!
+//    // Returns FullPath with componentType and propertyPath separated
+//    //
+//    // Usage: PATH_FULL_CONSTEXPR("Transform.Position.x")
+//    //        PATH_FULL_CONSTEXPR("Transform.Weights[1]")
+//    //        PATH_FULL_CONSTEXPR("Transform.Matrix.data[1][2]")
+//#define PATH_FULL_CONSTEXPR(path_str) \
+//    ([]() constexpr { \
+//        constexpr Core::reflection::CTPath path{path_str}; \
+//        return path.to_full_path(); \
+//    }())
+//
+//// COMPILE-TIME PATH PARSING using fixed-size sentinel-terminated array
+//// Parses strings like "Weights[1].x" at compile-time with ZERO runtime cost!
+//// Returns std::array<PathElement, 16> (sentinel-terminated like C strings)
+////
+//// Usage: PATH_CONSTEXPR("Position.x")
+////        PATH_CONSTEXPR("Weights[1]")
+////        PATH_CONSTEXPR("Matrix.data[1][2]")
+//#define PATH_CONSTEXPR(path_str) \
+//    ([]() constexpr { \
+//        constexpr Core::reflection::CTPath path{path_str}; \
+//        return path.to_path(); \
+//    }())

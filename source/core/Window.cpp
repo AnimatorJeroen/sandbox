@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Window.h"
 #include <glew/glew.h>
 #include <GLFW/glfw3.h>
@@ -14,6 +15,7 @@
 #include "event/KeyEvent.h"
 #include "Logger.h"
 
+
 namespace Core
 {
     void Window::SetCallBacks() const
@@ -24,13 +26,13 @@ namespace Core
                 auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
                 self->Width = width;
                 self->Height = height;
-                self->_eventBus.PushEvent(WindowResizeEvent(width, height));
+                self->_eventBus->PushEvent(WindowResizeEvent(width, height));
             });
 
         glfwSetWindowCloseCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window)
             {
                 auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
-				self->_eventBus.PushEvent(WindowCloseEvent(window));
+				self->_eventBus->PushEvent(WindowCloseEvent(window));
             });
 
         //Mouse events
@@ -40,10 +42,10 @@ namespace Core
                 switch (action)
                 {
                 case GLFW_PRESS:
-                    self->_eventBus.PushEvent(MouseDownEvent(button));
+                    self->_eventBus->PushEvent(MouseDownEvent(button));
                     break;
                 case GLFW_RELEASE:
-                    self->_eventBus.PushEvent(MouseUpEvent(button));
+                    self->_eventBus->PushEvent(MouseUpEvent(button));
                     break;
                 default: break;
                 }
@@ -52,13 +54,13 @@ namespace Core
         glfwSetCursorPosCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window, double xPos, double yPos)
             {
                 auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
-                self->_eventBus.PushEvent(MouseMoveEvent(xPos, yPos));
+                self->_eventBus->PushEvent(MouseMoveEvent(xPos, yPos));
             });
 
         glfwSetScrollCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window, double xOffset, double yOffset)
             {
                 auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
-                self->_eventBus.PushEvent(MouseScrollEvent(xOffset, yOffset));
+                self->_eventBus->PushEvent(MouseScrollEvent(xOffset, yOffset));
             });
 
         //Key events
@@ -70,17 +72,17 @@ namespace Core
                 {
                 case GLFW_PRESS:
                 {
-                    self->_eventBus.PushEvent(KeyDownEvent(key, false, mods));
+                    self->_eventBus->PushEvent(KeyDownEvent(key, false, mods));
                     break;
                 }
                 case GLFW_REPEAT:
                 {
-                    self->_eventBus.PushEvent(KeyDownEvent(key, true, mods));
+                    self->_eventBus->PushEvent(KeyDownEvent(key, true, mods));
                     break;
                 }
                 case GLFW_RELEASE:
                 {
-                    self->_eventBus.PushEvent(KeyUpEvent(key, mods));
+                    self->_eventBus->PushEvent(KeyUpEvent(key, mods));
                     break;
                 }
 
@@ -90,12 +92,12 @@ namespace Core
         glfwSetCharCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window, unsigned int codepoint)
             {
 				auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
-				self->_eventBus.PushEvent(KeyCharacterEvent(codepoint));
+				self->_eventBus->PushEvent(KeyCharacterEvent(codepoint));
 			});
 	}
 
 	Window::Window(int width, int height, const char* title, EventBus& eventBus)
-		: Width(width), Height(height), _eventBus(eventBus)
+		: Width(width), Height(height), _eventBus(&eventBus)
 	{
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);

@@ -1,31 +1,33 @@
+#include "pch.h"
 #include "SceneApplicationLayer.h"
 #include "SceneManager.h"
 #include <core/serializer/Serializer.h>
 #include <core/Logger.h>
+#include "core/event/eventBus.h"
 
 SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
 _testScene(ctx.Get<SceneManager>()),
-_eventBus(*ctx.Get<Core::EventBus>().get())
+_eventBus(ctx.Get<Core::EventBus>().get())
 {
 	_testScene.Setup();
 
     // Store scene pointer in entt registry context for ChangeApplicator direct scene fields
     _sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
 	
-	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
-	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
-	REGISTER_CALLBACK(_eventBus, Core::MouseMoveEvent, OnMouseMoveEvent);
-	REGISTER_CALLBACK(_eventBus, Core::MouseScrollEvent, OnMouseScrollEvent);
+	REGISTER_CALLBACK((*_eventBus), Core::MouseDownEvent, OnMouseDownEvent);
+	REGISTER_CALLBACK((*_eventBus), Core::MouseUpEvent, OnMouseUpEvent);
+	REGISTER_CALLBACK((*_eventBus), Core::MouseMoveEvent, OnMouseMoveEvent);
+	REGISTER_CALLBACK((*_eventBus), Core::MouseScrollEvent, OnMouseScrollEvent);
 
-	REGISTER_CALLBACK(_eventBus, Core::KeyDownEvent, OnKeyDownEvent);
-	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
+	REGISTER_CALLBACK((*_eventBus), Core::KeyDownEvent, OnKeyDownEvent);
+	REGISTER_CALLBACK((*_eventBus), Core::KeyUpEvent, OnKeyUpEvent);
 
-	REGISTER_CALLBACK(_eventBus, Core::WindowResizeEvent, OnWindowResizedEvent);
+	REGISTER_CALLBACK((*_eventBus), Core::WindowResizeEvent, OnWindowResizedEvent);
 
-	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
-	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
-	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
+	REGISTER_CALLBACK((*_eventBus), RequestSaveSceneEvent, OnRequestSaveSceneEvent);
+	REGISTER_CALLBACK((*_eventBus), RequestLoadSceneEvent, OnRequestLoadSceneEvent);
+	REGISTER_CALLBACK((*_eventBus), OnChangeActiveSceneEvent, OnChangeActiveScene);
 }
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)

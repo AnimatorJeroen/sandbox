@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "BezierCurve.h"
 
 const void BezierCurve::Draw(Core::DrawCommandRecorder& recorder)

@@ -1,13 +1,13 @@
 #pragma once
 #include "core/IApplicationLayer.h"
 #include "tests/TestScene1.h"
-#include "core/event/eventBus.h"
 #include <core/event/MouseEvent.h>
 #include <core/event/KeyEvent.h>
 #include <core/event/ApplicationEvent.h>
 #include "app/event/SceneEvent.h"
 
 class SceneManager;
+class EventBus;
 
 class SceneApplicationLayer : public Core::IApplicationLayer
 {
@@ -31,7 +31,7 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
 
 	private:
-	Core::EventBus& _eventBus;
+	Core::EventBus* _eventBus;
 	std::shared_ptr<SceneManager> _sceneManager;
 	TestScene1 _testScene;
 };

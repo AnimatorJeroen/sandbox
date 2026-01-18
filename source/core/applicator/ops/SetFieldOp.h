@@ -3,6 +3,7 @@
 #include "../vendor/include/entt/entt.hpp"
 #include "IOp.h"
 #include "core/reflection/Reflection.h"
+#include "core/UUID.h"
 
 // ===========================================================================
 // SetFieldOp: Operation that sets a field value (templated on FieldTypes)

@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "EditorApplicationLayer.h"
 #include <imgui/imgui.h>
 #include <core/serializer/Serializer.h>

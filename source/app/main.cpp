@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "core/Application.h"
 #include "app/sceneLayer/SceneApplicationLayer.h"
 #include "app/editorLayer/EditorApplicationLayer.h"
@@ -9,7 +10,7 @@
 #include <entt/meta/meta.hpp>
 
 #include "app/sceneLayer/Scene.h"
-#include "app/sceneLayer/types/ReflectTypes.hpp"
+#include "app/sceneLayer/types/ReflectTypes.h"
 
 int main() {
 

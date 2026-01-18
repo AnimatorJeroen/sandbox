@@ -1,10 +1,12 @@
-#include "ReflectTypes.hpp"
+#include "pch.h"
+#include "ReflectTypes.h"
 
 #include "../vendor/include/entt/entt.hpp"
 #include "../vendor/include/entt/meta/meta.hpp"
-#include "Types.hpp"
+#include "Types.h"
 #include "core/UUID.h"
 #include <app/sceneLayer/Scene.h>
+#include "app/sceneLayer/components/Components.h"
 
 // ----- Meta registration (call once before usage)
 void ReflectTypes() {
@@ -40,10 +42,6 @@ void ReflectTypes() {
         .data<&SceneData::_name, entt::as_ref_t>("name"_hs)
         .data<&SceneData::sceneColor, entt::as_ref_t>("sceneColor"_hs);
 
-    entt::meta_factory<DummyComponent>()
-        .type("DummyComponent"_hs)  // Register type name
-        .data<&DummyComponent::value, entt::as_ref_t>("value"_hs);
-    
     // Reflect NameComponent
     entt::meta_factory<NameComponent>()
         .type("NameComponent"_hs)  // Register type name

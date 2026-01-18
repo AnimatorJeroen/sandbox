@@ -1,5 +1,4 @@
 #pragma once
-#include "Window.h"
 #include <memory>
 #include <vector>
 #include "IApplicationLayer.h"
@@ -7,6 +6,9 @@
 
 namespace Core
 {
+	class Window;
+	class EventBus;
+
 	struct ApplicationSpecs
 	{
 		unsigned int windowWidth = 800;

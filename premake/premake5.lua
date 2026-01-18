@@ -13,12 +13,21 @@ project "Sandbox"
     targetdir ("../build/bin/" .. "%{cfg.buildcfg}")
     objdir ("../build/bin-int/" .. "%{cfg.buildcfg}")
 
+    -- Precompiled header configuration
+    pchheader "pch.h"
+    pchsource "../source/pch.cpp"
+
     files {
         "../source/**.h",
         "../source/**.cpp",
         "../vendor/**.h",
         "../vendor/**.cpp"
     }
+
+    -- Exclude vendor files from using precompiled header
+    filter "files:../vendor/**"
+        flags { "NoPCH" }
+    filter {}
 
     includedirs {
         "../vendor/include/",
@@ -42,6 +51,11 @@ project "Sandbox"
     defines {
         "GLEW_STATIC"
     }
+
+    -- Enable multiprocessor compilation for Visual Studio
+    filter "action:vs*"
+        buildoptions { "/MP" }
+    filter {}
 
     filter "configurations:Debug"
         symbols "on"

@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Circle.h"
 
 const void Circle::Draw(Core::DrawCommandRecorder& recorder)

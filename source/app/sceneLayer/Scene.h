@@ -8,24 +8,12 @@
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
+
 #include "shape/IShape.h"
 #include <entt/entt.hpp>
 #include <core/renderer/DrawCommandRecorder.h>
 #include <core/UUID.h>
-#include "types/Types.hpp"
-
-
-// Dummy component to track with the registry
-struct DummyComponent {
-    float value{0.0f};
-    // Editable color channels
-    float r{1.0f}, g{1.0f}, b{1.0f}, a{1.0f};
-
-    template<class Archive>
-    void serialize(Archive& ar) {
-        ar(value, r, g, b, a);
-    }
-};
+#include "components/Components.h"
 
 struct SceneData {
 
@@ -59,7 +47,6 @@ class Scene
 			// Collect entity data for saving
 			std::vector<Core::UUID> uuids;
 			std::vector<NameComponent> names;
-			std::vector<DummyComponent> dummies;
 
 			for (auto entity : _registry.view<NameComponent>()) {
 				if (entity != _sceneEntity) {
@@ -71,16 +58,11 @@ class Scene
 					} else {
 						names.push_back(NameComponent{}); // Generate new if missing
 					}
-					
-					// Only add DummyComponent if the entity has one
-					if (_registry.all_of<DummyComponent>(entity)) {
-						dummies.push_back(_registry.get<DummyComponent>(entity));
-					}
 				}
 			}
 
 			// Serialize the data
-			archive(sceneData, _shapes, uuids, names, dummies);
+			archive(sceneData, _shapes, uuids, names);
 		}
 
 		template<class Archive>
@@ -89,9 +71,8 @@ class Scene
 			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
 			std::vector<Core::UUID> uuids;
 			std::vector<NameComponent> names;
-			std::vector<DummyComponent> dummies;
 
-			archive(sceneData, _shapes, uuids, names, dummies);
+			archive(sceneData, _shapes, uuids, names);
 
 			// Recreate entities from loaded data
 			for (size_t i = 0; i < uuids.size(); ++i) {
@@ -102,9 +83,6 @@ class Scene
 					_registry.emplace<NameComponent>(newEntity, names[i]);
 				} else {
 					_registry.emplace<NameComponent>(newEntity); // Generate new if missing
-				}
-				if (i < dummies.size()) {
-					_registry.emplace<DummyComponent>(newEntity, dummies[i]);
 				}
 			}
 		}

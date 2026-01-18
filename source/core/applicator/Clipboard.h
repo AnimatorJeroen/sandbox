@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/memory/SelectionArchive.h>
+#include "SelectionArchive.h"
 
 namespace Core {
     // Enum to track the current clipboard context type

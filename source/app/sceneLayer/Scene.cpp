@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Scene.h"
 #include <random>
 #include "core/UUID.h"
@@ -35,12 +36,7 @@ entt::entity Scene::CreateEntity(const std::string& name)
 	
 	// Add name component
 	_registry.emplace<NameComponent>(e, name);
-	
-	// Add dummy component with random value
-	static std::mt19937 rng{std::random_device{}()};
-	std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-	_registry.emplace<DummyComponent>(e, DummyComponent{dist(rng)});
-	
+
 	return e;
 }
 
