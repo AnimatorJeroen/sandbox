@@ -5,10 +5,7 @@
 
 #include <core/Logger.h>
 
-SceneManager::SceneManager(Core::EventBus& eventBus) : _eventBus(eventBus)
-{
-	REGISTER_CALLBACK(_eventBus, RequestCloseSceneEvent, onRequestCloseSceneEvent);
-}
+SceneManager::SceneManager(Core::EventBus& eventBus) : _eventBus(eventBus) {}
 
 std::shared_ptr<Scene> SceneManager::GetActiveScene() const
 {
@@ -156,11 +153,3 @@ bool SceneManager::SaveScene(size_t index, const std::string& filepath)
         return false;
     }
 }
-
-bool SceneManager::onRequestCloseSceneEvent(const RequestCloseSceneEvent& e)
-{
-    LOG_DEBUG() << "Close scene request received by SceneManager";
-    CloseScene(e.sceneIndex);
-    return true;
-}
-

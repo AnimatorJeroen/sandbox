@@ -22,12 +22,15 @@ _editorContext(*_sceneManager, _eventBus, _applicator, _undoManager, _windowHand
 //ui panels
 _mainMenu(_eventBus, _editorContext),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _editorContext),
-_openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get()),
+_openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get(), _editorContext),
 //popup system
 _popupManager()
 {
 	// Set popup manager reference in editor context
 	_editorContext.SetPopupManager(&_popupManager);
+	
+	// Set window reference for blocking popups
+	_popupManager.SetWindow(ctx.Get<Core::Window>().get());
 
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
@@ -40,6 +43,7 @@ _popupManager()
 
 	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
 	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
+	REGISTER_CALLBACK(_eventBus, RequestCloseSceneEvent, OnRequestCloseSceneEvent);
 	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
 	REGISTER_CALLBACK(_eventBus, RequestUndoEvent, OnRequestUndo);
 	REGISTER_CALLBACK(_eventBus, RequestRedoEvent, OnRequestRedo);
@@ -178,6 +182,33 @@ bool EditorApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	return false;
+}
+
+bool EditorApplicationLayer::OnRequestCloseSceneEvent(const RequestCloseSceneEvent& e)
+{
+	LOG_TRACE() << e.GetName() << " received in editor layer.";
+
+	// Get scene name for the message
+	auto scene = _sceneManager->GetScene(e.sceneIndex);
+	std::string sceneName = scene ? scene->GetFileName() : "Untitled";
+	if (sceneName.empty())
+		sceneName = "Untitled";
+	auto* popupManager = _editorContext.GetPopupManager();
+	std::string message = "Are you sure you want to close \"" + sceneName + "\"?\n\nAny unsaved changes will be lost.";
+
+	// Show blocking confirmation
+	bool confirmed = popupManager->ShowBlockingConfirmation("Close Scene", message);
+	if (confirmed)
+	{
+		LOG_DEBUG() << "Closing scene: " << sceneName;
+		_sceneManager->CloseScene(e.sceneIndex);
+	}
+	else
+	{
+		LOG_DEBUG() << "Close scene cancelled: " << sceneName;
+	}
+
+	return true;
 }
 
 bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)

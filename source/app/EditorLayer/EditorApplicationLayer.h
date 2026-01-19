@@ -36,6 +36,7 @@ public:
 
 	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
 	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
+	bool OnRequestCloseSceneEvent(const RequestCloseSceneEvent& e);
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
 
 	bool OnRequestUndo(const RequestUndoEvent& e);

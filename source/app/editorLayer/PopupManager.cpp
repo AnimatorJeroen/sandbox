@@ -1,5 +1,10 @@
 #include "pch.h"
 #include "PopupManager.h"
+#include <core/Window.h>
+#include <GLFW/glfw3.h>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
 
 std::shared_ptr<PopupWindow> PopupManager::ShowPopup(const std::string& title, const std::string& message)
 {
@@ -28,6 +33,36 @@ void PopupManager::ShowConfirmation(const std::string& title, const std::string&
     
     popup->Open();
     _popups.push_back(popup);
+}
+
+bool PopupManager::ShowBlockingConfirmation(const std::string& title, const std::string& message)
+{
+    if (!_window)
+        return false;
+
+    bool result = false;
+    bool resultSet = false;
+
+    auto popup = std::make_shared<PopupWindow>(title, message);
+    
+    // Add Yes button
+    popup->AddButton("Yes", [&result, &resultSet]() {
+        result = true;
+        resultSet = true;
+    }, true);
+    
+    // Add No button
+    popup->AddButton("No", [&result, &resultSet]() {
+        result = false;
+        resultSet = true;
+    }, true);
+    
+    popup->Open();
+    
+    // Run blocking loop until popup is closed
+    RunBlockingPopupLoop(*popup);
+    
+    return result && resultSet;
 }
 
 void PopupManager::ShowInfo(const std::string& title, const std::string& message, 
@@ -86,4 +121,42 @@ void PopupManager::CleanupClosedPopups()
             }),
         _popups.end()
     );
+}
+
+void PopupManager::RunBlockingPopupLoop(PopupWindow& popup)
+{
+    if (!_window)
+        return;
+
+    GLFWwindow* glfwWindow = static_cast<GLFWwindow*>(_window->GetHandle());
+    
+    // Run a mini render loop until the popup is closed
+    while (popup.IsOpen() && !glfwWindowShouldClose(glfwWindow))
+    {
+        // Poll events
+        glfwPollEvents();
+
+        // Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Render the popup
+        popup.Render();
+
+        // Render ImGui
+        ImGui::Render();
+        
+        // Clear and render
+        int display_w, display_h;
+        glfwGetFramebufferSize(glfwWindow, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Swap buffers
+        glfwSwapBuffers(glfwWindow);
+    }
 }

@@ -5,6 +5,11 @@
 #include <string>
 #include <functional>
 
+// Forward declaration
+namespace Core {
+    class Window;
+}
+
 /// <summary>
 /// PopupManager manages multiple popup windows and ensures they are rendered properly.
 /// This allows creating and managing popups from different parts of the editor.
@@ -34,6 +39,14 @@ public:
         std::function<void()> onConfirm, std::function<void()> onCancel = nullptr);
 
     /// <summary>
+    /// Show a blocking confirmation dialog that waits for user response
+    /// </summary>
+    /// <param name="title">The title of the popup</param>
+    /// <param name="message">The message to display</param>
+    /// <returns>True if user clicked OK/Yes, false if Cancel/No</returns>
+    bool ShowBlockingConfirmation(const std::string& title, const std::string& message);
+
+    /// <summary>
     /// Create a simple information popup with just an OK button
     /// </summary>
     /// <param name="title">The title of the popup</param>
@@ -61,11 +74,22 @@ public:
     /// </summary>
     void CloseAll();
 
+    /// <summary>
+    /// Set the window reference for blocking popups
+    /// </summary>
+    void SetWindow(Core::Window* window) { _window = window; }
+
 private:
     std::vector<std::shared_ptr<PopupWindow>> _popups;
+    Core::Window* _window = nullptr;
 
     /// <summary>
     /// Remove closed popups from the list
     /// </summary>
     void CleanupClosedPopups();
+
+    /// <summary>
+    /// Run a mini render loop for blocking popups
+    /// </summary>
+    void RunBlockingPopupLoop(PopupWindow& popup);
 };
