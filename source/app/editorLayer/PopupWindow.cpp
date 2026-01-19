@@ -34,14 +34,14 @@ void PopupWindow::Render()
     {
         ImGui::OpenPopup(_title.c_str());
         _needsOpen = false;
+        
+        // Center the popup window both horizontally and vertically
+        ImVec2 center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+        ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     }
 
-    // Center the popup window
-    ImVec2 center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
     // BeginPopupModal blocks input to other windows
-    if (ImGui::BeginPopupModal(_title.c_str(), &_isOpen, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal(_title.c_str(), &_isOpen, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
     {
         // Display message text
         ImGui::TextWrapped("%s", _message.c_str());
