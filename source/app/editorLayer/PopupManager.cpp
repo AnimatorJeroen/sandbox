@@ -49,24 +49,32 @@ void PopupManager::ShowConfirmation(const std::string& title, const std::string&
 PopupResult PopupManager::ShowBlockingConfirmation(const std::string& title, const std::string& message)
 {
     if (!_window)
-        return false;
+        return PopupResult::None;
 
     auto popup = std::make_shared<PopupWindow>(title, message);
-    
+    PopupResult result = PopupResult::Cancel;
 
     // Add Yes button with result value 1
-    popup->AddButton("Yes", []() {}, true);
-    
+    popup->AddButton("Yes", [&result]() {
+        result = PopupResult::Yes;
+    }, true);
+
     // Add No button with result value 0
-    popup->AddButton("No", []() {}, true);
-    
+    popup->AddButton("No", [&result]() {
+        result = PopupResult::No;
+    }, true);
+
+    // Add Cancel button with result value 0
+    popup->AddButton("Cancel", [&result]() {
+        result = PopupResult::Cancel;
+    }, true);
+
     popup->Open();
     
     // Run blocking loop until popup is closed
     RunBlockingPopupLoop(*popup);
-    
-    // Return true if result is 1, false otherwise
-    return popup->GetResult().value_or(0) == 1;
+
+    return result;
 }
 
 void PopupManager::ShowInfo(const std::string& title, const std::string& message, 

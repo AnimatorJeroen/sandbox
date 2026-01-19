@@ -123,11 +123,13 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	else if (e.key == 'S' && !e.repeated) {
 		if ((e.mods & Core::KMOD_CONTROL) && (e.mods & Core::KMOD_SHIFT))
 		{
-			_editorContext.SaveSceneAs();
+			auto activeSceneIndex = _sceneManager->GetActiveSceneIndex();
+			_editorContext.SaveSceneAs(activeSceneIndex);
 		}
 		else if (e.mods & Core::KMOD_CONTROL)
 		{
-			_editorContext.SaveScene();
+			auto activeSceneIndex = _sceneManager->GetActiveSceneIndex();
+			_editorContext.SaveScene(activeSceneIndex);
 		}
 	}
 	else if (e.key == 'O' && !e.repeated) {
@@ -199,18 +201,19 @@ bool EditorApplicationLayer::OnRequestApplicationCloseEvent(const Core::RequestA
 
 	while (_sceneManager->GetSceneCount() > 0)
 	{
-		PopupResult result = InvokePopupRequestSaveChanges(0);
-		
+		size_t sceneIndex = _sceneManager->GetSceneCount() - 1;
+		PopupResult result = InvokePopupRequestSaveChanges(sceneIndex);
+
 		if (result == PopupResult::Yes)
 		{
-			// TODO: Save the scene before closing
 			LOG_DEBUG() << "Saving and closing scene...";
-			_sceneManager->CloseScene(0);
+			_editorContext.SaveScene(sceneIndex);
+			_sceneManager->CloseScene(sceneIndex);
 		}
 		else if (result == PopupResult::No)
 		{
 			LOG_DEBUG() << "Closing scene without saving...";
-			_sceneManager->CloseScene(0);
+			_sceneManager->CloseScene(sceneIndex);
 		}
 		else // Cancel
 		{
@@ -260,12 +263,12 @@ PopupResult EditorApplicationLayer::InvokePopupRequestSaveChanges(const size_t s
 	PopupResult result;
 
 	// Create popup with custom buttons
-	auto popup = std::make_shared<PopupWindow>("Save changes?", message);
-	popup->AddButtonWithResult("Yes", [&result]() { result = PopupResult::Yes; }, (int)(PopupResult::Yes), true);
-	popup->AddButtonWithResult("No", [&result]() { result = PopupResult::No; }, (int)(PopupResult::No), true);
-	popup->AddButtonWithResult("Cancel", [&result]() { result = PopupResult::Cancel; }, (int)(PopupResult::Cancel), true);
+	auto popup = std::make_shared<PopupWindow>("Save pending changes?", message);
+	popup->AddButton("Yes", [&result]() { result = PopupResult::Yes; }, true);
+	popup->AddButton("No", [&result]() { result = PopupResult::No; }, true);
+	popup->AddButton("Cancel", [&result]() { result = PopupResult::Cancel; }, true);
 
-	// Show blocking popup and get result (-1 if no button clicked)
+	// Show blocking popup
 	_popupManager.ShowPopupBlocking(popup);
 
 	// Return the result as PopupResult enum

@@ -50,8 +50,8 @@ public:
     void Redo();
 
     // === Scene Operations ===
-    void SaveScene();
-    void SaveSceneAs();
+    void SaveScene(const size_t sceneIndex);
+    void SaveSceneAs(const size_t sceneIndex);
     void OpenScene();
     void RevertScene();
 

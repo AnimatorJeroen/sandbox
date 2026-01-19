@@ -54,7 +54,7 @@ public:
     /// <param name="title">The title of the popup</param>
     /// <param name="message">The message to display</param>
     /// <returns>True if user clicked OK/Yes, false if Cancel/No</returns>
-    bool ShowBlockingConfirmation(const std::string& title, const std::string& message);
+    PopupResult ShowBlockingConfirmation(const std::string& title, const std::string& message);
 
     /// <summary>
     /// Create a simple information popup with just an OK button
