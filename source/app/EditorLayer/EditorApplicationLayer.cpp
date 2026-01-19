@@ -22,8 +22,12 @@ _editorContext(*_sceneManager, _eventBus, _applicator, _undoManager, _windowHand
 //ui panels
 _mainMenu(_eventBus, _editorContext),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _editorContext),
-_openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get())
+_openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get()),
+//popup system
+_popupManager()
 {
+	// Set popup manager reference in editor context
+	_editorContext.SetPopupManager(&_popupManager);
 
 	REGISTER_CALLBACK(_eventBus, Core::MouseDownEvent, OnMouseDownEvent);
 	REGISTER_CALLBACK(_eventBus, Core::MouseUpEvent, OnMouseUpEvent);
@@ -50,6 +54,9 @@ void EditorApplicationLayer::OnRender()
 	_mainMenu.Render();
 	_openDocumentsTopBar.Render();
 	_sceneHierarchyPanel.Render();
+	
+	// Render popups last so they appear on top of everything
+	_popupManager.Render();
 }
 
 bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)

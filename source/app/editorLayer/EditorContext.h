@@ -6,6 +6,7 @@
 
 // Forward declarations
 class SceneManager;
+class PopupManager;
 namespace Core {
     class EventBus;
     template<typename ValueTypes, typename ComponentTypes>
@@ -79,6 +80,16 @@ public:
     // === Accessors ===
     SceneManager& sceneManager() { return _sceneManager; }
     Core::Applicator<AppFieldTypes, AppComponentTypes>& applicator();
+    
+    /// <summary>
+    /// Set the popup manager reference (called by EditorApplicationLayer)
+    /// </summary>
+    void SetPopupManager(PopupManager* popupManager) { _popupManager = popupManager; }
+    
+    /// <summary>
+    /// Get the popup manager for showing dialogs and popups
+    /// </summary>
+    PopupManager* GetPopupManager() { return _popupManager; }
 
 private:
     // State
@@ -90,4 +101,5 @@ private:
     Core::Applicator<AppFieldTypes, AppComponentTypes>& _applicator;
     Core::UndoManager<AppFieldTypes>& _undoManager;
     void* _windowHandle;
+    PopupManager* _popupManager = nullptr;
 };

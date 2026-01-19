@@ -3,6 +3,7 @@
 #include "panels/Panel_SceneHierarchy.h"
 #include "MainMenu.h"
 #include "EditorContext.h"
+#include "PopupManager.h"
 #include "core/event/MouseEvent.h"
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
@@ -40,6 +41,9 @@ public:
 	bool OnRequestUndo(const RequestUndoEvent& e);
 	bool OnRequestRedo(const RequestRedoEvent& e);
 
+	// Access to popup manager for other components
+	PopupManager& GetPopupManager() { return _popupManager; }
+
 private:
 	// Core services
 	std::shared_ptr<SceneManager> _sceneManager;
@@ -55,4 +59,7 @@ private:
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
 	OpenDocumentsTopBar _openDocumentsTopBar;
+	
+	// Popup system
+	PopupManager _popupManager;
 };
