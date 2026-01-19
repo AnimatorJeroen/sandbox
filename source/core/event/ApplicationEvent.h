@@ -3,6 +3,12 @@
 
 namespace Core
 {
+	class RequestApplicationCloseEvent : public Core::IEvent
+	{
+	public:
+		SET_EVENT_TYPE_FUNCTIONS(RequestApplicationCloseEvent)
+	};
+
 	class ApplicationCloseEvent : public Core::IEvent
 	{
 	public:

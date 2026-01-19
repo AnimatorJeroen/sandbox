@@ -38,12 +38,16 @@ namespace Core
 		//register callbacks
 		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);
 		REGISTER_CALLBACK((*_eventBus), WindowCloseEvent, OnWindowCloseEvent);
-		REGISTER_CALLBACK((*_eventBus), ApplicationCloseEvent, OnApplicationCloseEvent);
+		// Note: ApplicationCloseEvent is registered in Run() after all layers are initialized
 	}
 
 	static bool shouldClose = false;
 	void Application::Run()
 	{
+		// Register ApplicationCloseEvent callback last, so all layer callbacks are called first
+		REGISTER_CALLBACK((*_eventBus), RequestApplicationCloseEvent, OnRequestApplicationCloseEvent);
+		REGISTER_CALLBACK((*_eventBus), ApplicationCloseEvent, OnApplicationCloseEvent);
+		
 		float deltaTime = 0.0f;
 		float lastFrameTime = 0.0f;
 		float currentFrameTime = 0.0f;
@@ -104,11 +108,18 @@ namespace Core
 		return false;
 	}
 
+	bool Application::OnRequestApplicationCloseEvent(const RequestApplicationCloseEvent& e)
+	{
+		LOG_TRACE() << e.GetName() << " received.";
+		_eventBus->PushEvent<ApplicationCloseEvent>(ApplicationCloseEvent());
+		return true;
+	}
+
 	bool Application::OnApplicationCloseEvent(const ApplicationCloseEvent& e)
 	{
 		LOG_DEBUG() << e.GetName() << " received.";
 		shouldClose = true;
-		return false;
+		return true;
 	}
 
 	bool Application::OnWindowCloseEvent(const WindowCloseEvent& e)
@@ -116,7 +127,7 @@ namespace Core
 		LOG_DEBUG() << e.GetName() << " received.";
 		if (e.windowHandle == _window->GetHandle())
 		{
-			_eventBus->PushEvent<ApplicationCloseEvent>(ApplicationCloseEvent());
+			_eventBus->PushEvent<RequestApplicationCloseEvent>(RequestApplicationCloseEvent());
 		}
 		return false;
 	}

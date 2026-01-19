@@ -131,7 +131,7 @@ void PopupManager::RunBlockingPopupLoop(PopupWindow& popup)
     GLFWwindow* glfwWindow = static_cast<GLFWwindow*>(_window->GetHandle());
     
     // Run a mini render loop until the popup is closed
-    while (popup.IsOpen() && !glfwWindowShouldClose(glfwWindow))
+    while (popup.IsOpen()/* && !glfwWindowShouldClose(glfwWindow)*/)
     {
         // Poll events
         glfwPollEvents();

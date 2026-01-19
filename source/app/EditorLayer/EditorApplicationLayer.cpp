@@ -47,6 +47,9 @@ _popupManager()
 	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
 	REGISTER_CALLBACK(_eventBus, RequestUndoEvent, OnRequestUndo);
 	REGISTER_CALLBACK(_eventBus, RequestRedoEvent, OnRequestRedo);
+
+	REGISTER_CALLBACK(_eventBus, Core::ApplicationCloseEvent, OnApplicationCloseEvent);
+	REGISTER_CALLBACK(_eventBus, Core::RequestApplicationCloseEvent, OnRequestApplicationCloseEvent);
 }
 
 void EditorApplicationLayer::OnUpdate(const float deltaTime)
@@ -184,12 +187,54 @@ bool EditorApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent
 	return false;
 }
 
+bool EditorApplicationLayer::OnApplicationCloseEvent(const Core::ApplicationCloseEvent& e)
+{
+	LOG_TRACE() << e.GetName() << " received in editor layer.";
+	return false;
+}
+
+bool EditorApplicationLayer::OnRequestApplicationCloseEvent(const Core::RequestApplicationCloseEvent& e)
+{
+	LOG_TRACE() << e.GetName() << " received in editor layer.";
+
+	while (_sceneManager->GetSceneCount() > 0)
+	{
+		if(InvokePopupRequestCloseScene(0))
+		{
+			_sceneManager->CloseScene(0);
+		}
+		else
+		{
+			LOG_DEBUG() << "Application close cancelled by user.";
+			return true; // Cancel application close
+		}
+	}
+	return false;
+}
+
 bool EditorApplicationLayer::OnRequestCloseSceneEvent(const RequestCloseSceneEvent& e)
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 
+	// Show blocking confirmation
+	bool confirmed = InvokePopupRequestCloseScene(e.sceneIndex);
+	if (confirmed)
+	{
+		LOG_DEBUG() << "Closing scene: " << e.sceneIndex;
+		_sceneManager->CloseScene(e.sceneIndex);
+	}
+	else
+	{
+		LOG_DEBUG() << "Close scene cancelled: " << e.sceneIndex;
+	}
+	return true;
+}
+
+bool EditorApplicationLayer::InvokePopupRequestCloseScene(const size_t sceneIndex)
+{
+
 	// Get scene name for the message
-	auto scene = _sceneManager->GetScene(e.sceneIndex);
+	auto scene = _sceneManager->GetScene(sceneIndex);
 	std::string sceneName = scene ? scene->GetFileName() : "Untitled";
 	if (sceneName.empty())
 		sceneName = "Untitled";
@@ -197,18 +242,7 @@ bool EditorApplicationLayer::OnRequestCloseSceneEvent(const RequestCloseSceneEve
 	std::string message = "Are you sure you want to close \"" + sceneName + "\"?\n\nAny unsaved changes will be lost.";
 
 	// Show blocking confirmation
-	bool confirmed = popupManager->ShowBlockingConfirmation("Close Scene", message);
-	if (confirmed)
-	{
-		LOG_DEBUG() << "Closing scene: " << sceneName;
-		_sceneManager->CloseScene(e.sceneIndex);
-	}
-	else
-	{
-		LOG_DEBUG() << "Close scene cancelled: " << sceneName;
-	}
-
-	return true;
+	return popupManager->ShowBlockingConfirmation("Close Scene", message);
 }
 
 bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
