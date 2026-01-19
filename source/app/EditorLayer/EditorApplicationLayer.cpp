@@ -41,7 +41,6 @@ _popupManager()
 	REGISTER_CALLBACK(_eventBus, Core::KeyUpEvent, OnKeyUpEvent);
 	REGISTER_CALLBACK(_eventBus, Core::KeyCharacterEvent, OnKeyCharacterEvent);
 
-	REGISTER_CALLBACK(_eventBus, RequestSaveSceneEvent, OnRequestSaveSceneEvent);
 	REGISTER_CALLBACK(_eventBus, RequestLoadSceneEvent, OnRequestLoadSceneEvent);
 	REGISTER_CALLBACK(_eventBus, RequestCloseSceneEvent, OnRequestCloseSceneEvent);
 	REGISTER_CALLBACK(_eventBus, OnChangeActiveSceneEvent, OnChangeActiveScene);
@@ -175,12 +174,6 @@ bool EditorApplicationLayer::OnKeyCharacterEvent(const Core::KeyCharacterEvent& 
 		return false;
 	LOG_TRACE() << e.GetName() << " in editor layer: Character " << e.character;
 	return true;
-}
-
-bool EditorApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
-{
-	LOG_TRACE() << e.GetName() << " received in editor layer.";
-	return false;
 }
 
 bool EditorApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)

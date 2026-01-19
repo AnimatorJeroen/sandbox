@@ -37,7 +37,6 @@ public:
 	bool OnKeyUpEvent(const Core::KeyUpEvent& e);
 	bool OnKeyCharacterEvent(const Core::KeyCharacterEvent& e);
 
-	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
 	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
 	bool OnRequestCloseSceneEvent(const RequestCloseSceneEvent& e);
 	PopupResult InvokePopupRequestSaveChanges(const size_t sceneIndex);
