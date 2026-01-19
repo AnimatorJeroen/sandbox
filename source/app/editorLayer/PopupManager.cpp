@@ -14,6 +14,17 @@ std::shared_ptr<PopupWindow> PopupManager::ShowPopup(const std::string& title, c
     return popup;
 }
 
+void PopupManager::ShowPopupBlocking(std::shared_ptr<PopupWindow> popup)
+{
+    if (!_window || !popup)
+        return;
+
+    popup->Open();
+    
+    // Run blocking loop until popup is closed
+    RunBlockingPopupLoop(*popup);
+}
+
 void PopupManager::ShowConfirmation(const std::string& title, const std::string& message,
     std::function<void()> onConfirm, std::function<void()> onCancel)
 {
@@ -35,34 +46,27 @@ void PopupManager::ShowConfirmation(const std::string& title, const std::string&
     _popups.push_back(popup);
 }
 
-bool PopupManager::ShowBlockingConfirmation(const std::string& title, const std::string& message)
+PopupResult PopupManager::ShowBlockingConfirmation(const std::string& title, const std::string& message)
 {
     if (!_window)
         return false;
 
-    bool result = false;
-    bool resultSet = false;
-
     auto popup = std::make_shared<PopupWindow>(title, message);
     
-    // Add Yes button
-    popup->AddButton("Yes", [&result, &resultSet]() {
-        result = true;
-        resultSet = true;
-    }, true);
+
+    // Add Yes button with result value 1
+    popup->AddButton("Yes", []() {}, true);
     
-    // Add No button
-    popup->AddButton("No", [&result, &resultSet]() {
-        result = false;
-        resultSet = true;
-    }, true);
+    // Add No button with result value 0
+    popup->AddButton("No", []() {}, true);
     
     popup->Open();
     
     // Run blocking loop until popup is closed
     RunBlockingPopupLoop(*popup);
     
-    return result && resultSet;
+    // Return true if result is 1, false otherwise
+    return popup->GetResult().value_or(0) == 1;
 }
 
 void PopupManager::ShowInfo(const std::string& title, const std::string& message, 

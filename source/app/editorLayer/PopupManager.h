@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <optional>
 
 // Forward declaration
 namespace Core {
@@ -29,6 +30,13 @@ public:
     std::shared_ptr<PopupWindow> ShowPopup(const std::string& title, const std::string& message);
 
     /// <summary>
+    /// Show a popup and wait for result in blocking mode
+    /// </summary>
+    /// <param name="popup">The popup to show</param>
+    /// <returns>The result value if set, otherwise -1</returns>
+    void ShowPopupBlocking(std::shared_ptr<PopupWindow> popup);
+
+    /// <summary>
     /// Create a simple confirmation popup with OK and Cancel buttons
     /// </summary>
     /// <param name="title">The title of the popup</param>
@@ -37,6 +45,8 @@ public:
     /// <param name="onCancel">Optional callback to execute when Cancel is clicked</param>
     void ShowConfirmation(const std::string& title, const std::string& message,
         std::function<void()> onConfirm, std::function<void()> onCancel = nullptr);
+
+    bool ShowPopup(const PopupWindow& popup);
 
     /// <summary>
     /// Show a blocking confirmation dialog that waits for user response
@@ -60,7 +70,7 @@ public:
     /// </summary>
     /// <param name="title">The title of the popup</param>
     /// <param name="message">The warning message to display</param>
-    /// <param name="onClose">Optional callback to execute when OK is clicked</param>
+    /// <param="onClose">Optional callback to execute when OK is clicked</param>
     void ShowWarning(const std::string& title, const std::string& message,
         std::function<void()> onClose = nullptr);
 

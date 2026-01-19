@@ -17,6 +17,9 @@
 class SceneManager;
 class EventBus;
 
+// Forward declare enum
+enum class PopupResult : int;
+
 class EditorApplicationLayer : public Core::IApplicationLayer
 {
 public:
@@ -37,7 +40,7 @@ public:
 	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
 	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
 	bool OnRequestCloseSceneEvent(const RequestCloseSceneEvent& e);
-	bool InvokePopupRequestCloseScene(const size_t sceneIndex);
+	PopupResult InvokePopupRequestSaveChanges(const size_t sceneIndex);
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
 	bool OnRequestApplicationCloseEvent(const Core::RequestApplicationCloseEvent& e);
 	bool OnApplicationCloseEvent(const Core::ApplicationCloseEvent& e);

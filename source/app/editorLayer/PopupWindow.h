@@ -2,6 +2,19 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <optional>
+
+// Enum for save scene dialog results
+enum class PopupResult : int
+{
+	None = -1, // No result
+    Cancel = 0,
+    No = 1,
+    Yes = 2,
+	NoToAll = 3,
+	YesToAll = 4
+};
+
 
 /// <summary>
 /// Represents a button in a popup window with text and callback
@@ -11,9 +24,10 @@ struct PopupButton
     std::string text;
     std::function<void()> callback;
     bool closeOnClick = true; // Whether clicking this button should close the popup
+    int resultValue = -1; // Value to set as result when this button is clicked (-1 means no result)
 
-    PopupButton(const std::string& buttonText, std::function<void()> buttonCallback, bool shouldClose = true)
-        : text(buttonText), callback(std::move(buttonCallback)), closeOnClick(shouldClose)
+    PopupButton(const std::string& buttonText, std::function<void()> buttonCallback, bool shouldClose = true, int result = -1)
+        : text(buttonText), callback(std::move(buttonCallback)), closeOnClick(shouldClose), resultValue(result)
     {
     }
 };
