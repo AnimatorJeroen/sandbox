@@ -17,9 +17,11 @@ _sceneManager(ctx.Get<SceneManager>()),
 _eventBus(*ctx.Get<Core::EventBus>().get()), 
 _undoManager(),
 _applicator(_undoManager),
+//editor context
+_editorContext(*_sceneManager, _eventBus, _applicator, _undoManager, _windowHandle),
 //ui panels
-_mainMenu(*ctx.Get<Core::EventBus>().get(), ctx.Get<Core::Window>()->GetNativeWindowHandle(), ctx.Get<SceneManager>().get()),
-_sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _applicator),
+_mainMenu(_eventBus, _editorContext),
+_sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _editorContext),
 _openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get())
 {
 
@@ -107,126 +109,39 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 	else if (e.key == 'S' && !e.repeated) {
 		if ((e.mods & Core::KMOD_CONTROL) && (e.mods & Core::KMOD_SHIFT))
 		{
-			SaveSceneAs(_sceneManager.get(), _eventBus, _windowHandle);
+			_editorContext.SaveSceneAs();
 		}
 		else if (e.mods & Core::KMOD_CONTROL)
 		{
-			SaveScene(_sceneManager.get(), _eventBus, _windowHandle);
+			_editorContext.SaveScene();
 		}
 	}
 	else if (e.key == 'O' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
-			OpenScene(_sceneManager.get(), _eventBus, _windowHandle);
+			_editorContext.OpenScene();
 		}
 	}
 	else if (e.key == 'C' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
-			auto sel = _sceneHierarchyPanel.GetSelectedEntities();
-			if (sel.empty())
-				return true;
-			_applicator.CopyToClipboard(sel);
+			_editorContext.Copy();
 		}
 	}
 	else if (e.key == 'X' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
-			auto sel = _sceneHierarchyPanel.GetSelectedEntities();
-			if(sel.empty())
-				return true;
-
-			_applicator.CopyToClipboard(sel);
-
-			_applicator.BeginUndo();
-			_applicator.CaptureDelete(sel);
-			_applicator.EndUndo();
+			_editorContext.Cut();
 		}
 	}
 	else if (e.key == 'V' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
-			_applicator.BeginUndo();
-			_applicator.PasteFromClipboard(Core::ClipboardType::Entities);
-			_applicator.EndUndo();
+			_editorContext.Paste();
 		}
 	}
 
 	return true;
-}
-
-void EditorApplicationLayer::SaveScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
-{
-	auto scene = sceneManager->GetActiveScene();
-	if (scene && !scene->GetFilepath().empty())
-	{
-		// Save to current filepath
-		eventBus.PushEvent<RequestSaveSceneEvent>(
-			RequestSaveSceneEvent(scene->GetFilepath()));
-	}
-	else
-	{
-		SaveSceneAs(sceneManager, eventBus, windowHandle);
-	}
-}
-
-void EditorApplicationLayer::SaveSceneAs(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
-{
-	auto scene = sceneManager->GetActiveScene();
-	if (scene == nullptr)
-		return;
-
-	Core::BrowserWindow browserWindow(windowHandle);
-	auto result = browserWindow.SaveFile(
-		"Save Scene As",
-		{
-			Core::FileFilter("Scene Files", "*.scene"),
-			Core::FileFilter("Binary Files", "*.dat"),
-			Core::FileFilter("All Files", "*.*")
-		},
-		"",
-		"scene");
-
-	if (result.has_value())
-	{
-		eventBus.PushEvent<RequestSaveSceneEvent>(
-			RequestSaveSceneEvent(result.value()));
-	}
-}
-
-void EditorApplicationLayer::OpenScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
-{
-	Core::BrowserWindow browserWindow(windowHandle);
-	auto result = browserWindow.OpenFile(
-		"Open Scene",
-		{
-			Core::FileFilter("Scene Files", "*.scene"),
-			Core::FileFilter("Binary Files", "*.dat"),
-			Core::FileFilter("All Files", "*.*")
-		});
-
-	if (result.has_value())
-	{
-		eventBus.PushEvent<RequestLoadSceneEvent>(
-			RequestLoadSceneEvent(result.value()));
-	}
-}
-
-void EditorApplicationLayer::RevertScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle)
-{
-	auto scene = sceneManager->GetActiveScene();
-	if (scene == nullptr)
-		return;
-
-	auto filePath = scene->GetFilepath();
-	if (filePath.empty())
-		return;
-
-	eventBus.PushImmediateEvent<RequestCloseSceneEvent>(
-		RequestCloseSceneEvent(sceneManager->GetActiveSceneIndex()));
-
-	eventBus.PushImmediateEvent<RequestLoadSceneEvent>(
-		RequestLoadSceneEvent(filePath));
 }
 
 bool EditorApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
@@ -262,21 +177,18 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
-	_undoManager.SetContext(_sceneManager->GetActiveScene()->GetRegistry());
-	_undoManager.Clear();
+	_editorContext.OnActiveSceneChanged();
 	return false;
 }
 
 bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 {
-	bool handled = _undoManager.Undo();
-	LOG_DEBUG() << e.GetName() << " Undo handled: " << handled;
+	_editorContext.Undo();
 	return true;
 }
 
 bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
 {
-	bool handled = _undoManager.Redo();
-	LOG_DEBUG() << e.GetName() << " Redo handled: " << handled;
+	_editorContext.Redo();
 	return true;
 }

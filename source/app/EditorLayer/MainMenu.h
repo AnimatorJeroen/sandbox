@@ -2,20 +2,18 @@
 
 // Forward declare
 class SceneManager;
+class EditorContext;
 
 namespace Core {
     class EventBus;
 }
 
-
 class MainMenu
 {
 public:
-    MainMenu(Core::EventBus& eventBus, void* windowHandle, SceneManager* sceneManager = nullptr);
+    MainMenu(Core::EventBus& eventBus, EditorContext& editorContext);
     void Render();
 private:
     Core::EventBus& _eventBus;
-    SceneManager* _sceneManager;
-    void* _windowHandle;
-
+    EditorContext& _editorContext;
 };

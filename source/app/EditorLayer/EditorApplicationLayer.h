@@ -2,6 +2,7 @@
 #include "core/IApplicationLayer.h"
 #include "panels/Panel_SceneHierarchy.h"
 #include "MainMenu.h"
+#include "EditorContext.h"
 #include "core/event/MouseEvent.h"
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
@@ -39,19 +40,19 @@ public:
 	bool OnRequestUndo(const RequestUndoEvent& e);
 	bool OnRequestRedo(const RequestRedoEvent& e);
 
-	static void SaveScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
-	static void SaveSceneAs(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
-	static void OpenScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
-	static void RevertScene(SceneManager* sceneManager, Core::EventBus& eventBus, void* windowHandle);
-
 private:
+	// Core services
 	std::shared_ptr<SceneManager> _sceneManager;
-	Panel_SceneHierarchy _sceneHierarchyPanel;
-	MainMenu _mainMenu;
-	OpenDocumentsTopBar _openDocumentsTopBar;
-
 	Core::EventBus& _eventBus;
 	Core::Applicator<AppFieldTypes, AppComponentTypes> _applicator;
 	Core::UndoManager<AppFieldTypes> _undoManager;
 	void* _windowHandle;
+
+	// Editor context - shared state and operations
+	EditorContext _editorContext;
+
+	// UI panels
+	Panel_SceneHierarchy _sceneHierarchyPanel;
+	MainMenu _mainMenu;
+	OpenDocumentsTopBar _openDocumentsTopBar;
 };

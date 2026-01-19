@@ -3,8 +3,9 @@
 #include <set>
 
 class Scene;
-namespace MyNamespace
-{
+class EditorContext;
+
+namespace Core {
 	template<typename T1, typename T2>
 	class Applicator;
 }
@@ -12,14 +13,12 @@ namespace MyNamespace
 class Panel_SceneHierarchy
 {
 public:
-	explicit Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppFieldTypes, AppComponentTypes>& applicator);
+	explicit Panel_SceneHierarchy(Scene& scene, EditorContext& editorContext);
 	~Panel_SceneHierarchy() = default;
 	void Render();
 	void SetContext(Scene& scene);
-	const std::set<entt::entity>& GetSelectedEntities() const { return _selectedEntities; }
 private:
 	Scene* _scene;
-	Core::Applicator<AppFieldTypes, AppComponentTypes>& _applicator;
-	std::set<entt::entity> _selectedEntities;
+	EditorContext& _editorContext;
 	entt::entity _lastClickedEntity = entt::null;
 };

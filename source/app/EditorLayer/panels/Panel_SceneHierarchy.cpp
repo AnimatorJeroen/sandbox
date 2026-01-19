@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Panel_SceneHierarchy.h"
+#include "app/editorLayer/EditorContext.h"
 #include <core/applicator/Applicator.h>
 #include "app/sceneLayer/Scene.h"
 #include <imgui/imgui.h>
@@ -8,7 +9,8 @@
 
 #include <app/sceneLayer/shape/Circle.h>
 
-Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, Core::Applicator<AppFieldTypes, AppComponentTypes>& applicator) : _scene(&scene), _applicator(applicator)
+Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, EditorContext& editorContext) 
+    : _scene(&scene), _editorContext(editorContext)
 {
 }
 
@@ -31,9 +33,9 @@ void Panel_SceneHierarchy::Render()
     ImGui::InputFloat("Scene Color: %f", &sceneColor);
     if (ImGui::IsItemDeactivatedAfterEdit())
     {
-        _applicator.BeginUndo();
-        _applicator.SetField(_scene->GetSceneEntity(), "Scene.sceneColor", sceneColor);
-        _applicator.EndUndo();
+        _editorContext.BeginUndo();
+        _editorContext.applicator().SetField(_scene->GetSceneEntity(), "Scene.sceneColor", sceneColor);
+        _editorContext.EndUndo();
     }
 	// Update scene name when input changes
     strncpy_s(inputTextbuffer, _scene->GetName().data, sizeof(inputTextbuffer) - 1);
@@ -41,9 +43,9 @@ void Panel_SceneHierarchy::Render()
     if (ImGui::IsItemDeactivatedAfterEdit())
     {
         //_scene->SetName(std::string(inputTextbuffer));
-        _applicator.BeginUndo();
-        _applicator.SetField(_scene->GetSceneEntity(), "Scene.name", String64(inputTextbuffer));
-        _applicator.EndUndo();
+        _editorContext.BeginUndo();
+        _editorContext.applicator().SetField(_scene->GetSceneEntity(), "Scene.name", String64(inputTextbuffer));
+        _editorContext.EndUndo();
     }
 	
     if (ImGui::Button("Add Circle"))
@@ -64,10 +66,10 @@ void Panel_SceneHierarchy::Render()
     ImGui::SameLine();
     if (ImGui::Button("Add Entity"))
     {
-        _applicator.BeginUndo();
+        _editorContext.BeginUndo();
         auto e = _scene->CreateEntity();
-        _applicator.CaptureCreate({e});
-        _applicator.EndUndo();
+        _editorContext.applicator().CaptureCreate({e});
+        _editorContext.EndUndo();
     }
 
     ImGui::Separator();
@@ -82,9 +84,10 @@ void Panel_SceneHierarchy::Render()
         const auto& uuidA = registry.get<Core::UUID>(a);
         const auto& uuidB = registry.get<Core::UUID>(b);
         return uuidA.value < uuidB.value;
-		});
+    });
 
-    std::vector<entt::entity> entitiesToDelete;
+    // Get selection from EditorContext
+    auto& selectedEntities = _editorContext.GetSelectedEntities();
     
 	bool deleteEntitiesPressed = false;
     for (size_t i = 0; i < entities.size(); ++i) {
@@ -104,7 +107,7 @@ void Panel_SceneHierarchy::Render()
                                  | ImGuiTreeNodeFlags_Leaf;
         
         // Add selected flag if this entity is selected
-        if (_selectedEntities.find(entity) != _selectedEntities.end()) {
+        if (selectedEntities.find(entity) != selectedEntities.end()) {
             flags |= ImGuiTreeNodeFlags_Selected;
         }
         
@@ -129,32 +132,38 @@ void Panel_SceneHierarchy::Render()
                     auto startIt = (lastIt < currentIt) ? lastIt : currentIt;
                     auto endIt = (lastIt < currentIt) ? currentIt : lastIt;
                     
-                    // Clear selection if not holding ctrl
-                    if (!isCtrlDown) {
-                        _selectedEntities.clear();
+                    // Build new selection
+                    std::set<entt::entity> newSelection;
+                    
+                    // Keep existing selection if holding ctrl
+                    if (isCtrlDown) {
+                        newSelection = selectedEntities;
                     }
                     
                     // Select all entities in range
                     for (auto it = startIt; it <= endIt; ++it) {
                         if (*it != _scene->GetSceneEntity()) {
-                            _selectedEntities.insert(*it);
+                            newSelection.insert(*it);
                         }
                     }
+                    
+                    _editorContext.SetSelection(newSelection);
                 }
             }
             else if (isCtrlDown) {
                 // Ctrl+Click: Toggle selection
-                if (_selectedEntities.find(entity) != _selectedEntities.end()) {
-                    _selectedEntities.erase(entity);
+                std::set<entt::entity> newSelection = selectedEntities;
+                if (selectedEntities.find(entity) != selectedEntities.end()) {
+                    newSelection.erase(entity);
                 } else {
-                    _selectedEntities.insert(entity);
+                    newSelection.insert(entity);
                 }
+                _editorContext.SetSelection(newSelection);
                 _lastClickedEntity = entity;
             }
             else {
                 // Normal click: Replace selection
-                _selectedEntities.clear();
-                _selectedEntities.insert(entity);
+                _editorContext.SetSelection({entity});
                 _lastClickedEntity = entity;
             }
         }
@@ -176,8 +185,8 @@ void Panel_SceneHierarchy::Render()
             }
 
             // Show selection info
-            if (_selectedEntities.size() > 1) {
-                ImGui::Text("(%zu entities selected)", _selectedEntities.size());
+            if (selectedEntities.size() > 1) {
+                ImGui::Text("(%zu entities selected)", selectedEntities.size());
             }
             ImGui::EndTooltip();
         }
@@ -191,22 +200,12 @@ void Panel_SceneHierarchy::Render()
         ImGui::PopID();
     }
 
-    if(deleteEntitiesPressed)
+    if(deleteEntitiesPressed && !selectedEntities.empty())
     {
-        // Convert vector to unordered_set for CaptureDelete
-        std::unordered_set<entt::entity> entitiesToDeleteSet(_selectedEntities.begin(), _selectedEntities.end());
-
-        _applicator.BeginUndo();
-        _applicator.CaptureDelete(entitiesToDeleteSet);
-        _applicator.EndUndo();
-        
-        // Clear selection for deleted entities
-        for (auto entity : entitiesToDelete) {
-            _selectedEntities.erase(entity);
-        }
+        _editorContext.DeleteSelection();
         
         // Clear last clicked if it was deleted
-        if (std::find(entitiesToDelete.begin(), entitiesToDelete.end(), _lastClickedEntity) != entitiesToDelete.end()) {
+        if (selectedEntities.find(_lastClickedEntity) == selectedEntities.end()) {
             _lastClickedEntity = entt::null;
         }
 	}

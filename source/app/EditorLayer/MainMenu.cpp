@@ -1,15 +1,15 @@
 #include "pch.h"
 #include "MainMenu.h"
+#include "EditorContext.h"
 #include <imgui/imgui.h>
 #include "core/event/ApplicationEvent.h"
 #include "app/event/SceneEvent.h"
 #include "app/event/UndoEvent.h"
 #include "app/sceneLayer/SceneManager.h"
 #include "core/event/EventBus.h"
-#include "EditorApplicationLayer.h"
 
-MainMenu::MainMenu(Core::EventBus& eventBus, void* windowHandle, SceneManager* sceneManager)
-    : _eventBus(eventBus), _windowHandle(windowHandle), _sceneManager(sceneManager)
+MainMenu::MainMenu(Core::EventBus& eventBus, EditorContext& editorContext)
+    : _eventBus(eventBus), _editorContext(editorContext)
 {
 }
 
@@ -19,27 +19,26 @@ void MainMenu::Render()
     {
         if (ImGui::BeginMenu("File"))
         {
-
             if(ImGui::MenuItem("Save", "Ctrl+S", false))
             {
-                EditorApplicationLayer::SaveScene(_sceneManager, _eventBus, _windowHandle);
+                _editorContext.SaveScene();
             }
             
             if(ImGui::MenuItem("Save Scene As..."))
             {
-               EditorApplicationLayer::SaveSceneAs(_sceneManager, _eventBus, _windowHandle);
+                _editorContext.SaveSceneAs();
             }
             
             if(ImGui::MenuItem("Open Scene..."))
             {
-                EditorApplicationLayer::OpenScene(_sceneManager, _eventBus, _windowHandle);
+                _editorContext.OpenScene();
             }
 
-            bool canRevert = _sceneManager && _sceneManager->GetActiveScene() &&
-                !_sceneManager->GetActiveScene()->GetFilepath().empty();
+            bool canRevert = _editorContext.sceneManager().GetActiveScene() &&
+                !_editorContext.sceneManager().GetActiveScene()->GetFilepath().empty();
             if(ImGui::MenuItem("Revert", nullptr, false, canRevert))
             {
-                EditorApplicationLayer::RevertScene(_sceneManager, _eventBus, _windowHandle);
+                _editorContext.RevertScene();
             }
             
             ImGui::Separator();
@@ -61,6 +60,28 @@ void MainMenu::Render()
             {
                 _eventBus.PushEvent<RequestRedoEvent>(RequestRedoEvent());
             }
+            
+            ImGui::Separator();
+            
+            bool hasSelection = !_editorContext.GetSelectedEntities().empty();
+            
+            if (ImGui::MenuItem("Cut", "Ctrl+X", false, hasSelection))
+            {
+                _editorContext.Cut();
+            }
+            if (ImGui::MenuItem("Copy", "Ctrl+C", false, hasSelection))
+            {
+                _editorContext.Copy();
+            }
+            if (ImGui::MenuItem("Paste", "Ctrl+V"))
+            {
+                _editorContext.Paste();
+            }
+            if (ImGui::MenuItem("Delete", "Del", false, hasSelection))
+            {
+                _editorContext.DeleteSelection();
+            }
+            
             ImGui::EndMenu();
         }
         
