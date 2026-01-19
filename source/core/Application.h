@@ -25,6 +25,7 @@ namespace Core
 			void Stop();
 			void GetFrameBufferSize(int& width, int& height) const;
 			bool OnWindowResizeEvent(const WindowResizeEvent& e);
+			bool OnRequestApplicationCloseEvent(const RequestApplicationCloseEvent& e);
 			bool OnApplicationCloseEvent(const ApplicationCloseEvent& e);
 			bool OnWindowCloseEvent(const WindowCloseEvent& e);
 			template<typename TLayer>

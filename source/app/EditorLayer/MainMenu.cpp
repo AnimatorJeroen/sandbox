@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "MainMenu.h"
 #include "EditorContext.h"
+#include "PopupManager.h"
 #include <imgui/imgui.h>
 #include "core/event/ApplicationEvent.h"
 #include "app/event/SceneEvent.h"
@@ -19,14 +20,15 @@ void MainMenu::Render()
     {
         if (ImGui::BeginMenu("File"))
         {
-            if(ImGui::MenuItem("Save", "Ctrl+S", false))
+			size_t activeSceneIndex = _editorContext.sceneManager().GetActiveSceneIndex();
+            if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex == -1))
             {
-                _editorContext.SaveScene();
+                _editorContext.SaveScene(activeSceneIndex);
             }
-            
-            if(ImGui::MenuItem("Save Scene As..."))
+
+            if(ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S", false, activeSceneIndex == -1))
             {
-                _editorContext.SaveSceneAs();
+                _editorContext.SaveSceneAs(activeSceneIndex);
             }
             
             if(ImGui::MenuItem("Open Scene..."))
@@ -80,6 +82,41 @@ void MainMenu::Render()
             if (ImGui::MenuItem("Delete", "Del", false, hasSelection))
             {
                 _editorContext.DeleteSelection();
+            }
+            
+            ImGui::EndMenu();
+        }
+        
+        if (ImGui::BeginMenu("Help"))
+        {
+            if (ImGui::MenuItem("About"))
+            {
+                auto* popupManager = _editorContext.GetPopupManager();
+                if (popupManager)
+                {
+                    popupManager->ShowInfo(
+                        "About",
+                        "Scene Editor v1.0\n\nA powerful scene editing tool with undo/redo support."
+                    );
+                }
+            }
+            
+            if (ImGui::MenuItem("Test Popup"))
+            {
+                auto* popupManager = _editorContext.GetPopupManager();
+                if (popupManager)
+                {
+                    popupManager->ShowConfirmation(
+                        "Test Confirmation",
+                        "This is a test confirmation dialog.\nDo you want to proceed?",
+                        []() {
+                            // User clicked OK
+                        },
+                        []() {
+                            // User clicked Cancel
+                        }
+                    );
+                }
             }
             
             ImGui::EndMenu();

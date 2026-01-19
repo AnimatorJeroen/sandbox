@@ -95,26 +95,25 @@ void EditorContext::Redo()
 
 // === Scene Operations ===
 
-void EditorContext::SaveScene()
+void EditorContext::SaveScene(const size_t sceneIndex)
 {
-    auto scene = _sceneManager.GetActiveScene();
+    auto scene = _sceneManager.GetScene(sceneIndex);
     if (scene && !scene->GetFilepath().empty())
     {
         // Save to current filepath
-        _eventBus.PushEvent<RequestSaveSceneEvent>(
-            RequestSaveSceneEvent(scene->GetFilepath()));
         LOG_DEBUG() << "Saving scene to: " << scene->GetFilepath();
+        _sceneManager.SaveActiveScene(scene->GetFilepath());
     }
     else
     {
         // No filepath, show Save As dialog
-        SaveSceneAs();
+        SaveSceneAs(sceneIndex);
     }
 }
 
-void EditorContext::SaveSceneAs()
+void EditorContext::SaveSceneAs(const size_t sceneIndex)
 {
-    auto scene = _sceneManager.GetActiveScene();
+    auto scene = _sceneManager.GetScene(sceneIndex);
     if (scene == nullptr)
         return;
 
@@ -131,8 +130,7 @@ void EditorContext::SaveSceneAs()
 
     if (result.has_value())
     {
-        _eventBus.PushEvent<RequestSaveSceneEvent>(
-            RequestSaveSceneEvent(result.value()));
+        _sceneManager.SaveScene(sceneIndex, result.value());
         LOG_DEBUG() << "Saving scene as: " << result.value();
     }
 }

@@ -2,17 +2,6 @@
 #include <core/event/IEvent.h>
 #include <string>
 
-class RequestSaveSceneEvent : public Core::IEvent
-{
-	public:
-		char* filepath;
-		SET_EVENT_TYPE_FUNCTIONS(RequestSaveSceneEvent)
-		RequestSaveSceneEvent(const std::string& _filepath)
-		{
-			HeapAllocateData(filepath, _filepath.data(), _filepath.size() + 1);
-		}
-};
-
 class RequestLoadSceneEvent : public Core::IEvent
 {
 	public:

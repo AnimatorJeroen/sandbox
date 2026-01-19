@@ -25,7 +25,6 @@ _eventBus(*ctx.Get<Core::EventBus>().get())
 
 	REGISTER_CALLBACK((_eventBus), Core::WindowResizeEvent, OnWindowResizedEvent);
 
-	REGISTER_CALLBACK((_eventBus), RequestSaveSceneEvent, OnRequestSaveSceneEvent);
 	REGISTER_CALLBACK((_eventBus), RequestLoadSceneEvent, OnRequestLoadSceneEvent);
 	REGISTER_CALLBACK((_eventBus), OnChangeActiveSceneEvent, OnChangeActiveScene);
 }
@@ -83,13 +82,6 @@ bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& 
 	specs.width = e.Width;
 	_testScene.SetRenderSpecs(specs);
 	return false;
-}
-
-bool SceneApplicationLayer::OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e)
-{
-	LOG_TRACE() << e.GetName() << " received in scene layer.";
-	bool success = _sceneManager->SaveActiveScene(e.filepath);
-	return true;
 }
 
 bool SceneApplicationLayer::OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e)

@@ -44,5 +44,4 @@ private:
     Core::EventBus& _eventBus;
     
     void NotifySceneChanged();
-    bool onRequestCloseSceneEvent(const RequestCloseSceneEvent& e);
 };

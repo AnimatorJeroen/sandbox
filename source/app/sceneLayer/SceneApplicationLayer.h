@@ -26,7 +26,6 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 	bool OnKeyUpEvent(const Core::KeyUpEvent& e);
 	bool OnWindowResizedEvent(const Core::WindowResizeEvent& e);
 
-	bool OnRequestSaveSceneEvent(const RequestSaveSceneEvent& e);
 	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
 
