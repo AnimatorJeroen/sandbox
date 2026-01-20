@@ -49,6 +49,8 @@ _popupManager()
 
 	REGISTER_CALLBACK(_eventBus, Core::ApplicationCloseEvent, OnApplicationCloseEvent);
 	REGISTER_CALLBACK(_eventBus, Core::RequestApplicationCloseEvent, OnRequestApplicationCloseEvent);
+
+	REGISTER_CALLBACK((_eventBus), OnDestroySceneEvent, OnDestroyScene);
 }
 
 void EditorApplicationLayer::OnUpdate(const float deltaTime)
@@ -201,12 +203,12 @@ bool EditorApplicationLayer::OnRequestApplicationCloseEvent(const Core::RequestA
 		{
 			LOG_DEBUG() << "Saving and closing scene...";
 			_editorContext.SaveScene(sceneIndex);
-			_sceneManager->CloseScene(sceneIndex);
+			_editorContext.CloseScene(sceneIndex);
 		}
 		else if (result == PopupResult::No)
 		{
 			LOG_DEBUG() << "Closing scene without saving...";
-			_sceneManager->CloseScene(sceneIndex);
+			_editorContext.CloseScene(sceneIndex);
 		}
 		else // Cancel
 		{
@@ -228,12 +230,14 @@ bool EditorApplicationLayer::OnRequestCloseSceneEvent(const RequestCloseSceneEve
 	{
 		// TODO: Save the scene before closing
 		LOG_DEBUG() << "Saving and closing scene: " << e.sceneIndex;
-		_sceneManager->CloseScene(e.sceneIndex);
+		_editorContext.SaveScene(e.sceneIndex);
+		auto scene = _sceneManager->GetScene(e.sceneIndex);
+		_editorContext.CloseScene(e.sceneIndex);
 	}
 	else if (result == PopupResult::No)
 	{
 		LOG_DEBUG() << "Closing scene without saving: " << e.sceneIndex;
-		_sceneManager->CloseScene(e.sceneIndex);
+		_editorContext.CloseScene(e.sceneIndex);
 	}
 	else // Cancel
 	{
@@ -241,6 +245,13 @@ bool EditorApplicationLayer::OnRequestCloseSceneEvent(const RequestCloseSceneEve
 	}
 	
 	return true;
+}
+
+bool EditorApplicationLayer::OnDestroyScene(const OnDestroySceneEvent& e)
+{
+	LOG_TRACE() << e.GetName() << " received in editor layer.";
+	_undoManager.EraseContext(e.registry);
+	return false;
 }
 
 PopupResult EditorApplicationLayer::InvokePopupRequestSaveChanges(const size_t sceneIndex)

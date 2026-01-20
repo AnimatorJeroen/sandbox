@@ -2,6 +2,7 @@
 #include "SceneManager.h"
 #include "core/event/EventBus.h"
 #include "core/serializer/Serializer.h"
+#include "app/event/SceneEvent.h"
 
 #include <core/Logger.h>
 
@@ -58,7 +59,8 @@ void SceneManager::SetActiveScene(size_t index)
 void SceneManager::CloseScene(size_t index)
 {
     if (index >= _scenes.size()) return;
-    
+
+	_eventBus.PushImmediateEvent<OnDestroySceneEvent>(OnDestroySceneEvent(&(_scenes.begin() + index)->get()->GetRegistry()));
     _scenes.erase(_scenes.begin() + index);
     
     // Adjust active index if needed
@@ -107,7 +109,6 @@ bool SceneManager::LoadScene(const char* filepath, bool makeActive)
         
         // Set the filepath for the loaded scene
         scene->SetFilepath(filepath);
-        
         _scenes.push_back(scene);
         
         if (makeActive) {

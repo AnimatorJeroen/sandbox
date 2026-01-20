@@ -39,6 +39,7 @@ public:
 
 	bool OnRequestLoadSceneEvent(const RequestLoadSceneEvent& e);
 	bool OnRequestCloseSceneEvent(const RequestCloseSceneEvent& e);
+	bool OnDestroyScene(const OnDestroySceneEvent& e);
 	PopupResult InvokePopupRequestSaveChanges(const size_t sceneIndex);
 	bool OnChangeActiveScene(const OnChangeActiveSceneEvent& e);
 	bool OnRequestApplicationCloseEvent(const Core::RequestApplicationCloseEvent& e);

@@ -6,6 +6,7 @@
 #include <stack>
 #include <vector>
 #include <optional>
+#include <unordered_map>
 
 // ===========================================================================
 // UndoManager: Manages undo/redo stacks (templated directly on FieldTypes)
@@ -13,21 +14,45 @@
 
 namespace Core {
 
+    // Context struct that holds undo/redo state for a specific registry
+    struct UndoContext {
+        entt::registry* registry = nullptr;
+        std::stack<UndoableCommand> undoStack;
+        std::stack<UndoableCommand> redoStack;
+        bool recording = false;
+        std::optional<UndoableCommand> currentCommand;
+    };
 
     template<typename FieldTypes>
     class UndoManager {
     public:
         explicit UndoManager();
-        void SetContext(entt::registry& registry) {
-            _registry = &registry;
+        
+        void SetContext(entt::registry* registry) {
+            auto it = _contexts.find(registry);
+            if (it == _contexts.end()) {
+                // Create new context for this registry
+                UndoContext newContext;
+                newContext.registry = registry;
+                _contexts[registry] = std::move(newContext);
+            }
+            // Switch to this context (always valid after this call)
+            _ctx = &_contexts[registry];
         }
 
+        void EraseContext(entt::registry* registry)
+        {
+            auto it = _contexts.find(registry);
+            if (it != _contexts.end()) {
+                _contexts.erase(it);
+            }
+        }
 
         // Execute a change with FullPath (component type extracted from path string)
         template<typename T>
         void SetField(entt::entity e, const reflection::FullPath& fullPath, T&& value) {
             entt::id_type actualComponentTypeId = resolve_component_type(fullPath.componentType);
-            Execute(e, actualComponentTypeId, fullPath.propertyPath, FieldTypes{ std::forward<T>(value) });
+            SetField(e, actualComponentTypeId, fullPath.propertyPath, FieldTypes{ std::forward<T>(value) });
         }
 
         // Execute a change with Path (sentinel-terminated fixed-size array)
@@ -76,7 +101,7 @@ namespace Core {
 
         // Get the registry pointer
         [[nodiscard]] entt::registry* GetRegistry() const noexcept {
-            return _registry;
+            return _ctx->registry;
         }
 
     private:
@@ -89,14 +114,11 @@ namespace Core {
             return meta_type.info().hash();
         }
 
-        entt::registry* _registry;
-        std::stack<UndoableCommand> _undo_stack;
-        std::stack<UndoableCommand> _redo_stack;
-
-        // Recording state for bundling patches
-        bool _recording = false;
-        std::optional<UndoableCommand> _current_command;
-
+        // Map of registry pointers to their undo contexts
+        std::unordered_map<entt::registry*, UndoContext> _contexts;
+        
+        // Pointer to the currently active context (always valid, points to _dummyContext or a context in _contexts)
+        UndoContext* _ctx;
     };
 
 }

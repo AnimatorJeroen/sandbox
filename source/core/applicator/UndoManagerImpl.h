@@ -16,7 +16,8 @@ namespace Core {
 
     template<typename FieldTypes>
     UndoManager<FieldTypes>::UndoManager()
-        : _recording(false) {
+    {
+        SetContext(nullptr);
     }
 
     // Execute a change and push it onto the undo stack
@@ -26,25 +27,26 @@ namespace Core {
         entt::id_type compId,
         const reflection::Path& pathIds,
         const FieldTypes& newVal) {
+        
         // Create SetFieldOp (captures old value)
-        auto op = std::make_unique<Core::SetFieldOp<FieldTypes>>(*_registry, e, compId, pathIds, newVal);
+        auto op = std::make_unique<Core::SetFieldOp<FieldTypes>>(*_ctx->registry, e, compId, pathIds, newVal);
 
         // Apply the change
         op->Apply();
 
         // If we're recording, add to current command
-        if (_recording && _current_command.has_value()) {
-            _current_command->AddOp(std::move(op));
+        if (_ctx->recording && _ctx->currentCommand.has_value()) {
+            _ctx->currentCommand->AddOp(std::move(op));
         }
         else {
             // Otherwise, push as a single-op command to undo stack
             UndoableCommand command;
             command.AddOp(std::move(op));
-            _undo_stack.push(std::move(command));
+            _ctx->undoStack.push(std::move(command));
 
             // Clear redo stack when a new action is performed
-            while (!_redo_stack.empty()) {
-                _redo_stack.pop();
+            while (!_ctx->redoStack.empty()) {
+                _ctx->redoStack.pop();
             }
         }
     }
@@ -54,26 +56,26 @@ namespace Core {
     void UndoManager<FieldTypes>::CaptureCreate(const std::unordered_set<entt::entity>& selection)
     {
         auto op = std::make_unique<Core::CaptureCreateOp<Cs...>>(
-            *_registry, selection);
+            *_ctx->registry, selection);
 
-        _registry->remove<Cs...>(selection.begin(), selection.end());
+        _ctx->registry->remove<Cs...>(selection.begin(), selection.end());
 
         // Apply the change
         op->Apply();
 
         // If we're recording, add to current command
-        if (_recording && _current_command.has_value()) {
-            _current_command->AddOp(std::move(op));
+        if (_ctx->recording && _ctx->currentCommand.has_value()) {
+            _ctx->currentCommand->AddOp(std::move(op));
         }
         else {
             // Otherwise, push as a single-op command to undo stack
             UndoableCommand command;
             command.AddOp(std::move(op));
-            _undo_stack.push(std::move(command));
+            _ctx->undoStack.push(std::move(command));
 
             // Clear redo stack when a new action is performed
-            while (!_redo_stack.empty()) {
-                _redo_stack.pop();
+            while (!_ctx->redoStack.empty()) {
+                _ctx->redoStack.pop();
             }
         }
 
@@ -84,24 +86,24 @@ namespace Core {
     void UndoManager<FieldTypes>::CaptureDelete(const std::unordered_set<entt::entity>& selection)
     {
         auto op = std::make_unique<Core::CaptureDeleteOp<Cs...>>(
-            *_registry, selection);
+            *_ctx->registry, selection);
 
         // Apply the change
         op->Apply();
 
         // If we're recording, add to current command
-        if (_recording && _current_command.has_value()) {
-            _current_command->AddOp(std::move(op));
+        if (_ctx->recording && _ctx->currentCommand.has_value()) {
+            _ctx->currentCommand->AddOp(std::move(op));
         }
         else {
             // Otherwise, push as a single-op command to undo stack
             UndoableCommand command;
             command.AddOp(std::move(op));
-            _undo_stack.push(std::move(command));
+            _ctx->undoStack.push(std::move(command));
 
             // Clear redo stack when a new action is performed
-            while (!_redo_stack.empty()) {
-                _redo_stack.pop();
+            while (!_ctx->redoStack.empty()) {
+                _ctx->redoStack.pop();
             }
         }
 
@@ -111,58 +113,58 @@ namespace Core {
     // Begin recording operations for bundling
     template<typename FieldTypes>
     void UndoManager<FieldTypes>::BeginUndo() {
-        if (_recording) {
+        if (_ctx->recording) {
             throw std::runtime_error("BeginUndo() called while already recording. Call EndUndo() first.");
         }
-        _recording = true;
-        _current_command = UndoableCommand();
+        _ctx->recording = true;
+        _ctx->currentCommand = UndoableCommand();
     }
 
     // End recording and push all bundled operations as a single undo step
     template<typename FieldTypes>
     void UndoManager<FieldTypes>::EndUndo() {
-        if (!_recording) {
+        if (!_ctx->recording) {
             throw std::runtime_error("EndUndo() called without matching BeginUndo()");
         }
 
-        _recording = false;
+        _ctx->recording = false;
 
         // Only push to undo stack if we have operations
-        if (_current_command.has_value() && !_current_command->Empty()) {
-            _undo_stack.push(std::move(*_current_command));
-            _current_command.reset();
+        if (_ctx->currentCommand.has_value() && !_ctx->currentCommand->Empty()) {
+            _ctx->undoStack.push(std::move(*_ctx->currentCommand));
+            _ctx->currentCommand.reset();
 
             // Clear redo stack when a new action is performed
-            while (!_redo_stack.empty()) {
-                _redo_stack.pop();
+            while (!_ctx->redoStack.empty()) {
+                _ctx->redoStack.pop();
             }
         }
         else {
-            _current_command.reset();
+            _ctx->currentCommand.reset();
         }
     }
 
     // Check if currently recording a bundle
     template<typename FieldTypes>
     bool UndoManager<FieldTypes>::IsRecording() const noexcept {
-        return _recording;
+        return _ctx->recording;
     }
 
     // Undo the last change
     template<typename FieldTypes>
     bool UndoManager<FieldTypes>::Undo() {
-        if (_undo_stack.empty()) {
+        if (_ctx->undoStack.empty()) {
             return false;
         }
 
-        UndoableCommand command = std::move(_undo_stack.top());
-        _undo_stack.pop();
+        UndoableCommand command = std::move(_ctx->undoStack.top());
+        _ctx->undoStack.pop();
 
         // Revert the command (operations are reverted in reverse order internally)
         command.Revert();
 
         // Move to redo stack
-        _redo_stack.push(std::move(command));
+        _ctx->redoStack.push(std::move(command));
 
         return true;
     }
@@ -170,18 +172,18 @@ namespace Core {
     // Redo the last undone change
     template<typename FieldTypes>
     bool UndoManager<FieldTypes>::Redo() {
-        if (_redo_stack.empty()) {
+        if (_ctx->redoStack.empty()) {
             return false;
         }
 
-        UndoableCommand command = std::move(_redo_stack.top());
-        _redo_stack.pop();
+        UndoableCommand command = std::move(_ctx->redoStack.top());
+        _ctx->redoStack.pop();
 
         // Apply the command (operations are applied in forward order)
         command.Apply();
 
         // Move back to undo stack
-        _undo_stack.push(std::move(command));
+        _ctx->undoStack.push(std::move(command));
 
         return true;
     }
@@ -189,34 +191,34 @@ namespace Core {
     // Check if undo is available
     template<typename FieldTypes>
     bool UndoManager<FieldTypes>::CanUndo() const noexcept {
-        return !_undo_stack.empty();
+        return !_ctx->undoStack.empty();
     }
 
     // Check if redo is available
     template<typename FieldTypes>
     bool UndoManager<FieldTypes>::CanRedo() const noexcept {
-        return !_redo_stack.empty();
+        return !_ctx->redoStack.empty();
     }
 
     // Get the size of the undo stack
     template<typename FieldTypes>
     size_t UndoManager<FieldTypes>::UndoStackSize() const noexcept {
-        return _undo_stack.size();
+        return _ctx->undoStack.size();
     }
 
     // Get the size of the redo stack
     template<typename FieldTypes>
     size_t UndoManager<FieldTypes>::RedoStackSize() const noexcept {
-        return _redo_stack.size();
+        return _ctx->redoStack.size();
     }
 
     // Clear all history
     template<typename FieldTypes>
     void UndoManager<FieldTypes>::Clear() {
-        while (!_undo_stack.empty()) _undo_stack.pop();
-        while (!_redo_stack.empty()) _redo_stack.pop();
-        _recording = false;
-        _current_command.reset();
+        while (!_ctx->undoStack.empty()) _ctx->undoStack.pop();
+        while (!_ctx->redoStack.empty()) _ctx->redoStack.pop();
+        _ctx->recording = false;
+        _ctx->currentCommand.reset();
     }
 
 }

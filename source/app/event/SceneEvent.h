@@ -1,6 +1,7 @@
 #pragma once
 #include <core/event/IEvent.h>
 #include <string>
+#include <entt/entt.hpp>	
 
 class RequestLoadSceneEvent : public Core::IEvent
 {
@@ -34,4 +35,12 @@ class OnChangeActiveSceneEvent : public Core::IEvent
 	public:
 		SET_EVENT_TYPE_FUNCTIONS(OnChangeActiveSceneEvent)
 		OnChangeActiveSceneEvent() = default;
+};
+
+class OnDestroySceneEvent : public Core::IEvent
+{
+public:
+	SET_EVENT_TYPE_FUNCTIONS(OnDestroySceneEvent)
+		OnDestroySceneEvent(entt::registry* reg) : registry(reg) {}
+	entt::registry* registry;
 };

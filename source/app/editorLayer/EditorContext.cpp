@@ -173,6 +173,14 @@ void EditorContext::RevertScene()
     LOG_DEBUG() << "Reverting scene: " << filePath;
 }
 
+void EditorContext::CloseScene(const size_t sceneIndex)
+{
+	auto scene = _sceneManager.GetScene(sceneIndex);
+    if (scene == nullptr)
+		return;
+    _sceneManager.CloseScene(sceneIndex);
+}
+
 // === Context Update ===
 
 void EditorContext::OnActiveSceneChanged()
@@ -182,11 +190,7 @@ void EditorContext::OnActiveSceneChanged()
 
     // Update undo manager context
     auto scene = _sceneManager.GetActiveScene();
-    if (scene)
-    {
-        _undoManager.SetContext(scene->GetRegistry());
-        _undoManager.Clear();
-    }
+    _undoManager.SetContext(scene ? &scene->GetRegistry() : nullptr);
 
     LOG_DEBUG() << "Editor context updated for new active scene";
 }

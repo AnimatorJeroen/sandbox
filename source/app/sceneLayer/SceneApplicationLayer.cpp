@@ -27,6 +27,7 @@ _eventBus(*ctx.Get<Core::EventBus>().get())
 
 	REGISTER_CALLBACK((_eventBus), RequestLoadSceneEvent, OnRequestLoadSceneEvent);
 	REGISTER_CALLBACK((_eventBus), OnChangeActiveSceneEvent, OnChangeActiveScene);
+	
 }
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)

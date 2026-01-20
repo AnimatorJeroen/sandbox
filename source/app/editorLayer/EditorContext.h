@@ -54,6 +54,7 @@ public:
     void SaveSceneAs(const size_t sceneIndex);
     void OpenScene();
     void RevertScene();
+	void CloseScene(const size_t sceneIndex);
 
     // === Context Update ===
     /// <summary>

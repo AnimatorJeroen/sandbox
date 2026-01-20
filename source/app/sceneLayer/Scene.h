@@ -33,7 +33,10 @@ class Scene
 			_registry.emplace<Core::UUID>(_sceneEntity);
 			_registry.emplace<SceneData>(_sceneEntity, SceneData{});
 		}
-		~Scene() = default;
+		~Scene() {
+			_registry.clear();
+		}
+
 		Scene(const Scene&) {}
 		
 		void Draw(Core::DrawCommandRecorder& recorder);
