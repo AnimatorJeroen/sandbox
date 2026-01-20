@@ -15,9 +15,9 @@ private:
     Core::EventBus& _eventBus;
     SceneManager& _sceneManager;
     EditorContext& _editorContext;
-    size_t _lastActiveIndex = static_cast<size_t>(-1); // Track last known active scene
+    int _lastActiveIndex = -1; // Track last known active scene
     
-    void ShowCloseSceneConfirmation(size_t sceneIndex);
+    void ShowCloseSceneConfirmation(int sceneIndex);
     
 public:
     OpenDocumentsTopBar(SceneManager& sceneManager, Core::EventBus& eventBus, EditorContext& editorContext) 

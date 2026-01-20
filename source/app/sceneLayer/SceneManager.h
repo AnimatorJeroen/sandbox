@@ -18,29 +18,29 @@ public:
 
     std::shared_ptr<Scene> GetActiveScene() const;
 
-    std::shared_ptr<Scene> GetScene(size_t index) const;
+    std::shared_ptr<Scene> GetScene(int index) const;
 
     const std::vector<std::shared_ptr<Scene>>& GetAllScenes() const;
 
-    size_t GetActiveSceneIndex() const;
+    int GetActiveSceneIndex() const;
 
     std::shared_ptr<Scene> CreateNewScene(const std::string& name, bool makeActive);
     
-    bool SaveScene(size_t index, const std::string& filepath);
+    bool SaveScene(int index, const std::string& filepath);
 
     bool LoadScene(const char* filepath, bool makeActive = true);
 
     bool SaveActiveScene(const std::string& filepath);
 
-    void SetActiveScene(size_t index);
+    void SetActiveScene(int index);
 
-    void CloseScene(size_t index);
+    void CloseScene(int index);
 
-    size_t GetSceneCount() const;
+    int GetSceneCount() const;
 
 private:
     std::vector<std::shared_ptr<Scene>> _scenes;
-    size_t _activeSceneIndex = -1;
+    int _activeSceneIndex = -1;
     Core::EventBus& _eventBus;
     
     void NotifySceneChanged();

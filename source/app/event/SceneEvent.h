@@ -17,17 +17,17 @@ class RequestLoadSceneEvent : public Core::IEvent
 class RequestSetActiveSceneEvent : public Core::IEvent
 {
 	public:
-		size_t sceneIndex;
+		int sceneIndex;
 		SET_EVENT_TYPE_FUNCTIONS(RequestSetActiveSceneEvent)
-		RequestSetActiveSceneEvent(size_t index) : sceneIndex(index) {}
+		RequestSetActiveSceneEvent(int index) : sceneIndex(index) {}
 };
 
 class RequestCloseSceneEvent : public Core::IEvent
 {
 	public:
-		size_t sceneIndex;
+		int sceneIndex;
 		SET_EVENT_TYPE_FUNCTIONS(RequestCloseSceneEvent)
-		RequestCloseSceneEvent(size_t index) : sceneIndex(index) {}
+		RequestCloseSceneEvent(int index) : sceneIndex(index) {}
 };
 
 class OnChangeActiveSceneEvent : public Core::IEvent

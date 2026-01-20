@@ -133,6 +133,12 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 			_editorContext.SaveScene(activeSceneIndex);
 		}
 	}
+	else if (e.key == 'N' && !e.repeated) {
+		if (e.mods & Core::KMOD_CONTROL)
+		{
+			_editorContext.NewScene("Untitled", true);
+		}
+	}
 	else if (e.key == 'O' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
@@ -196,7 +202,8 @@ bool EditorApplicationLayer::OnRequestApplicationCloseEvent(const Core::RequestA
 
 	while (_sceneManager->GetSceneCount() > 0)
 	{
-		size_t sceneIndex = _sceneManager->GetSceneCount() - 1;
+		int sceneIndex = _sceneManager->GetSceneCount() - 1;
+
 		bool isDirty = _editorContext.IsSceneDirty(sceneIndex);
 		if (!isDirty)
 		{
@@ -229,6 +236,12 @@ bool EditorApplicationLayer::OnRequestCloseSceneEvent(const RequestCloseSceneEve
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 
+	bool isDirty = _editorContext.IsSceneDirty(e.sceneIndex);
+	if (!isDirty)
+	{
+		_editorContext.CloseScene(e.sceneIndex);
+		return true;
+	}
 	// Show blocking confirmation
 	PopupResult result = InvokePopupRequestSaveChanges(e.sceneIndex);
 	
@@ -260,7 +273,7 @@ bool EditorApplicationLayer::OnDestroyScene(const OnDestroySceneEvent& e)
 	return false;
 }
 
-PopupResult EditorApplicationLayer::InvokePopupRequestSaveChanges(const size_t sceneIndex)
+PopupResult EditorApplicationLayer::InvokePopupRequestSaveChanges(const int sceneIndex)
 {
 	// Get scene name for the message
 	auto scene = _sceneManager->GetScene(sceneIndex);

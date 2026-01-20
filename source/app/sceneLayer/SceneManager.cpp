@@ -10,13 +10,13 @@ SceneManager::SceneManager(Core::EventBus& eventBus) : _eventBus(eventBus) {}
 
 std::shared_ptr<Scene> SceneManager::GetActiveScene() const
 {
-    if (_activeSceneIndex >= _scenes.size()) return nullptr;
+    if (_activeSceneIndex < 0 || _activeSceneIndex >= static_cast<int>(_scenes.size())) return nullptr;
     return _scenes[_activeSceneIndex];
 }
 
-std::shared_ptr<Scene> SceneManager::GetScene(size_t index) const
+std::shared_ptr<Scene> SceneManager::GetScene(int index) const
 {
-    if (index >= _scenes.size()) return nullptr;
+    if (index < 0 || index >= static_cast<int>(_scenes.size())) return nullptr;
     return _scenes[index];
 }
 
@@ -25,7 +25,7 @@ const std::vector<std::shared_ptr<Scene>>& SceneManager::GetAllScenes() const
     return _scenes;
 }
 
-size_t SceneManager::GetActiveSceneIndex() const
+int SceneManager::GetActiveSceneIndex() const
 {
     return _activeSceneIndex;
 }
@@ -37,17 +37,17 @@ std::shared_ptr<Scene> SceneManager::CreateNewScene(const std::string& name, boo
     _scenes.push_back(scene);
     
     if (makeActive) {
-        SetActiveScene(_scenes.size() - 1);
+        SetActiveScene(static_cast<int>(_scenes.size()) - 1);
     }
     
     return scene;
 }
 
-void SceneManager::SetActiveScene(size_t index)
+void SceneManager::SetActiveScene(int index)
 {
-    if (index >= _scenes.size()) return;
+    if (index < 0 || index >= static_cast<int>(_scenes.size())) return;
     
-    size_t oldIndex = _activeSceneIndex;
+    int oldIndex = _activeSceneIndex;
     _activeSceneIndex = index;
     
     // Push event to event bus if scene changed
@@ -56,16 +56,16 @@ void SceneManager::SetActiveScene(size_t index)
     }
 }
 
-void SceneManager::CloseScene(size_t index)
+void SceneManager::CloseScene(int index)
 {
-    if (index >= _scenes.size()) return;
+    if (index < 0 || index >= static_cast<int>(_scenes.size())) return;
 
 	_eventBus.PushImmediateEvent<OnDestroySceneEvent>(OnDestroySceneEvent(&(_scenes.begin() + index)->get()->GetRegistry()));
     _scenes.erase(_scenes.begin() + index);
     
     // Adjust active index if needed
-    if (_activeSceneIndex >= _scenes.size()) {
-        _activeSceneIndex = _scenes.size() - 1;
+    if (_activeSceneIndex >= static_cast<int>(_scenes.size())) {
+        _activeSceneIndex = static_cast<int>(_scenes.size()) - 1;
     } else if (index <= _activeSceneIndex && _activeSceneIndex > 0) {
         _activeSceneIndex--;
     }
@@ -73,9 +73,9 @@ void SceneManager::CloseScene(size_t index)
     NotifySceneChanged();
 }
 
-size_t SceneManager::GetSceneCount() const
+int SceneManager::GetSceneCount() const
 {
-    return _scenes.size();
+    return static_cast<int>(_scenes.size());
 }
 
 void SceneManager::NotifySceneChanged()
@@ -89,7 +89,7 @@ void SceneManager::NotifySceneChanged()
 bool SceneManager::LoadScene(const char* filepath, bool makeActive)
 {
     // Check if scene with this filepath is already open
-    for (size_t i = 0; i < _scenes.size(); ++i) {
+    for (int i = 0; i < static_cast<int>(_scenes.size()); ++i) {
         if (_scenes[i]->GetFilepath() == filepath) {
             LOG_INFO() << "Scene already open, switching to it: " << filepath;
             if (makeActive) {
@@ -112,7 +112,7 @@ bool SceneManager::LoadScene(const char* filepath, bool makeActive)
         _scenes.push_back(scene);
         
         if (makeActive) {
-            SetActiveScene(_scenes.size() - 1);
+            SetActiveScene(static_cast<int>(_scenes.size()) - 1);
         }
         
         LOG_INFO() << "Scene loaded from: " << filepath;
@@ -129,9 +129,9 @@ bool SceneManager::SaveActiveScene(const std::string& filepath)
     return SaveScene(_activeSceneIndex, filepath);
 }
 
-bool SceneManager::SaveScene(size_t index, const std::string& filepath)
+bool SceneManager::SaveScene(int index, const std::string& filepath)
 {
-    if (index >= _scenes.size()) {
+    if (index < 0 || index >= static_cast<int>(_scenes.size())) {
         LOG_ERROR() << "Invalid scene index: " << index;
         return false;
     }

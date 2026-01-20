@@ -49,13 +49,15 @@ public:
     void Undo();
     void Redo();
 
+
     // === Scene Operations ===
-    void SaveScene(const size_t sceneIndex);
-    void SaveSceneAs(const size_t sceneIndex);
+    void NewScene(const std::string& name, bool makeActive = true);
+    void SaveScene(const int sceneIndex);
+    void SaveSceneAs(const int sceneIndex);
     void OpenScene();
     void RevertScene();
-	void CloseScene(const size_t sceneIndex);
-	bool IsSceneDirty(const size_t sceneIndex) const;
+	void CloseScene(const int sceneIndex);
+	bool IsSceneDirty(const int sceneIndex) const;
 
     // === Context Update ===
     /// <summary>

@@ -20,13 +20,19 @@ void MainMenu::Render()
     {
         if (ImGui::BeginMenu("File"))
         {
-			size_t activeSceneIndex = _editorContext.sceneManager().GetActiveSceneIndex();
-            if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex == -1))
+
+            if(ImGui::MenuItem("New Scene", "Ctrl+N"))
+            {
+                _editorContext.NewScene("Untitled");
+			}
+
+			int activeSceneIndex = _editorContext.sceneManager().GetActiveSceneIndex();
+            if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex != -1))
             {
                 _editorContext.SaveScene(activeSceneIndex);
             }
 
-            if(ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S", false, activeSceneIndex == -1))
+            if(ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S", false, activeSceneIndex != -1))
             {
                 _editorContext.SaveSceneAs(activeSceneIndex);
             }

@@ -95,7 +95,12 @@ void EditorContext::Redo()
 
 // === Scene Operations ===
 
-void EditorContext::SaveScene(const size_t sceneIndex)
+void EditorContext::NewScene(const std::string& name, bool makeActive)
+{
+    _sceneManager.CreateNewScene(name, makeActive);
+}
+
+void EditorContext::SaveScene(const int sceneIndex)
 {
     auto scene = _sceneManager.GetScene(sceneIndex);
     if (scene && !scene->GetFilepath().empty())
@@ -113,7 +118,7 @@ void EditorContext::SaveScene(const size_t sceneIndex)
     }
 }
 
-void EditorContext::SaveSceneAs(const size_t sceneIndex)
+void EditorContext::SaveSceneAs(const int sceneIndex)
 {
     auto scene = _sceneManager.GetScene(sceneIndex);
     if (scene == nullptr)
@@ -177,7 +182,7 @@ void EditorContext::RevertScene()
     LOG_DEBUG() << "Reverting scene: " << filePath;
 }
 
-void EditorContext::CloseScene(const size_t sceneIndex)
+void EditorContext::CloseScene(const int sceneIndex)
 {
 	auto scene = _sceneManager.GetScene(sceneIndex);
     if (scene == nullptr)
@@ -185,7 +190,7 @@ void EditorContext::CloseScene(const size_t sceneIndex)
     _sceneManager.CloseScene(sceneIndex);
 }
 
-bool EditorContext::IsSceneDirty(const size_t sceneIndex) const
+bool EditorContext::IsSceneDirty(const int sceneIndex) const
 {
     auto scene = _sceneManager.GetScene(sceneIndex);
     return scene ? _undoManager.IsContextDirty(

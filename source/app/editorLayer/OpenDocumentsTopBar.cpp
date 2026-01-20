@@ -8,7 +8,7 @@ void OpenDocumentsTopBar::Render()
 {
     // Get all open scenes
     const auto& scenes = _sceneManager.GetAllScenes();
-    size_t activeIndex = _sceneManager.GetActiveSceneIndex();
+    int activeIndex = _sceneManager.GetActiveSceneIndex();
 
     if (scenes.empty())
         return;
@@ -34,10 +34,10 @@ void OpenDocumentsTopBar::Render()
     {
         // Track if we need to close a scene
         int sceneToClose = -1;
-        size_t currentlySelectedTab = static_cast<size_t>(-1);
+        int currentlySelectedTab = -1;
 
         // Iterate through all scenes and create tabs
-        for (size_t i = 0; i < scenes.size(); ++i)
+        for (int i = 0; i < static_cast<int>(scenes.size()); ++i)
         {
             auto scene = scenes[i];
             if (!scene)
@@ -84,13 +84,13 @@ void OpenDocumentsTopBar::Render()
             // Check if tab was closed
             if (!tabOpen)
             {
-                sceneToClose = static_cast<int>(i);
+                sceneToClose = i;
             }
         }
 
         // Only update active scene if user clicked a different tab
         // (not if ImGui just re-selected a tab internally)
-        if (currentlySelectedTab != static_cast<size_t>(-1) && 
+        if (currentlySelectedTab != -1 && 
             currentlySelectedTab != activeIndex &&
             currentlySelectedTab != _lastActiveIndex)
         {
@@ -103,7 +103,7 @@ void OpenDocumentsTopBar::Render()
         // Close scene after iteration to avoid invalidating iterator
         if (sceneToClose >= 0)
         {
-            ShowCloseSceneConfirmation(static_cast<size_t>(sceneToClose));
+            ShowCloseSceneConfirmation(sceneToClose);
         }
 
         ImGui::EndTabBar();
@@ -112,7 +112,7 @@ void OpenDocumentsTopBar::Render()
     ImGui::End();
 }
 
-void OpenDocumentsTopBar::ShowCloseSceneConfirmation(size_t sceneIndex)
+void OpenDocumentsTopBar::ShowCloseSceneConfirmation(int sceneIndex)
 {
    _eventBus.PushEvent<RequestCloseSceneEvent>(RequestCloseSceneEvent(sceneIndex));
 }
