@@ -21,6 +21,7 @@ namespace Core {
         std::stack<UndoableCommand> redoStack;
         bool recording = false;
         std::optional<UndoableCommand> currentCommand;
+		bool isDirty = false;
     };
 
     template<typename FieldTypes>
@@ -45,6 +46,23 @@ namespace Core {
             auto it = _contexts.find(registry);
             if (it != _contexts.end()) {
                 _contexts.erase(it);
+            }
+        }
+
+        bool IsContextDirty(entt::registry& registry) const
+        {
+            auto it = _contexts.find(&registry);
+            if (it != _contexts.end()) {
+                return it->second.isDirty;
+            }
+            return false;
+        }
+
+        void MarkContextDirty(entt::registry& registry, bool dirty)
+        {
+            auto it = _contexts.find(&registry);
+            if (it != _contexts.end()) {
+                it->second.isDirty = dirty;
             }
         }
 

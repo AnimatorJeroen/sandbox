@@ -102,7 +102,9 @@ void EditorContext::SaveScene(const size_t sceneIndex)
     {
         // Save to current filepath
         LOG_DEBUG() << "Saving scene to: " << scene->GetFilepath();
-        _sceneManager.SaveActiveScene(scene->GetFilepath());
+        bool success = _sceneManager.SaveActiveScene(scene->GetFilepath());
+        if (success)
+            _undoManager.MarkContextDirty(scene->GetRegistry(), false);
     }
     else
     {
@@ -130,8 +132,10 @@ void EditorContext::SaveSceneAs(const size_t sceneIndex)
 
     if (result.has_value())
     {
-        _sceneManager.SaveScene(sceneIndex, result.value());
         LOG_DEBUG() << "Saving scene as: " << result.value();
+        bool success = _sceneManager.SaveScene(sceneIndex, result.value());
+        if (success)
+            _undoManager.MarkContextDirty(scene->GetRegistry(), false);
     }
 }
 
@@ -179,6 +183,13 @@ void EditorContext::CloseScene(const size_t sceneIndex)
     if (scene == nullptr)
 		return;
     _sceneManager.CloseScene(sceneIndex);
+}
+
+bool EditorContext::IsSceneDirty(const size_t sceneIndex) const
+{
+    auto scene = _sceneManager.GetScene(sceneIndex);
+    return scene ? _undoManager.IsContextDirty(
+        scene->GetRegistry()) : false;
 }
 
 // === Context Update ===

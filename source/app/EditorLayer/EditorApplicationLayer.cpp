@@ -197,6 +197,12 @@ bool EditorApplicationLayer::OnRequestApplicationCloseEvent(const Core::RequestA
 	while (_sceneManager->GetSceneCount() > 0)
 	{
 		size_t sceneIndex = _sceneManager->GetSceneCount() - 1;
+		bool isDirty = _editorContext.IsSceneDirty(sceneIndex);
+		if (!isDirty)
+		{
+			_editorContext.CloseScene(sceneIndex);
+			continue;
+		}
 		PopupResult result = InvokePopupRequestSaveChanges(sceneIndex);
 
 		if (result == PopupResult::Yes)

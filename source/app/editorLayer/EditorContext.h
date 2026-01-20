@@ -55,6 +55,7 @@ public:
     void OpenScene();
     void RevertScene();
 	void CloseScene(const size_t sceneIndex);
+	bool IsSceneDirty(const size_t sceneIndex) const;
 
     // === Context Update ===
     /// <summary>

@@ -48,6 +48,9 @@ void OpenDocumentsTopBar::Render()
             if (sceneName.empty())
                 sceneName = "Untitled";
 
+            bool isDirty = _editorContext.IsSceneDirty(i);
+            sceneName += isDirty ? " *" : "";
+
             // Create unique ID for each tab
             std::string tabId = sceneName + "##" + std::to_string(i);
 
