@@ -17,8 +17,8 @@ int main() {
     ReflectTypes();
 
 	Core::ApplicationSpecs specs {
-		800,
-		600,
+		1280,
+		720,
 		"Application Skeleton"
 	};
 	Core::Application app(specs);

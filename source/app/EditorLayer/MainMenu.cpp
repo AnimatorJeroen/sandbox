@@ -53,7 +53,7 @@ void MainMenu::Render()
             
             if (ImGui::MenuItem("Exit"))
             {
-                _eventBus.PushEvent<Core::ApplicationCloseEvent>(Core::ApplicationCloseEvent());
+                _eventBus.PushEvent<Core::RequestApplicationCloseEvent>(Core::RequestApplicationCloseEvent());
             }
             ImGui::EndMenu();
         }
