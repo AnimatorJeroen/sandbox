@@ -4,11 +4,18 @@
 #include "core/UUID.h"
 #include <glm/gtc/matrix_transform.hpp>
 
+void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight)
+{
+	// Update view matrix
+	m_ViewMatrix = glm::lookAt(m_CameraPosition, m_CameraTarget, m_CameraUp);
+	
+	// Update projection matrix
+	float aspect = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
+	m_ProjectionMatrix = glm::perspective(glm::radians(m_CameraFOV), aspect, m_CameraNear, m_CameraFar);
+}
+
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
-	//for (const auto& shape : _shapes) {
-	//	shape->Draw(recorder);
-	//}
 
 	int i = 0;
 	for (auto entity : _registry.view<Transform>()) {

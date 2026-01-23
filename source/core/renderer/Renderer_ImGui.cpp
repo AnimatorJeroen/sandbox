@@ -136,4 +136,25 @@ namespace Core {
 	void Renderer_ImGui::EndFrame()
 	{
 	}
+	
+	std::shared_ptr<IMesh> Renderer_ImGui::CreateMesh()
+	{
+		// ImGui doesn't support mesh rendering
+		return nullptr;
+	}
+	
+	void Renderer_ImGui::DrawMesh(const std::shared_ptr<IMesh>& mesh)
+	{
+		// ImGui doesn't support mesh rendering - no-op
+	}
+	
+	void Renderer_ImGui::SetViewMatrix(const glm::mat4& view)
+	{
+		// ImGui is 2D only - no-op
+	}
+	
+	void Renderer_ImGui::SetProjectionMatrix(const glm::mat4& projection)
+	{
+		// ImGui is 2D only - no-op
+	}
 }

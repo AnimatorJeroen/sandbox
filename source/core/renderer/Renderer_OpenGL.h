@@ -44,6 +44,10 @@ namespace Core {
         std::shared_ptr<IMesh> CreateMesh() override;
         void DrawMesh(const std::shared_ptr<IMesh>& mesh) override;
         void DrawMesh(const std::shared_ptr<IMesh>& mesh, const ColorRGBA& color);
+        
+        // 3D camera support
+        void SetViewMatrix(const glm::mat4& view) override;
+        void SetProjectionMatrix(const glm::mat4& projection) override;
 
     private:
         void InitializeShaders();

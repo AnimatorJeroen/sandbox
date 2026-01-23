@@ -54,8 +54,14 @@ public:
 		auto scene = _sceneManager->GetActiveScene();
 		if (!scene) return;
 
-		_recorder.Clear();
+		// Update camera matrices based on viewport size
+		scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
+		
+		// Set the scene's camera matrices to the renderer
+		_renderer.SetViewMatrix(scene->GetViewMatrix());
+		_renderer.SetProjectionMatrix(scene->GetProjectionMatrix());
 
+		_recorder.Clear();
 		scene->Draw(_recorder);
 		
 		_renderer.BeginFrame(_renderSpecs);

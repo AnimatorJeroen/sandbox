@@ -362,15 +362,7 @@ namespace Core {
         // Clear cube instances from previous frame
         m_CubeInstances.clear();
 
-        // Set up 3D camera matrices (used in EndFrame for cube rendering)
-        m_ViewMatrix = glm::lookAt(
-            glm::vec3(0.0f, 5.0f, 10.0f),  // Camera position
-            glm::vec3(0.0f, 0.0f, 0.0f),   // Look at origin
-            glm::vec3(0.0f, 1.0f, 0.0f)    // Up vector
-        );
-        
-        float aspect = static_cast<float>(target.width) / static_cast<float>(target.height);
-        m_ProjectionMatrix = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+        // Note: View and projection matrices are now set externally via SetViewMatrix/SetProjectionMatrix
 
         // Since ImGui rendering is disabled in Application.cpp, we need to:
         // 1. Set the viewport
@@ -544,6 +536,14 @@ namespace Core {
         }
         
         mesh->Unbind();
+    }
+    
+    void Renderer_OpenGL::SetViewMatrix(const glm::mat4& view) {
+        m_ViewMatrix = view;
+    }
+    
+    void Renderer_OpenGL::SetProjectionMatrix(const glm::mat4& projection) {
+        m_ProjectionMatrix = projection;
     }
 
 }
