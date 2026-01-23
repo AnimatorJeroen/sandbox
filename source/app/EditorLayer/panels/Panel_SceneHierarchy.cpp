@@ -7,8 +7,6 @@
 #include <core/UUID.h>
 #include <algorithm>
 
-#include <app/sceneLayer/shape/Circle.h>
-
 Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, EditorContext& editorContext) 
     : _scene(&scene), _editorContext(editorContext)
 {
@@ -47,23 +45,7 @@ void Panel_SceneHierarchy::Render()
         _editorContext.applicator().SetField(_scene->GetSceneEntity(), "Scene.name", String64(inputTextbuffer));
         _editorContext.EndUndo();
     }
-	
-    if (ImGui::Button("Add Circle"))
-    {
-        static int posIncr = 0;
-        auto newCircle = std::make_shared<Circle>(
-            glm::vec2{ 150.0f + posIncr, 150.0f },  // center
-            15.0f,                        // radius
-            true,                         // filled
-            Core::ColorRGBA{ 1.0f, 0.0f, 0.0f, 1.0f },  // color
-            32,                           // num_segments
-            1.0f                          // thickness
-        );
-        _scene->GetShapes().push_back(newCircle);
-        posIncr += 20;
-    }
 
-    ImGui::SameLine();
     if (ImGui::Button("Add Entity"))
     {
         _editorContext.BeginUndo();

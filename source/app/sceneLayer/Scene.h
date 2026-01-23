@@ -9,7 +9,6 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
 
-#include "shape/IShape.h"
 #include <entt/entt.hpp>
 #include <core/renderer/DrawCommandRecorder.h>
 #include <core/UUID.h>
@@ -65,7 +64,7 @@ class Scene
 			}
 
 			// Serialize the data
-			archive(sceneData, _shapes, uuids, names);
+			archive(sceneData, uuids, names);
 		}
 
 		template<class Archive>
@@ -75,7 +74,7 @@ class Scene
 			std::vector<Core::UUID> uuids;
 			std::vector<NameComponent> names;
 
-			archive(sceneData, _shapes, uuids, names);
+			archive(sceneData, uuids, names);
 
 			// Recreate entities from loaded data
 			for (size_t i = 0; i < uuids.size(); ++i) {
@@ -89,8 +88,6 @@ class Scene
 				}
 			}
 		}
-
-		inline std::vector<std::shared_ptr<IShape>>& GetShapes() { return _shapes; }
 
 		// Access entt registry
 		inline entt::registry& GetRegistry() { return _registry; }
@@ -118,7 +115,6 @@ class Scene
 
 	private:
 		entt::entity _sceneEntity;
-		std::vector<std::shared_ptr<IShape>> _shapes;
 		int a = 0;
 		entt::registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
