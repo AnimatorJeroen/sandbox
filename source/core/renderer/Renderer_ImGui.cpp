@@ -1,15 +1,18 @@
 #include "pch.h"
 #include "Renderer_ImGui.h"
 #include "imgui/imgui.h"
+#include <vector>
 
 namespace Core {
 
 	static ImDrawList* draw_list = nullptr;
+	static std::vector<ImVec2> polygon_points;
+	static ImU32 polygon_color = IM_COL32(255, 255, 255, 255);
+	static float polygon_thickness = 1.0f;
 
 	void Renderer_ImGui::BeginFrame(const IRenderer::RenderTargetSpecs& target)
 	{
 		draw_list = ImGui::GetBackgroundDrawList();
-
 	}
 
 	void Renderer_ImGui::Submit(const DrawCommandBuffer& cmdBuf)
@@ -18,22 +21,47 @@ namespace Core {
 		{
 			switch (cmd.type)
 			{
-			case CommandType::Line:
+			case CommandType::PolygonBegin:
 			{
-				const auto& line = cmd.line;
-				draw_list->AddLine(
-					ImVec2(line.p0.x, line.p0.y),
-					ImVec2(line.p1.x, line.p1.y),
-					IM_COL32(
-						static_cast<uint8_t>(line.color.r * 255),
-						static_cast<uint8_t>(line.color.g * 255),
-						static_cast<uint8_t>(line.color.b * 255),
-						static_cast<uint8_t>(line.color.a * 255)
-					),
-					line.thickness
+				const auto& polyBegin = cmd.polyBegin;
+				polygon_points.clear();
+				polygon_points.push_back(ImVec2(polyBegin.p.x, polyBegin.p.y));
+				polygon_color = IM_COL32(
+					static_cast<uint8_t>(polyBegin.color.r * 255),
+					static_cast<uint8_t>(polyBegin.color.g * 255),
+					static_cast<uint8_t>(polyBegin.color.b * 255),
+					static_cast<uint8_t>(polyBegin.color.a * 255)
 				);
+				polygon_thickness = polyBegin.thickness;
 				break;
 			}
+			
+			case CommandType::PolygonPoint:
+			{
+				const auto& polyPoint = cmd.polyPoint;
+				polygon_points.push_back(ImVec2(polyPoint.p.x, polyPoint.p.y));
+				break;
+			}
+			
+			case CommandType::PolygonEnd:
+			{
+				const auto& polyEnd = cmd.polyEnd;
+				polygon_points.push_back(ImVec2(polyEnd.p.x, polyEnd.p.y));
+				
+				// Draw polyline
+				if (polygon_points.size() >= 2) {
+					draw_list->AddPolyline(
+						polygon_points.data(),
+						static_cast<int>(polygon_points.size()),
+						polygon_color,
+						false, // not closed
+						polygon_thickness
+					);
+				}
+				polygon_points.clear();
+				break;
+			}
+			
 			case CommandType::Circle:
 			{
 				const auto& circle = cmd.circle;
@@ -88,11 +116,9 @@ namespace Core {
 				break;
 			}
 		}
-
 	}
 
 	void Renderer_ImGui::EndFrame()
 	{
-
 	}
 }

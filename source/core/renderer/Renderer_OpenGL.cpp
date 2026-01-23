@@ -226,32 +226,69 @@ namespace Core {
     void Renderer_OpenGL::Submit(const DrawCommandBuffer& cmdBuf) {
         for (const auto& cmd : cmdBuf.Data()) {
             switch (cmd.type) {
-                case CommandType::Line: {
-                    const auto& line = cmd.line;
+                case CommandType::PolygonBegin: {
+                    const auto& polyBegin = cmd.polyBegin;
                     
-                    // Create two vertices for the line
-                    Vertex vertices[2];
-                    vertices[0].position = line.p0;
-                    vertices[0].texCoord = {0.0f, 0.0f};
-                    vertices[0].color = line.color;
+                    // Start new polygon, store color and thickness
+                    m_PolygonVertices.clear();
+                    m_PolygonColor = polyBegin.color;
+                    m_PolygonThickness = polyBegin.thickness;
                     
-                    vertices[1].position = line.p1;
-                    vertices[1].texCoord = {1.0f, 1.0f};
-                    vertices[1].color = line.color;
-
-                    glBindVertexArray(m_LineVAO);
-                    glBindBuffer(GL_ARRAY_BUFFER, m_LineVBO);
-                    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-
-                    glLineWidth(line.thickness);
-                    glDrawArrays(GL_LINES, 0, 2);
+                    // Add first vertex
+                    Vertex v;
+                    v.position = polyBegin.p;
+                    v.texCoord = {0.0f, 0.0f};
+                    v.color = polyBegin.color;
+                    m_PolygonVertices.push_back(v);
                     break;
                 }
+                
+                case CommandType::PolygonPoint: {
+                    const auto& polyPoint = cmd.polyPoint;
+                    
+                    // Add intermediate point to polygon
+                    Vertex v;
+                    v.position = polyPoint.p;
+                    v.texCoord = {0.0f, 0.0f};
+                    v.color = m_PolygonColor;
+                    m_PolygonVertices.push_back(v);
+                    break;
+                }
+                
+                case CommandType::PolygonEnd: {
+                    const auto& polyEnd = cmd.polyEnd;
+                    
+                    // Add final point
+                    Vertex v;
+                    v.position = polyEnd.p;
+                    v.texCoord = {1.0f, 1.0f};
+                    v.color = m_PolygonColor;
+                    m_PolygonVertices.push_back(v);
+                    
+                    // Now render all the vertices as a line strip
+                    if (m_PolygonVertices.size() >= 2) {
+                        glBindVertexArray(m_LineVAO);
+                        glBindBuffer(GL_ARRAY_BUFFER, m_LineVBO);
+                        glBufferData(GL_ARRAY_BUFFER, 
+                                    m_PolygonVertices.size() * sizeof(Vertex), 
+                                    m_PolygonVertices.data(), 
+                                    GL_DYNAMIC_DRAW);
+
+                        glLineWidth(m_PolygonThickness);
+                        glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(m_PolygonVertices.size()));
+                    }
+                    
+                    // Clear polygon state
+                    m_PolygonVertices.clear();
+                    break;
+                }
+                
                 case CommandType::Circle:
                 case CommandType::QuadraticBezier:
                 case CommandType::CubicBezier:
                     // Skip rendering circles and bezier curves as requested
                     break;
+                    
                 default:
                     break;
             }

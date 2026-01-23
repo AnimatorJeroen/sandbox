@@ -10,18 +10,26 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 	//}
 
 	int i = 0;
-	for (auto entity : _registry.view<NameComponent>()) {
-		// Just a demo: draw a circle at position based on UUID
-		auto uuid = _registry.get<Core::UUID>(entity);
+	for (auto entity : _registry.view<Transform>()) {
+		auto& transform = _registry.get<Transform>(entity);
 
-		float x = static_cast<float>((20)); // Assuming window width 800
-		float y = static_cast<float>((100) + i * 5); // Assuming window height 600
+		float x = transform.Position.x; // Assuming window width 800
+		float y = transform.Position.y + 100 + i * 15; // Assuming window height 600
 		recorder.Line(
 			{ x - 10.0f, y },
 			{ x + 10.0f, y },
 			2,
 			{ 1.0f, 0.0f, 0.0f, 1.0f }
 		);
+
+		recorder.PolygonBegin({ x - 10.0f, y - 10.0f },2.0f,
+			{ 0.0f, 1.0f, 0.0f, 1.0f }
+		);
+		recorder.PolygonPoint({ x + 10.0f, y - 10.0f });
+		recorder.PolygonPoint({ x + 10.0f, y + 10.0f });
+		recorder.PolygonPoint({ x - 10.0f, y + 10.0f });
+		recorder.PolygonEnd({ x - 10.0f, y - 10.0f });
+
 		i++;
 	}
 }
@@ -57,6 +65,16 @@ entt::entity Scene::CreateEntity(const std::string& name)
 	
 	// Add name component
 	_registry.emplace<NameComponent>(e, name);
+
+	// Generate random position between 0 and 400
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	static std::uniform_real_distribution<float> dis(0.0f, 400.0f);
+	
+	float x = dis(gen);
+	float y = dis(gen);
+
+	_registry.emplace<Transform>(e, Transform{x, y});
 
 	return e;
 }

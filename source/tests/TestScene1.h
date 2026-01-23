@@ -40,6 +40,13 @@ public:
 		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
 		pingpong = std::min(1.0f, std::max(0.0f, pingpong + incr * deltaTime));
 
+		//int i = 0;
+		//for (auto entity : scene->GetRegistry().view<Transform>()) {
+		//	auto& transform = scene->GetRegistry().get<Transform>(entity);
+		//	transform.Position.x = pingpong * 10.0f * i;
+		//	i++;
+		//}
+
 	}
 
 	inline void Render() override

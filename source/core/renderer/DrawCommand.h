@@ -5,7 +5,9 @@
 namespace Core {
 
     enum class CommandType : uint8_t {
-        Line,
+        PolygonBegin,
+        PolygonPoint,
+        PolygonEnd,
         Circle,
         QuadraticBezier,
         CubicBezier,
@@ -20,11 +22,18 @@ namespace Core {
     };
 
     // Keep command payloads POD and compact.
-    struct LineCmd {
-        Vec2 p0;
-        Vec2 p1;
+    struct PolygonBeginCmd {
+        Vec2 p;
         float thickness;
         ColorRGBA color;
+    };
+
+    struct PolygonPointCmd {
+        Vec2 p;
+    };
+
+    struct PolygonEndCmd {
+        Vec2 p;
     };
 
     struct CircleCmd {
@@ -53,15 +62,23 @@ namespace Core {
         CommandType type;
         // padding may be added by the compiler—ok for simplicity
         union {
-            LineCmd line;
+            PolygonBeginCmd polyBegin;
+            PolygonPointCmd polyPoint;
+            PolygonEndCmd polyEnd;
             CircleCmd circle;
             QuadraticBezierCmd qbez;
             CubicBezierCmd cbez;
         };
 
         // Helpers to construct commands
-        static DrawCommand Add(const LineCmd& c) {
-            DrawCommand cmd; cmd.type = CommandType::Line; cmd.line = c; return cmd;
+        static DrawCommand Add(const PolygonBeginCmd& c) {
+            DrawCommand cmd; cmd.type = CommandType::PolygonBegin; cmd.polyBegin = c; return cmd;
+        }
+        static DrawCommand Add(const PolygonPointCmd& c) {
+            DrawCommand cmd; cmd.type = CommandType::PolygonPoint; cmd.polyPoint = c; return cmd;
+        }
+        static DrawCommand Add(const PolygonEndCmd& c) {
+            DrawCommand cmd; cmd.type = CommandType::PolygonEnd; cmd.polyEnd = c; return cmd;
         }
         static DrawCommand Add(const CircleCmd& c) {
             DrawCommand cmd; cmd.type = CommandType::Circle; cmd.circle = c; return cmd;

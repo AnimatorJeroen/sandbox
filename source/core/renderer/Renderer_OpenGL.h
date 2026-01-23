@@ -62,6 +62,11 @@ namespace Core {
         
         RenderTargetSpecs m_CurrentTarget;
         
+        // Polygon state tracking
+        std::vector<Vertex> m_PolygonVertices;
+        ColorRGBA m_PolygonColor = {1.0f, 1.0f, 1.0f, 1.0f};
+        float m_PolygonThickness = 1.0f;
+        
         // Saved OpenGL state for restoration
         GLuint m_SavedShaderProgram = 0;
         GLuint m_SavedVAO = 0;
