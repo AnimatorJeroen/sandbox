@@ -8,6 +8,22 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 	//for (const auto& shape : _shapes) {
 	//	shape->Draw(recorder);
 	//}
+
+	int i = 0;
+	for (auto entity : _registry.view<NameComponent>()) {
+		// Just a demo: draw a circle at position based on UUID
+		auto uuid = _registry.get<Core::UUID>(entity);
+
+		float x = static_cast<float>((20)); // Assuming window width 800
+		float y = static_cast<float>((100) + i * 5); // Assuming window height 600
+		recorder.Line(
+			{ x - 10.0f, y },
+			{ x + 10.0f, y },
+			2,
+			{ 1.0f, 0.0f, 0.0f, 1.0f }
+		);
+		i++;
+	}
 }
 
 void Scene::SetName(const std::string& name)

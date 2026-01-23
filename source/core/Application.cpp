@@ -26,15 +26,17 @@ namespace Core
 			return;
 		}
 
+#ifdef USE_IMGUI
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
 		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)_window->GetHandle(), true);
 		ImGui_ImplOpenGL3_Init("#version 330");
+#endif
 
 		_layerContext.Register<EventBus>(_eventBus);
-		_layerContext.Register<Window>(_window); // Register Window so layers can access it
-		
+		_layerContext.Register<Window>(_window); // Register Window so layers can access itP
+
 		//register callbacks
 		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);
 		REGISTER_CALLBACK((*_eventBus), WindowCloseEvent, OnWindowCloseEvent);
@@ -57,9 +59,11 @@ namespace Core
 			_window->PollEvents();
 			_eventBus->HandleEvents();
 
+#ifdef USE_IMGUI
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
+#endif
 
 			currentFrameTime = static_cast<float>(glfwGetTime());
 			deltaTime = currentFrameTime - lastFrameTime;
@@ -75,11 +79,14 @@ namespace Core
 				(*it)->OnRender();
 			}
 
+#ifdef USE_IMGUI
 			ImGui::Render();
-			ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-			glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-			glClear(GL_COLOR_BUFFER_BIT);
+			//// if now renderer handles the glClear, we need to do it here
+			////ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+			////glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+			////glClear(GL_COLOR_BUFFER_BIT);
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
 
 			_window->SwapBuffers();
 		}
@@ -90,9 +97,11 @@ namespace Core
 	{
 		_window.reset();
 
+#ifdef USE_IMGUI
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+#endif
 
 		glfwTerminate();
 	}

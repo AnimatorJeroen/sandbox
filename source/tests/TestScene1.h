@@ -3,6 +3,7 @@
 #include "app/sceneLayer/Scene.h"
 #include "app/sceneLayer/SceneManager.h"
 #include "core/renderer/Renderer_ImGui.h"
+#include "core/renderer/Renderer_OpenGL.h"
 #include <memory>
 
 class TestScene1 : public ITestScene
@@ -10,8 +11,8 @@ class TestScene1 : public ITestScene
 private:
 	std::shared_ptr<SceneManager> _sceneManager;
 	Core::DrawCommandRecorder _recorder;
-	Core::Renderer_ImGui _renderer;
-	Core::Renderer_ImGui::RenderTargetSpecs _renderSpecs;
+	Core::Renderer_OpenGL _renderer;
+	Core::Renderer_OpenGL::RenderTargetSpecs _renderSpecs;
 
 public:
 	inline explicit TestScene1(std::shared_ptr<SceneManager> sceneManager) : _sceneManager(sceneManager)
@@ -47,7 +48,9 @@ public:
 		if (!scene) return;
 
 		_recorder.Clear();
+
 		scene->Draw(_recorder);
+		
 		_renderer.BeginFrame(_renderSpecs);
 		_renderer.Submit(_recorder.GetCommandBuffer());
 		_renderer.EndFrame();

@@ -115,6 +115,8 @@ namespace Core
         // Store this pointer for callback access
         glfwSetWindowUserPointer((GLFWwindow*)_glfwWindow, this);
 
+        _eventBus->PushEvent<WindowResizeEvent>(WindowResizeEvent(width, height));
+
         SetCallBacks();
 
 	}
