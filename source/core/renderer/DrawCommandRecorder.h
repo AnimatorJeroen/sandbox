@@ -15,8 +15,8 @@ namespace Core {
 		}
 		
 		// Polygon commands
-		inline void PolygonBegin(const Vec2& p, float thickness, const ColorRGBA& color) {
-			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ p, thickness, color }));
+		inline void PolygonBegin(const Vec2& p, float thickness, const ColorRGBA& color, bool filled = false) {
+			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ p, thickness, color, filled }));
 		}
 		
 		inline void PolygonPoint(const Vec2& p) {
@@ -29,7 +29,7 @@ namespace Core {
 		
 		// Convenience method for drawing a simple line (2 points)
 		inline void Line(const Vec2& p0, const Vec2& p1, float thickness, const ColorRGBA& color) {
-			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ p0, thickness, color }));
+			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ p0, thickness, color, false }));
 			_cmdBuffer.Push(DrawCommand::Add(PolygonEndCmd{ p1 }));
 		}
 		

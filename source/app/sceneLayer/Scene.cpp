@@ -15,20 +15,21 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 
 		float x = transform.Position.x; // Assuming window width 800
 		float y = transform.Position.y + 100 + i * 15; // Assuming window height 600
+
+		recorder.PolygonBegin({ x - 10.0f, y - 10.0f },2.0f,
+			{ 0.0f, 1.0f, 0.0f, 1.0f }, true
+		);
+		recorder.PolygonPoint({ x + 10.0f, y - 10.0f });
+		recorder.PolygonPoint({ x + 10.0f, y + 10.0f });
+		recorder.PolygonPoint({ x - 10.0f, y + 10.0f });
+		recorder.PolygonEnd({ x - 10.0f, y - 10.0f });
+
 		recorder.Line(
 			{ x - 10.0f, y },
 			{ x + 10.0f, y },
 			2,
 			{ 1.0f, 0.0f, 0.0f, 1.0f }
 		);
-
-		recorder.PolygonBegin({ x - 10.0f, y - 10.0f },2.0f,
-			{ 0.0f, 1.0f, 0.0f, 1.0f }
-		);
-		recorder.PolygonPoint({ x + 10.0f, y - 10.0f });
-		recorder.PolygonPoint({ x + 10.0f, y + 10.0f });
-		recorder.PolygonPoint({ x - 10.0f, y + 10.0f });
-		recorder.PolygonEnd({ x - 10.0f, y - 10.0f });
 
 		i++;
 	}

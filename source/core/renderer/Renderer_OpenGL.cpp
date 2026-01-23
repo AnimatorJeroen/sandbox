@@ -229,10 +229,11 @@ namespace Core {
                 case CommandType::PolygonBegin: {
                     const auto& polyBegin = cmd.polyBegin;
                     
-                    // Start new polygon, store color and thickness
+                    // Start new polygon, store color, thickness, and filled state
                     m_PolygonVertices.clear();
                     m_PolygonColor = polyBegin.color;
                     m_PolygonThickness = polyBegin.thickness;
+                    m_PolygonFilled = polyBegin.filled;
                     
                     // Add first vertex
                     Vertex v;
@@ -265,7 +266,7 @@ namespace Core {
                     v.color = m_PolygonColor;
                     m_PolygonVertices.push_back(v);
                     
-                    // Now render all the vertices as a line strip
+                    // Now render all the vertices
                     if (m_PolygonVertices.size() >= 2) {
                         glBindVertexArray(m_LineVAO);
                         glBindBuffer(GL_ARRAY_BUFFER, m_LineVBO);
@@ -274,8 +275,14 @@ namespace Core {
                                     m_PolygonVertices.data(), 
                                     GL_DYNAMIC_DRAW);
 
-                        glLineWidth(m_PolygonThickness);
-                        glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(m_PolygonVertices.size()));
+                        if (m_PolygonFilled) {
+                            // Render as filled polygon (triangle fan)
+                            glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<GLsizei>(m_PolygonVertices.size()));
+                        } else {
+                            // Render as line strip
+                            glLineWidth(m_PolygonThickness);
+                            glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(m_PolygonVertices.size()));
+                        }
                     }
                     
                     // Clear polygon state

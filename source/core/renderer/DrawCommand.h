@@ -26,6 +26,7 @@ namespace Core {
         Vec2 p;
         float thickness;
         ColorRGBA color;
+        bool filled;
     };
 
     struct PolygonPointCmd {

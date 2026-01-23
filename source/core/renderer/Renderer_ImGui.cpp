@@ -9,6 +9,7 @@ namespace Core {
 	static std::vector<ImVec2> polygon_points;
 	static ImU32 polygon_color = IM_COL32(255, 255, 255, 255);
 	static float polygon_thickness = 1.0f;
+	static bool polygon_filled = false;
 
 	void Renderer_ImGui::BeginFrame(const IRenderer::RenderTargetSpecs& target)
 	{
@@ -33,6 +34,7 @@ namespace Core {
 					static_cast<uint8_t>(polyBegin.color.a * 255)
 				);
 				polygon_thickness = polyBegin.thickness;
+				polygon_filled = polyBegin.filled;
 				break;
 			}
 			
@@ -48,15 +50,25 @@ namespace Core {
 				const auto& polyEnd = cmd.polyEnd;
 				polygon_points.push_back(ImVec2(polyEnd.p.x, polyEnd.p.y));
 				
-				// Draw polyline
+				// Draw polygon
 				if (polygon_points.size() >= 2) {
-					draw_list->AddPolyline(
-						polygon_points.data(),
-						static_cast<int>(polygon_points.size()),
-						polygon_color,
-						false, // not closed
-						polygon_thickness
-					);
+					if (polygon_filled) {
+						// Draw filled convex polygon
+						draw_list->AddConvexPolyFilled(
+							polygon_points.data(),
+							static_cast<int>(polygon_points.size()),
+							polygon_color
+						);
+					} else {
+						// Draw polyline (outline)
+						draw_list->AddPolyline(
+							polygon_points.data(),
+							static_cast<int>(polygon_points.size()),
+							polygon_color,
+							false, // not closed
+							polygon_thickness
+						);
+					}
 				}
 				polygon_points.clear();
 				break;
