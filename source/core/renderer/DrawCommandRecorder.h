@@ -15,23 +15,42 @@ namespace Core {
 			_cmdBuffer.Clear();
 		}
 		
-		// Polygon commands
-		inline void PolygonBegin(const Vec2& p, float thickness, const ColorRGBA& color, bool filled = false) {
+		// Polygon commands (3D)
+		inline void PolygonBegin(const Vec3& p, float thickness, const ColorRGBA& color, bool filled = false) {
 			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ p, thickness, color, filled }));
 		}
 		
-		inline void PolygonPoint(const Vec2& p) {
+		inline void PolygonPoint(const Vec3& p) {
 			_cmdBuffer.Push(DrawCommand::Add(PolygonPointCmd{ p }));
 		}
 		
-		inline void PolygonEnd(const Vec2& p) {
+		inline void PolygonEnd(const Vec3& p) {
 			_cmdBuffer.Push(DrawCommand::Add(PolygonEndCmd{ p }));
+		}
+		
+		// Convenience method for drawing a simple line (2 points in 3D)
+		inline void Line(const Vec3& p0, const Vec3& p1, float thickness, const ColorRGBA& color) {
+			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ p0, thickness, color, false }));
+			_cmdBuffer.Push(DrawCommand::Add(PolygonEndCmd{ p1 }));
+		}
+		
+		// 2D overloads (convert to 3D with z=0)
+		inline void PolygonBegin(const Vec2& p, float thickness, const ColorRGBA& color, bool filled = false) {
+			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ {p.x, p.y, 0.0f}, thickness, color, filled }));
+		}
+		
+		inline void PolygonPoint(const Vec2& p) {
+			_cmdBuffer.Push(DrawCommand::Add(PolygonPointCmd{ {p.x, p.y, 0.0f} }));
+		}
+		
+		inline void PolygonEnd(const Vec2& p) {
+			_cmdBuffer.Push(DrawCommand::Add(PolygonEndCmd{ {p.x, p.y, 0.0f} }));
 		}
 		
 		// Convenience method for drawing a simple line (2 points)
 		inline void Line(const Vec2& p0, const Vec2& p1, float thickness, const ColorRGBA& color) {
-			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ p0, thickness, color, false }));
-			_cmdBuffer.Push(DrawCommand::Add(PolygonEndCmd{ p1 }));
+			_cmdBuffer.Push(DrawCommand::Add(PolygonBeginCmd{ {p0.x, p0.y, 0.0f}, thickness, color, false }));
+			_cmdBuffer.Push(DrawCommand::Add(PolygonEndCmd{ {p1.x, p1.y, 0.0f} }));
 		}
 		
 		inline void Circle(const Vec2& p0, const float size, bool filled, const ColorRGBA& color, int num_segments = 12, float thickness = 1.0f)

@@ -7,7 +7,7 @@
 namespace Core {
 
     struct Vertex {
-        Vec2 position;
+        Vec3 position;
         Vec2 texCoord;
         ColorRGBA color;
     };

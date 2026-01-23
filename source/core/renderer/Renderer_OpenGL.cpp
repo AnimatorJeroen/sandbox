@@ -6,21 +6,21 @@
 
 namespace Core {
 
-    // Vertex shader source
+    // Vertex shader source (for 3D polygons)
     static const char* vertexShaderSource = R"(
         #version 330 core
-        layout (location = 0) in vec2 aPos;
+        layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec2 aTexCoord;
         layout (location = 2) in vec4 aColor;
         
-        uniform mat4 uProjection;
+        uniform mat4 uViewProjection;
         
         out vec2 TexCoord;
         out vec4 Color;
         
         void main()
         {
-            gl_Position = uProjection * vec4(aPos, 0.0, 1.0);
+            gl_Position = uViewProjection * vec4(aPos, 1.0);
             TexCoord = aTexCoord;
             Color = aColor;
         }
@@ -111,9 +111,9 @@ namespace Core {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_Indices.size() * sizeof(uint32_t), m_Indices.data(), GL_STATIC_DRAW);
 
         // Set vertex attributes
-        // Position
+        // Position (3D now)
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
         
         // TexCoord
         glEnableVertexAttribArray(1);
@@ -137,6 +137,10 @@ namespace Core {
     // ========== Renderer_OpenGL Implementation ==========
 
     Renderer_OpenGL::Renderer_OpenGL() {
+        // Initialize matrices to identity
+        m_ViewMatrix = glm::mat4(1.0f);
+        m_ProjectionMatrix = glm::mat4(1.0f);
+        
         InitializeShaders();
         SetupLineRendering();
         SetupCubeRendering();
@@ -232,9 +236,9 @@ namespace Core {
         glBindVertexArray(m_LineVAO);
         glBindBuffer(GL_ARRAY_BUFFER, m_LineVBO);
 
-        // Position attribute
+        // Position attribute (3D now)
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
         
         // TexCoord attribute
         glEnableVertexAttribArray(1);
@@ -374,8 +378,8 @@ namespace Core {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // Disable depth testing for 2D rendering
-        glDisable(GL_DEPTH_TEST);
+        // Enable depth testing for 3D rendering
+        glEnable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
         
         // Enable blending for transparency
@@ -385,13 +389,10 @@ namespace Core {
         // Use our shader program
         glUseProgram(m_ShaderProgram);
 
-        // Set up orthographic projection matrix for 2D rendering
-        glm::mat4 projection2D = glm::ortho(
-            0.0f, static_cast<float>(target.width),
-            static_cast<float>(target.height), 0.0f,
-            -1.0f, 1.0f
-        );
-        glUniformMatrix4fv(m_UniformProjection, 1, GL_FALSE, glm::value_ptr(projection2D));
+        // Set up view-projection matrix for 3D polygon rendering
+        glm::mat4 viewProjection = m_ProjectionMatrix * m_ViewMatrix;
+        GLint uniformViewProj = glGetUniformLocation(m_ShaderProgram, "uViewProjection");
+        glUniformMatrix4fv(uniformViewProj, 1, GL_FALSE, glm::value_ptr(viewProjection));
     }
 
     void Renderer_OpenGL::Submit(const DrawCommandBuffer& cmdBuf) {
@@ -439,6 +440,16 @@ namespace Core {
                     
                     // Now render all the vertices
                     if (m_PolygonVertices.size() >= 2) {
+                        // Only bind shader if it's not already bound
+                        GLint currentProgram = 0;
+                        glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+                        if (currentProgram != static_cast<GLint>(m_ShaderProgram)) {
+                            glUseProgram(m_ShaderProgram);
+                            glm::mat4 viewProjection = m_ProjectionMatrix * m_ViewMatrix;
+                            GLint uniformViewProj = glGetUniformLocation(m_ShaderProgram, "uViewProjection");
+                            glUniformMatrix4fv(uniformViewProj, 1, GL_FALSE, glm::value_ptr(viewProjection));
+                        }
+
                         glBindVertexArray(m_LineVAO);
                         glBindBuffer(GL_ARRAY_BUFFER, m_LineVBO);
                         glBufferData(GL_ARRAY_BUFFER, 

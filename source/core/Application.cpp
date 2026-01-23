@@ -81,10 +81,10 @@ namespace Core
 
 #ifdef USE_IMGUI
 			ImGui::Render();
-			//// if now renderer handles the glClear, we need to do it here
-			////ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-			////glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-			////glClear(GL_COLOR_BUFFER_BIT);
+			// if no renderer handles the glClear, we need to do it here
+			//ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+			//glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+			//glClear(GL_COLOR_BUFFER_BIT);
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #endif
 

@@ -22,32 +22,35 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		auto& transform = _registry.get<Transform>(entity);
 
 		float x = transform.Position.x;
-		float y = transform.Position.y + 100 + i * 15;
+		float y = transform.Position.y + 0.100 + i * 0.15;
 
-		// Draw 2D filled square
-		recorder.PolygonBegin({ x - 10.0f, y - 10.0f }, 2.0f,
+		// Scale down coordinates to fit in camera view
+		// Camera is at (0,5,10) looking at (0,0,0)
+		// So we need coordinates near the origin
+		float worldX = (x - 200.0f) * 0.01f;  // Center around 0, scale down
+		float worldY = (y - 200.0f) * 0.01f;  // Center around 0, scale down
+
+		recorder.PolygonBegin(Core::Vec3{ worldX - 0.1f, worldY - 0.1f, -5.0f }, 2.0f,
 			{ 0.0f, 1.0f, 0.0f, 1.0f }, true
 		);
-		recorder.PolygonPoint({ x + 10.0f, y - 10.0f });
-		recorder.PolygonPoint({ x + 10.0f, y + 10.0f });
-		recorder.PolygonPoint({ x - 10.0f, y + 10.0f });
-		recorder.PolygonEnd({ x - 10.0f, y - 10.0f });
+		recorder.PolygonPoint(Core::Vec3{ worldX + 0.1f, worldY - 0.1f, -5.0f });
+		recorder.PolygonPoint(Core::Vec3{ worldX + 0.1f, worldY + 0.1f, -5.0f });
+		recorder.PolygonPoint(Core::Vec3{ worldX - 0.1f, worldY + 0.1f, -5.0f });
+		recorder.PolygonEnd(Core::Vec3{ worldX - 0.1f, worldY - 0.1f, -5.0f });
 
-		// Draw 2D line
+		// Draw 2D line (explicitly using Vec2)
 		recorder.Line(
-			{ x - 10.0f, y },
-			{ x + 10.0f, y },
+			Core::Vec3{ worldX, worldY, -5.0f },
+			Core::Vec3{ worldX + 0.1f, worldY, -5.0f },
 			2,
 			{ 1.0f, 0.0f, 0.0f, 1.0f }
 		);
 
 		// Draw 3D cube for each entity
 		glm::mat4 cubeTransform = glm::mat4(1.0f);
-		cubeTransform = glm::translate(cubeTransform, glm::vec3((x) * 0.01f, (y) * -0.01f, -5.0f));
+		cubeTransform = glm::translate(cubeTransform, glm::vec3(worldX, worldY, -7.0f));
 		cubeTransform = glm::rotate(cubeTransform, glm::radians(i * 15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		cubeTransform = glm::scale(cubeTransform, glm::vec3(0.5f));
-
-		
 		recorder.Cube(cubeTransform, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 
 		i++;

@@ -22,21 +22,25 @@ namespace Core {
     struct Vec2 {
         float x, y;
     };
+    
+    struct Vec3 {
+        float x, y, z;
+    };
 
     // Keep command payloads POD and compact.
     struct PolygonBeginCmd {
-        Vec2 p;
+        Vec3 p;
         float thickness;
         ColorRGBA color;
         bool filled;
     };
 
     struct PolygonPointCmd {
-        Vec2 p;
+        Vec3 p;
     };
 
     struct PolygonEndCmd {
-        Vec2 p;
+        Vec3 p;
     };
 
     struct CircleCmd {
