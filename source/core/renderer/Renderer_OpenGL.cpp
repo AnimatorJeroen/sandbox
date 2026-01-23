@@ -40,6 +40,43 @@ namespace Core {
         }
     )";
 
+    // 3D Cube vertex shader
+    static const char* cubeVertexShaderSource = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec3 aNormal;
+        
+        uniform mat4 uMVP;
+        uniform vec4 uColor;
+        
+        out vec4 Color;
+        out vec3 Normal;
+        
+        void main()
+        {
+            gl_Position = uMVP * vec4(aPos, 1.0);
+            Color = uColor;
+            Normal = aNormal;
+        }
+    )";
+
+    // 3D Cube fragment shader
+    static const char* cubeFragmentShaderSource = R"(
+        #version 330 core
+        in vec4 Color;
+        in vec3 Normal;
+        
+        out vec4 FragColor;
+        
+        void main()
+        {
+            // Simple lighting
+            vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
+            float diff = max(dot(normalize(Normal), lightDir), 0.3);
+            FragColor = vec4(Color.rgb * diff, Color.a);
+        }
+    )";
+
     // ========== OpenGLMesh Implementation ==========
 
     OpenGLMesh::OpenGLMesh() {
@@ -102,16 +139,21 @@ namespace Core {
     Renderer_OpenGL::Renderer_OpenGL() {
         InitializeShaders();
         SetupLineRendering();
+        SetupCubeRendering();
+        CreateDefaultCube();
     }
 
     Renderer_OpenGL::~Renderer_OpenGL() {
         CleanupShaders();
         if (m_LineVAO) glDeleteVertexArrays(1, &m_LineVAO);
         if (m_LineVBO) glDeleteBuffers(1, &m_LineVBO);
+        if (m_CubeVAO) glDeleteVertexArrays(1, &m_CubeVAO);
+        if (m_CubeVBO) glDeleteBuffers(1, &m_CubeVBO);
+        if (m_CubeEBO) glDeleteBuffers(1, &m_CubeEBO);
     }
 
     void Renderer_OpenGL::InitializeShaders() {
-        // Compile vertex shader
+        // Compile 2D vertex shader
         m_VertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(m_VertexShader, 1, &vertexShaderSource, nullptr);
         glCompileShader(m_VertexShader);
@@ -125,7 +167,7 @@ namespace Core {
             // Vertex shader compilation failed
         }
 
-        // Compile fragment shader
+        // Compile 2D fragment shader
         m_FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(m_FragmentShader, 1, &fragmentShaderSource, nullptr);
         glCompileShader(m_FragmentShader);
@@ -136,7 +178,7 @@ namespace Core {
             // Fragment shader compilation failed
         }
 
-        // Link shader program
+        // Link 2D shader program
         m_ShaderProgram = glCreateProgram();
         glAttachShader(m_ShaderProgram, m_VertexShader);
         glAttachShader(m_ShaderProgram, m_FragmentShader);
@@ -148,12 +190,13 @@ namespace Core {
             // Shader program linking failed
         }
 
-        // Get uniform locations
+        // Get 2D uniform locations
         m_UniformProjection = glGetUniformLocation(m_ShaderProgram, "uProjection");
         m_UniformColor = glGetUniformLocation(m_ShaderProgram, "uColor");
     }
 
     void Renderer_OpenGL::CleanupShaders() {
+        // Cleanup 2D shaders
         if (m_ShaderProgram) {
             glDeleteProgram(m_ShaderProgram);
             m_ShaderProgram = 0;
@@ -165,6 +208,20 @@ namespace Core {
         if (m_FragmentShader) {
             glDeleteShader(m_FragmentShader);
             m_FragmentShader = 0;
+        }
+        
+        // Cleanup 3D cube shaders
+        if (m_CubeShaderProgram) {
+            glDeleteProgram(m_CubeShaderProgram);
+            m_CubeShaderProgram = 0;
+        }
+        if (m_CubeVertexShader) {
+            glDeleteShader(m_CubeVertexShader);
+            m_CubeVertexShader = 0;
+        }
+        if (m_CubeFragmentShader) {
+            glDeleteShader(m_CubeFragmentShader);
+            m_CubeFragmentShader = 0;
         }
     }
 
@@ -190,8 +247,130 @@ namespace Core {
         glBindVertexArray(0);
     }
 
+    void Renderer_OpenGL::SetupCubeRendering() {
+        // Compile 3D cube vertex shader
+        m_CubeVertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(m_CubeVertexShader, 1, &cubeVertexShaderSource, nullptr);
+        glCompileShader(m_CubeVertexShader);
+
+        GLint success;
+        GLchar infoLog[512];
+        glGetShaderiv(m_CubeVertexShader, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            glGetShaderInfoLog(m_CubeVertexShader, 512, nullptr, infoLog);
+        }
+
+        // Compile 3D cube fragment shader
+        m_CubeFragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(m_CubeFragmentShader, 1, &cubeFragmentShaderSource, nullptr);
+        glCompileShader(m_CubeFragmentShader);
+
+        glGetShaderiv(m_CubeFragmentShader, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            glGetShaderInfoLog(m_CubeFragmentShader, 512, nullptr, infoLog);
+        }
+
+        // Link 3D cube shader program
+        m_CubeShaderProgram = glCreateProgram();
+        glAttachShader(m_CubeShaderProgram, m_CubeVertexShader);
+        glAttachShader(m_CubeShaderProgram, m_CubeFragmentShader);
+        glLinkProgram(m_CubeShaderProgram);
+
+        glGetProgramiv(m_CubeShaderProgram, GL_LINK_STATUS, &success);
+        if (!success) {
+            glGetProgramInfoLog(m_CubeShaderProgram, 512, nullptr, infoLog);
+        }
+
+        // Get 3D uniform locations
+        m_CubeUniformMVP = glGetUniformLocation(m_CubeShaderProgram, "uMVP");
+        m_CubeUniformColor = glGetUniformLocation(m_CubeShaderProgram, "uColor");
+    }
+
+    void Renderer_OpenGL::CreateDefaultCube() {
+        // Cube vertices with positions and normals
+        float cubeVertices[] = {
+            // Positions          // Normals
+            // Front face
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+             0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+            // Back face
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+             0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+            // Top face
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+            // Bottom face
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+             0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+            // Right face
+             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+            // Left face
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        };
+
+        uint32_t cubeIndices[] = {
+            0, 1, 2,  2, 3, 0,    // Front
+            4, 6, 5,  6, 4, 7,    // Back
+            8, 9, 10, 10, 11, 8,  // Top
+            12, 14, 13, 14, 12, 15, // Bottom
+            16, 17, 18, 18, 19, 16, // Right
+            20, 22, 21, 22, 20, 23  // Left
+        };
+
+        m_CubeIndexCount = 36;
+
+        glGenVertexArrays(1, &m_CubeVAO);
+        glGenBuffers(1, &m_CubeVBO);
+        glGenBuffers(1, &m_CubeEBO);
+
+        glBindVertexArray(m_CubeVAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, m_CubeVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_CubeEBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
+
+        // Position attribute
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+
+        // Normal attribute
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+
+        glBindVertexArray(0);
+    }
+
     void Renderer_OpenGL::BeginFrame(const RenderTargetSpecs& target) {
         m_CurrentTarget = target;
+
+        // Clear cube instances from previous frame
+        m_CubeInstances.clear();
+
+        // Set up 3D camera matrices (used in EndFrame for cube rendering)
+        m_ViewMatrix = glm::lookAt(
+            glm::vec3(0.0f, 5.0f, 10.0f),  // Camera position
+            glm::vec3(0.0f, 0.0f, 0.0f),   // Look at origin
+            glm::vec3(0.0f, 1.0f, 0.0f)    // Up vector
+        );
+        
+        float aspect = static_cast<float>(target.width) / static_cast<float>(target.height);
+        m_ProjectionMatrix = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
         // Since ImGui rendering is disabled in Application.cpp, we need to:
         // 1. Set the viewport
@@ -214,13 +393,13 @@ namespace Core {
         // Use our shader program
         glUseProgram(m_ShaderProgram);
 
-        // Set up orthographic projection matrix
-        glm::mat4 projection = glm::ortho(
+        // Set up orthographic projection matrix for 2D rendering
+        glm::mat4 projection2D = glm::ortho(
             0.0f, static_cast<float>(target.width),
             static_cast<float>(target.height), 0.0f,
             -1.0f, 1.0f
         );
-        glUniformMatrix4fv(m_UniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(m_UniformProjection, 1, GL_FALSE, glm::value_ptr(projection2D));
     }
 
     void Renderer_OpenGL::Submit(const DrawCommandBuffer& cmdBuf) {
@@ -290,6 +469,13 @@ namespace Core {
                     break;
                 }
                 
+                case CommandType::Cube: {
+                    const auto& cube = cmd.cube;
+                    // Collect cube for instanced rendering in EndFrame
+                    m_CubeInstances.push_back({cube.transform, cube.color});
+                    break;
+                }
+                
                 case CommandType::Circle:
                 case CommandType::QuadraticBezier:
                 case CommandType::CubicBezier:
@@ -305,6 +491,34 @@ namespace Core {
     }
 
     void Renderer_OpenGL::EndFrame() {
+        // Render all collected cubes
+        if (!m_CubeInstances.empty()) {
+            // Enable depth testing for 3D rendering
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_CULL_FACE);
+            
+            glUseProgram(m_CubeShaderProgram);
+            glBindVertexArray(m_CubeVAO);
+            
+            // Use the view and projection matrices set in BeginFrame
+            // Render each cube instance
+            for (const auto& instance : m_CubeInstances) {
+                glm::mat4 mvp = m_ProjectionMatrix * m_ViewMatrix * instance.transform;
+                glUniformMatrix4fv(m_CubeUniformMVP, 1, GL_FALSE, glm::value_ptr(mvp));
+                glUniform4f(m_CubeUniformColor, 
+                           instance.color.r, instance.color.g, 
+                           instance.color.b, instance.color.a);
+                
+                glDrawElements(GL_TRIANGLES, m_CubeIndexCount, GL_UNSIGNED_INT, 0);
+            }
+            
+            glBindVertexArray(0);
+            
+            // Restore 2D rendering state
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_CULL_FACE);
+        }
+        
         glUseProgram(0);
     }
 

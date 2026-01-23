@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <array>
+#include <glm/glm.hpp>
 
 namespace Core {
 
@@ -9,6 +10,7 @@ namespace Core {
         PolygonPoint,
         PolygonEnd,
         Circle,
+        Cube,
         QuadraticBezier,
         CubicBezier,
     };
@@ -46,6 +48,11 @@ namespace Core {
         float thickness;
     };
 
+    struct CubeCmd {
+        glm::mat4 transform;
+        ColorRGBA color;
+    };
+
     struct QuadraticBezierCmd {
         Vec2 p0, p1, p2;   // start, control, end
         float thickness;
@@ -67,6 +74,7 @@ namespace Core {
             PolygonPointCmd polyPoint;
             PolygonEndCmd polyEnd;
             CircleCmd circle;
+            CubeCmd cube;
             QuadraticBezierCmd qbez;
             CubicBezierCmd cbez;
         };
@@ -83,6 +91,9 @@ namespace Core {
         }
         static DrawCommand Add(const CircleCmd& c) {
             DrawCommand cmd; cmd.type = CommandType::Circle; cmd.circle = c; return cmd;
+        }
+        static DrawCommand Add(const CubeCmd& c) {
+            DrawCommand cmd; cmd.type = CommandType::Cube; cmd.cube = c; return cmd;
         }
         static DrawCommand Add(const QuadraticBezierCmd& c) {
             DrawCommand cmd; cmd.type = CommandType::QuadraticBezier; cmd.qbez = c; return cmd;

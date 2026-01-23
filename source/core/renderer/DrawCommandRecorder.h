@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DrawCommandBuffer.h"
+#include <glm/glm.hpp>
 
 namespace Core {
 
@@ -37,6 +38,10 @@ namespace Core {
 		{
 			_cmdBuffer.Push(DrawCommand::Add(CircleCmd{ p0, size, filled, color, num_segments, thickness }));
 		 }
+		
+		inline void Cube(const glm::mat4& transform, const ColorRGBA& color) {
+			_cmdBuffer.Push(DrawCommand::Add(CubeCmd{ transform, color }));
+		}
 		
 		inline void QuadraticBezier(const Vec2& p0, const Vec2& p1, const Vec2& p2, float thickness, const ColorRGBA& color) {
 			_cmdBuffer.Push(DrawCommand::Add(QuadraticBezierCmd{ p0, p1, p2, thickness, color }));

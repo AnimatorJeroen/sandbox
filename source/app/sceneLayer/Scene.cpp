@@ -2,6 +2,7 @@
 #include "Scene.h"
 #include <random>
 #include "core/UUID.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
@@ -13,10 +14,11 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 	for (auto entity : _registry.view<Transform>()) {
 		auto& transform = _registry.get<Transform>(entity);
 
-		float x = transform.Position.x; // Assuming window width 800
-		float y = transform.Position.y + 100 + i * 15; // Assuming window height 600
+		float x = transform.Position.x;
+		float y = transform.Position.y + 100 + i * 15;
 
-		recorder.PolygonBegin({ x - 10.0f, y - 10.0f },2.0f,
+		// Draw 2D filled square
+		recorder.PolygonBegin({ x - 10.0f, y - 10.0f }, 2.0f,
 			{ 0.0f, 1.0f, 0.0f, 1.0f }, true
 		);
 		recorder.PolygonPoint({ x + 10.0f, y - 10.0f });
@@ -24,12 +26,22 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		recorder.PolygonPoint({ x - 10.0f, y + 10.0f });
 		recorder.PolygonEnd({ x - 10.0f, y - 10.0f });
 
+		// Draw 2D line
 		recorder.Line(
 			{ x - 10.0f, y },
 			{ x + 10.0f, y },
 			2,
 			{ 1.0f, 0.0f, 0.0f, 1.0f }
 		);
+
+		// Draw 3D cube for each entity
+		glm::mat4 cubeTransform = glm::mat4(1.0f);
+		cubeTransform = glm::translate(cubeTransform, glm::vec3((x) * 0.01f, (y) * -0.01f, -5.0f));
+		cubeTransform = glm::rotate(cubeTransform, glm::radians(i * 15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		cubeTransform = glm::scale(cubeTransform, glm::vec3(0.5f));
+
+		
+		recorder.Cube(cubeTransform, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 
 		i++;
 	}

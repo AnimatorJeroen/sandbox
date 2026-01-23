@@ -106,6 +106,9 @@ namespace Core {
 				}
 				break;
 			}
+			case CommandType::Cube:
+				// ImGui doesn't support 3D rendering, skip cubes
+				break;
 			case CommandType::QuadraticBezier:
 				// Implement quadratic bezier rendering if needed
 				break;
