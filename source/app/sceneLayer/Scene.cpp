@@ -22,7 +22,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		auto& transform = _registry.get<Transform>(entity);
 
 		float x = transform.Position.x;
-		float y = transform.Position.y + 0.100f + i * 0.15f;
+		float y = transform.Position.y;
 
 		// Scale down coordinates to fit in camera view
 		// Camera is at (0,5,10) looking at (0,0,0)
@@ -48,7 +48,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 
 		// Draw 3D cube for each entity
 		glm::mat4 cubeTransform = glm::mat4(1.0f);
-		cubeTransform = glm::translate(cubeTransform, glm::vec3(worldX, worldY, -7.0f));
+		cubeTransform = glm::translate(cubeTransform, transform.Position);
 		cubeTransform = glm::rotate(cubeTransform, glm::radians(i * 15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		cubeTransform = glm::scale(cubeTransform, glm::vec3(0.5f));
 		recorder.Cube(cubeTransform, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
@@ -92,12 +92,12 @@ entt::entity Scene::CreateEntity(const std::string& name)
 	// Generate random position between 0 and 400
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> dis(0.0f, 400.0f);
+	static std::uniform_real_distribution<float> dis(0.0f, 0.5f);
 	
 	float x = dis(gen);
 	float y = dis(gen);
 
-	_registry.emplace<Transform>(e, Transform{ vec4{x, y, 0.0f, 1.0f}});
+	_registry.emplace<Transform>(e, Transform{ vec3{x, y, 0.0f} });
 
 	return e;
 }

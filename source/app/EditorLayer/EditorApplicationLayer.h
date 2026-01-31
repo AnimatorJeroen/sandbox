@@ -53,6 +53,8 @@ public:
 	PopupManager& GetPopupManager() { return _popupManager; }
 
 private:
+	void RenderGizmos();
+	
 	// Core services
 	std::shared_ptr<SceneManager> _sceneManager;
 	Core::EventBus& _eventBus;

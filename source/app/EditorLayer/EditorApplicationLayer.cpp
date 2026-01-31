@@ -1,8 +1,13 @@
 #include "pch.h"
 #include "EditorApplicationLayer.h"
 #include <imgui/imgui.h>
+#include <ImGuizmo/ImGuizmo.h>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <GLFW/glfw3.h>
 #include <core/serializer/Serializer.h>
 #include "app/sceneLayer/SceneManager.h"
+#include "app/sceneLayer/components/Components.h"
 #include <core/event/EventBus.h>
 #include <core/Logger.h>
 #include <core/Window.h>
@@ -64,8 +69,94 @@ void EditorApplicationLayer::OnRender()
 	_openDocumentsTopBar.Render();
 	_sceneHierarchyPanel.Render();
 	
+	RenderGizmos();
+
 	// Render popups last so they appear on top of everything
 	_popupManager.Render();
+}
+
+void EditorApplicationLayer::RenderGizmos()
+{
+	auto scene = _sceneManager->GetActiveScene();
+	if (!scene)
+		return;
+	auto& registry = scene->GetRegistry();
+	auto selectedEntities = _editorContext.GetSelectedEntities();
+	
+	if (selectedEntities.empty())
+		return;
+	
+	ImGuizmo::BeginFrame();
+	// Setup ImGuizmo
+	int windowWidth = 1280, windowHeight = 720;
+	//_editorContext.Ge
+	ImGuizmo::SetRect(0, 0, static_cast<float>(windowWidth), static_cast<float>(windowHeight));
+	
+	// Get camera matrices  
+	auto& cameraComponent = scene->GetActiveCamera();
+	const glm::mat4 viewMatrix = glm::lookAt(cameraComponent.position, cameraComponent.target, cameraComponent.up);
+	const glm::mat4 projectionMatrix = glm::perspective(glm::radians(cameraComponent.fov), 
+		static_cast<float>(windowWidth) / static_cast<float>(windowHeight), 
+		cameraComponent.nearPlane, cameraComponent.farPlane);
+	
+	// For each selected entity, render gizmo
+	for (const auto& entity : selectedEntities)
+	{
+		if (registry.any_of<Transform>(entity))
+		{
+			auto& transform = registry.get<Transform>(entity);
+			glm::mat4 modelMatrix = glm::mat4(1.0f);
+			modelMatrix = glm::translate(modelMatrix, transform.Position);
+			modelMatrix = glm::scale(modelMatrix, transform.Scale);
+
+			// Use translate operation
+			ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
+			
+			// Manipulate
+			ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix),
+				operation, ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
+			
+
+			static bool imGuizmoActivate = false;
+			// If manipulated, decompose and update transform
+			if (ImGuizmo::IsUsing())
+			{
+				if (!imGuizmoActivate)
+				{
+					_editorContext.BeginUndo();
+					imGuizmoActivate = true;
+
+					if (operation == ImGuizmo::TRANSLATE)
+					{
+						_applicator.SetField(entity, "Transform.Position", transform.Position);
+					}
+					if (operation == ImGuizmo::SCALE)
+					{
+						_applicator.SetField(entity, "Transform.Scale", transform.Scale);
+					}
+				}
+				glm::vec3 translation, rotation, scale;
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix),
+					glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
+
+				transform.Position = translation;
+				transform.Scale = scale;
+			}
+			else if(imGuizmoActivate)
+			{
+				if (operation == ImGuizmo::TRANSLATE)
+				{
+					_applicator.SetField(entity, "Transform.Position", transform.Position);
+				}
+				if (operation == ImGuizmo::SCALE)
+				{
+					_applicator.SetField(entity, "Transform.Scale", transform.Scale);
+				}
+				_editorContext.EndUndo();
+				imGuizmoActivate = false;
+			}
+		}
+	}
 }
 
 bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
@@ -73,9 +164,9 @@ bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 	if (e.identifier == 0)
 		_isLeftMouseDown = true;
 	else if (e.identifier == 1)
-		_isMiddleMouseDown = true;
-	else if (e.identifier == 2)
 		_isRightMouseDown = true;
+	else if (e.identifier == 2)
+		_isMiddleMouseDown = true;
 
 	_cameraController.OnMouseDown(_lastMouseX, _lastMouseY);
 
@@ -91,9 +182,9 @@ bool EditorApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 	if (e.identifier == 0)
 		_isLeftMouseDown = false;
 	if (e.identifier == 1)
-		_isMiddleMouseDown = false;
-	if (e.identifier == 2)
 		_isRightMouseDown = false;
+	if (e.identifier == 2)
+		_isMiddleMouseDown = false;
 
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;

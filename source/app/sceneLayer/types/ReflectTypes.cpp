@@ -17,12 +17,12 @@ void ReflectTypes() {
         .type("UUID"_hs)  // Register type name
         .data<&Core::UUID::value, entt::as_ref_t>("value"_hs);
 
-    // Reflect vec4 fields with as_ref policy
-    entt::meta_factory<vec4>()
-        .type("vec4"_hs)  // Register type name
-        .data<&vec4::x, entt::as_ref_t>("x"_hs)
-        .data<&vec4::y, entt::as_ref_t>("y"_hs)
-        .data<&vec4::z, entt::as_ref_t>("z"_hs);
+    // Reflect vec3 fields with as_ref policy
+    entt::meta_factory<vec3>()
+        .type("vec3"_hs)  // Register type name
+        .data<&vec3::x, entt::as_ref_t>("x"_hs)
+        .data<&vec3::y, entt::as_ref_t>("y"_hs)
+        .data<&vec3::z, entt::as_ref_t>("z"_hs);
 
     // Reflect Transform fields with as_ref policy
     entt::meta_factory<Transform>()

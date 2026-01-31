@@ -25,12 +25,12 @@ void CameraController::OnMouseMove(double mouseX, double mouseY,
 	_lastMouseY = mouseY;
 
 	// Left button: Orbit
-	if (isLeftButtonDown && !isMiddleButtonDown)
+	if (isRightButtonDown && !isMiddleButtonDown)
 	{
 		OrbitCamera(deltaX, -deltaY);
 	}
 	// Middle button or Alt+Left: Pan
-	else if (isMiddleButtonDown || (isRightButtonDown && isLeftButtonDown))
+	else if (isLeftButtonDown || isMiddleButtonDown || (isRightButtonDown && isLeftButtonDown))
 	{
 		PanCamera(deltaX, deltaY);
 	}

@@ -6,6 +6,7 @@
 #include "glew/glew.h"
 #include <GLFW/glfw3.h>
 #include <imgui/imgui.h>
+#include <ImGuizmo/ImGuizmo.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <core/Logger.h>
@@ -63,6 +64,7 @@ namespace Core
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
+			ImGuizmo::BeginFrame();
 #endif
 
 			currentFrameTime = static_cast<float>(glfwGetTime());
