@@ -8,12 +8,15 @@
 
 void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight)
 {
+	// Get camera settings from SceneData
+	const auto& sceneData = data();
+	
 	// Update view matrix
-	m_ViewMatrix = glm::lookAt(m_CameraPosition, m_CameraTarget, m_CameraUp);
+	m_ViewMatrix = glm::lookAt(sceneData.cameraPosition, sceneData.cameraTarget, m_CameraUp);
 	
 	// Update projection matrix
 	float aspect = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
-	m_ProjectionMatrix = glm::perspective(glm::radians(m_CameraFOV), aspect, m_CameraNear, m_CameraFar);
+	m_ProjectionMatrix = glm::perspective(glm::radians(sceneData.cameraFOV), aspect, m_CameraNear, m_CameraFar);
 }
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
@@ -121,20 +124,8 @@ bool Scene::SaveToFile(const std::string& filepath) const
 		uint32_t version = 1;
 		file.write(reinterpret_cast<const char*>(&version), sizeof(version));
 
-		// Save scene metadata
-		SceneMetadata metadata;
-		metadata.sceneColor = data().sceneColor;
-		metadata.name = data()._name;
-		metadata.cameraPosition = m_CameraPosition;
-		metadata.cameraTarget = m_CameraTarget;
-		metadata.cameraFOV = m_CameraFOV;
-		metadata.SaveToFile(file);
-
-		// Save scene entity ID
-		file.write(reinterpret_cast<const char*>(&_sceneEntity), sizeof(_sceneEntity));
-
-		// Create archive with all component types and save all entities
-		// We need to unpack AppComponentTypes tuple to create the archive
+		// Create archive with all component types (including SceneData on _sceneEntity)
+		// No need to sync camera - SceneData is already the source of truth
 		auto saveEntities = [&]<typename... Cs>(std::tuple<Cs...>*) {
 			auto archive = Core::ArchiveHelpers::MakeFullSnapshot<Cs...>(
 				const_cast<entt::registry&>(_registry));
@@ -196,30 +187,10 @@ bool Scene::LoadFromFile(const std::string& filepath)
 		if (version != 1) {
 			LOG_ERROR() << "Unsupported scene file version: " << version;
 			return false;
-		}
+		 }
 
-		 // Load scene metadata first
-		SceneMetadata metadata;
-		metadata.LoadFromFile(file);
-
-		// Skip the saved scene entity ID (we don't need it)
-		entt::entity savedSceneEntity;
-		file.read(reinterpret_cast<char*>(&savedSceneEntity), sizeof(savedSceneEntity));
-
-		// Clear existing scene (this will also clear _sceneEntity)
+		// Clear existing scene
 		_registry.clear();
-
-		// Recreate the scene entity
-		_sceneEntity = _registry.create();
-		_registry.emplace<Core::UUID>(_sceneEntity);
-		auto& sceneData = _registry.emplace<SceneData>(_sceneEntity);
-		sceneData.sceneColor = metadata.sceneColor;
-		sceneData._name = metadata.name;
-
-		// Restore camera settings
-		m_CameraPosition = metadata.cameraPosition;
-		m_CameraTarget = metadata.cameraTarget;
-		m_CameraFOV = metadata.cameraFOV;
 
 		// Load entities and components using RestoreEntitiesAndComponents
 		auto loadEntities = [&]<typename... Cs>(std::tuple<Cs...>*) {
@@ -229,7 +200,7 @@ bool Scene::LoadFromFile(const std::string& filepath)
 			uint64_t entityCount = 0;
 			file.read(reinterpret_cast<char*>(&entityCount), sizeof(entityCount));
 
-			// Read all entity IDs (but we won't use them to preserve IDs)
+			// Read all entity IDs
 			archive.entities.resize(entityCount);
 			file.read(reinterpret_cast<char*>(archive.entities.data()),
 				entityCount * sizeof(entt::entity));
@@ -253,17 +224,29 @@ bool Scene::LoadFromFile(const std::string& filepath)
 			};
 			readStorages(std::index_sequence_for<Cs...>{});
 
-			// Restore entities with NEW IDs (don't preserve old IDs)
+			// Restore all entities (including the scene entity)
 			Core::ArchiveHelpers::RestoreEntitiesAndComponents(_registry, archive);
 		};
 		loadEntities(static_cast<AppComponentTypes*>(nullptr));
+
+		// Find the scene entity by looking for SceneData component
+		auto sceneDataView = _registry.view<SceneData>();
+		if (sceneDataView.empty()) {
+			LOG_ERROR() << "No SceneData component found in loaded scene";
+			return false;
+		}
+
+		// Set _sceneEntity to the entity with SceneData
+		_sceneEntity = sceneDataView.front();
+
+		 // Camera settings are already in SceneData - just update matrices
+		UpdateCameraMatrices(800, 600);
 
 		bool success = file.good();
 		file.close();
 
 		if (success) {
 			LOG_DEBUG() << "Scene loaded from: " << filepath;
-			UpdateCameraMatrices(800, 600); // Update camera matrices
 		} else {
 			LOG_ERROR() << "Error reading scene from file: " << filepath;
 		}
