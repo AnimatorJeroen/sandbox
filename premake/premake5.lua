@@ -31,6 +31,7 @@ project "Sandbox"
 
     includedirs {
         "../vendor/include/",
+        "../vendor/include/imgui/",
         "../source/"
     }
 

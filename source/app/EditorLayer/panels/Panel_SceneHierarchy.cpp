@@ -154,7 +154,7 @@ void Panel_SceneHierarchy::Render()
         }
         
         // Handle delete key - check once per frame, not per entity
-        if (!ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete)))
+        if (!ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Delete))
         {
             deleteEntitiesPressed = true;
         }
