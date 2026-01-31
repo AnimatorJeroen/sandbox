@@ -15,6 +15,8 @@
 #include "app/sceneLayer/types/Types.h"
 #include "OpenDocumentsTopBar.h"
 
+#include <ImGuizmo/ImGuizmo.h>
+
 class SceneManager;
 class EventBus;
 
@@ -53,7 +55,7 @@ public:
 	PopupManager& GetPopupManager() { return _popupManager; }
 
 private:
-	void RenderGizmos();
+	void RenderImGuizmo();
 	
 	// Core services
 	std::shared_ptr<SceneManager> _sceneManager;
@@ -82,4 +84,6 @@ private:
 	bool _isRightMouseDown = false;
 	double _lastMouseX = 0.0f;
 	double _lastMouseY = 0.0f;
+
+	ImGuizmo::OPERATION _imGuizmoOperation = ImGuizmo::TRANSLATE;
 };
