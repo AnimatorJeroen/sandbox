@@ -2,7 +2,7 @@
 #include "ITestScene.h"
 #include "app/sceneLayer/Scene.h"
 #include "app/sceneLayer/SceneManager.h"
-#include "core/renderer/Renderer_ImGui.h"
+#include "core/renderer/Renderer_OpenGL.h"
 #include <memory>
 
 class TestScene1 : public ITestScene
@@ -10,8 +10,8 @@ class TestScene1 : public ITestScene
 private:
 	std::shared_ptr<SceneManager> _sceneManager;
 	Core::DrawCommandRecorder _recorder;
-	Core::Renderer_ImGui _renderer;
-	Core::Renderer_ImGui::RenderTargetSpecs _renderSpecs;
+	Core::Renderer_OpenGL _renderer;
+	Core::Renderer_OpenGL::RenderTargetSpecs _renderSpecs;
 
 public:
 	inline explicit TestScene1(std::shared_ptr<SceneManager> sceneManager) : _sceneManager(sceneManager)
@@ -39,6 +39,13 @@ public:
 		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
 		pingpong = std::min(1.0f, std::max(0.0f, pingpong + incr * deltaTime));
 
+		//int i = 0;
+		//for (auto entity : scene->GetRegistry().view<Transform>()) {
+		//	auto& transform = scene->GetRegistry().get<Transform>(entity);
+		//	transform.Position.x = pingpong * 10.0f * i;
+		//	i++;
+		//}
+
 	}
 
 	inline void Render() override
@@ -46,8 +53,13 @@ public:
 		auto scene = _sceneManager->GetActiveScene();
 		if (!scene) return;
 
+		scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
+		_renderer.SetViewMatrix(scene->GetViewMatrix());
+		_renderer.SetProjectionMatrix(scene->GetProjectionMatrix());
+
 		_recorder.Clear();
 		scene->Draw(_recorder);
+		
 		_renderer.BeginFrame(_renderSpecs);
 		_renderer.Submit(_recorder.GetCommandBuffer());
 		_renderer.EndFrame();

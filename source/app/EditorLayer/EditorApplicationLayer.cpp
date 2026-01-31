@@ -145,6 +145,24 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 			_editorContext.OpenScene();
 		}
 	}
+	else if (e.key == 'A' && !e.repeated) {
+		if (e.mods & Core::KMOD_CONTROL)
+		{
+			auto scene = _sceneManager->GetActiveScene();
+			if (scene)
+			{
+				auto& registry = scene->GetRegistry();
+				auto view = registry.view<Core::UUID>();
+
+				std::set<entt::entity> entities(view.begin(), view.end());
+				if(entities.find(scene->GetSceneEntity()) != entities.end())
+				{
+					entities.erase(scene->GetSceneEntity());
+				}
+				_editorContext.SetSelection(entities);
+			}
+		}
+	}
 	else if (e.key == 'C' && !e.repeated) {
 		if (e.mods & Core::KMOD_CONTROL)
 		{
