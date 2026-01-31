@@ -50,16 +50,16 @@ public:
 
 	inline void Render() override
 	{
-		auto scene = _sceneManager->GetActiveScene();
-		if (!scene) return;
-
-		scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
-		_renderer.SetViewMatrix(scene->GetViewMatrix());
-		_renderer.SetProjectionMatrix(scene->GetProjectionMatrix());
-
 		_recorder.Clear();
-		scene->Draw(_recorder);
-		
+		auto scene = _sceneManager->GetActiveScene();
+		if (scene)
+		{
+			scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
+			_renderer.SetViewMatrix(scene->GetViewMatrix());
+			_renderer.SetProjectionMatrix(scene->GetProjectionMatrix());
+			scene->Draw(_recorder);
+		}
+
 		_renderer.BeginFrame(_renderSpecs);
 		_renderer.Submit(_recorder.GetCommandBuffer());
 		_renderer.EndFrame();

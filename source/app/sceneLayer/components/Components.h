@@ -16,10 +16,14 @@ struct NameComponent {
 };
 
 struct Transform {
-    Vec3 Position{};
-    Vec3 Scale{ 1.f, 1.f, 1.f };
-    std::vector<float> Weights{}; // Added: vector field for demonstrating index access
-    Matrix2x3 Matrix{};           // nested arrays for testing
+    vec4 Position{};
+    vec4 Scale{ 1.f, 1.f, 1.f, 1.f };
+	mat4 Matrix{ 1.0f };
+
+    template<class Archive>
+    void serialize(Archive& ar) {
+        ar(Position, Scale);
+    }
 };
 
 

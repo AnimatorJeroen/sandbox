@@ -97,7 +97,7 @@ entt::entity Scene::CreateEntity(const std::string& name)
 	float x = dis(gen);
 	float y = dis(gen);
 
-	_registry.emplace<Transform>(e, Transform{x, y});
+	_registry.emplace<Transform>(e, Transform{ vec4{x, y, 0.0f, 1.0f}});
 
 	return e;
 }

@@ -78,8 +78,14 @@ class Scene
 				}
 			}
 
+			//serialize remaining components
+			std::vector<Transform> transforms;
+			for (auto entity : _registry.view<Transform>()) {
+				transforms.push_back(_registry.get<Transform>(entity));
+			}
+
 			// Serialize the data
-			archive(sceneData, uuids, names);
+			archive(sceneData, uuids, names, transforms);
 		}
 
 		template<class Archive>
@@ -88,8 +94,9 @@ class Scene
 			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
 			std::vector<Core::UUID> uuids;
 			std::vector<NameComponent> names;
+			std::vector<Transform> transforms;
 
-			archive(sceneData, uuids, names);
+			archive(sceneData, uuids, names, transforms);
 
 			// Recreate entities from loaded data
 			for (size_t i = 0; i < uuids.size(); ++i) {
@@ -100,6 +107,13 @@ class Scene
 					_registry.emplace<NameComponent>(newEntity, names[i]);
 				} else {
 					_registry.emplace<NameComponent>(newEntity); // Generate new if missing
+				}
+
+				if (i < transforms.size()) {
+					_registry.emplace<Transform>(newEntity, transforms[i]);
+				}
+				else {
+					_registry.emplace<Transform>(newEntity); // Generate new if missing
 				}
 			}
 		}

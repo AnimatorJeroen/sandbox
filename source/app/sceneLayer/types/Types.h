@@ -8,16 +8,19 @@
 
 #include <cereal/archives/binary.hpp>
 #include "core/UUID.h"
+#include <glm/glm.hpp>
+
+using vec4 = glm::vec4;
+using mat4 = glm::mat4;
+
+namespace cereal {
+    template<class Archive>
+    void serialize(Archive& ar, glm::vec4& v) {
+        ar(v.x, v.y, v.z, v.w);
+    }
+}
 
 // ----- Minimal data types
-struct Vec3 { 
-    float x{}, y{}, z{}; 
-};
-
-struct Matrix2x3 {
-    std::array<std::array<float, 3>, 2> data = { { {0.f, 0.f, 1.f}, {0.f, 0.f, 1.f} } };
-};
-
 struct String64 {
 
     char data[64];
@@ -43,7 +46,7 @@ inline std::ostream& operator<<(std::ostream& os, const String64& str) {
 }
 
 // ----- Editor Value type (extend as needed)
-using AppFieldTypes = std::variant<bool, int, float, double, String64, Vec3>;
+using AppFieldTypes = std::variant<bool, int, float, double, String64, vec4, mat4>;
 
 
 
