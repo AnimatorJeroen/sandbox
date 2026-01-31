@@ -17,12 +17,6 @@
 #include <cstdint>
 #include <array>
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/polymorphic.hpp>
-
 #include <entt/entt.hpp>
 #include <entt/meta/meta.hpp>
 

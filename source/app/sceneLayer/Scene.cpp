@@ -3,6 +3,8 @@
 #include <random>
 #include "core/UUID.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <filesystem>
+#include <core/Logger.h>
 
 void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight)
 {
@@ -100,5 +102,177 @@ entt::entity Scene::CreateEntity(const std::string& name)
 	_registry.emplace<Transform>(e, Transform{ vec4{x, y, 0.0f, 1.0f}});
 
 	return e;
+}
+
+bool Scene::SaveToFile(const std::string& filepath) const
+{
+	try {
+		// Create directory if it doesn't exist
+		std::filesystem::path filePath(filepath);
+		std::filesystem::create_directories(filePath.parent_path());
+
+		std::ofstream file(filepath, std::ios::binary);
+		if (!file.is_open()) {
+			LOG_ERROR() << "Failed to open file for writing: " << filepath;
+			return false;
+		}
+
+		// Write file format version
+		uint32_t version = 1;
+		file.write(reinterpret_cast<const char*>(&version), sizeof(version));
+
+		// Save scene metadata
+		SceneMetadata metadata;
+		metadata.sceneColor = data().sceneColor;
+		metadata.name = data()._name;
+		metadata.cameraPosition = m_CameraPosition;
+		metadata.cameraTarget = m_CameraTarget;
+		metadata.cameraFOV = m_CameraFOV;
+		metadata.SaveToFile(file);
+
+		// Save scene entity ID
+		file.write(reinterpret_cast<const char*>(&_sceneEntity), sizeof(_sceneEntity));
+
+		// Create archive with all component types and save all entities
+		// We need to unpack AppComponentTypes tuple to create the archive
+		auto saveEntities = [&]<typename... Cs>(std::tuple<Cs...>*) {
+			auto archive = Core::ArchiveHelpers::MakeFullSnapshot<Cs...>(
+				const_cast<entt::registry&>(_registry));
+			
+			// Write entity count
+			uint64_t entityCount = archive.entities.size();
+			file.write(reinterpret_cast<const char*>(&entityCount), sizeof(entityCount));
+
+			// Write all entity IDs
+			file.write(reinterpret_cast<const char*>(archive.entities.data()),
+				entityCount * sizeof(entt::entity));
+
+			// Write each component storage
+			auto writeStorages = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+				([&] {
+					const auto& storage = std::get<Is>(archive.storages);
+					uint64_t count = storage.size();
+					file.write(reinterpret_cast<const char*>(&count), sizeof(count));
+
+					for (const auto& [entity, component] : storage) {
+						file.write(reinterpret_cast<const char*>(&entity), sizeof(entity));
+						file.write(reinterpret_cast<const char*>(&component), sizeof(component));
+					}
+				}(), ...);
+			};
+			writeStorages(std::index_sequence_for<Cs...>{});
+		};
+		saveEntities(static_cast<AppComponentTypes*>(nullptr));
+
+		bool success = file.good();
+		file.close();
+
+		if (success) {
+			LOG_DEBUG() << "Scene saved to: " << filepath;
+		} else {
+			LOG_ERROR() << "Error writing scene to file: " << filepath;
+		}
+
+		return success;
+	}
+	catch (const std::exception& e) {
+		LOG_ERROR() << "Exception saving scene: " << e.what();
+		return false;
+	}
+}
+
+bool Scene::LoadFromFile(const std::string& filepath)
+{
+	try {
+		std::ifstream file(filepath, std::ios::binary);
+		if (!file.is_open()) {
+			LOG_ERROR() << "Failed to open file for reading: " << filepath;
+			return false;
+		}
+
+		// Read and validate file format version
+		uint32_t version = 0;
+		file.read(reinterpret_cast<char*>(&version), sizeof(version));
+		if (version != 1) {
+			LOG_ERROR() << "Unsupported scene file version: " << version;
+			return false;
+		}
+
+		 // Load scene metadata first
+		SceneMetadata metadata;
+		metadata.LoadFromFile(file);
+
+		// Skip the saved scene entity ID (we don't need it)
+		entt::entity savedSceneEntity;
+		file.read(reinterpret_cast<char*>(&savedSceneEntity), sizeof(savedSceneEntity));
+
+		// Clear existing scene (this will also clear _sceneEntity)
+		_registry.clear();
+
+		// Recreate the scene entity
+		_sceneEntity = _registry.create();
+		_registry.emplace<Core::UUID>(_sceneEntity);
+		auto& sceneData = _registry.emplace<SceneData>(_sceneEntity);
+		sceneData.sceneColor = metadata.sceneColor;
+		sceneData._name = metadata.name;
+
+		// Restore camera settings
+		m_CameraPosition = metadata.cameraPosition;
+		m_CameraTarget = metadata.cameraTarget;
+		m_CameraFOV = metadata.cameraFOV;
+
+		// Load entities and components using RestoreEntitiesAndComponents
+		auto loadEntities = [&]<typename... Cs>(std::tuple<Cs...>*) {
+			Core::SelectionArchive<Cs...> archive;
+
+			// Read entity count
+			uint64_t entityCount = 0;
+			file.read(reinterpret_cast<char*>(&entityCount), sizeof(entityCount));
+
+			// Read all entity IDs (but we won't use them to preserve IDs)
+			archive.entities.resize(entityCount);
+			file.read(reinterpret_cast<char*>(archive.entities.data()),
+				entityCount * sizeof(entt::entity));
+
+			// Read each component storage
+			auto readStorages = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+				([&] {
+					auto& storage = std::get<Is>(archive.storages);
+					uint64_t count = 0;
+					file.read(reinterpret_cast<char*>(&count), sizeof(count));
+
+					storage.resize(count);
+					for (uint64_t i = 0; i < count; ++i) {
+						entt::entity entity;
+						typename std::tuple_element_t<Is, std::tuple<Cs...>> component;
+						file.read(reinterpret_cast<char*>(&entity), sizeof(entity));
+						file.read(reinterpret_cast<char*>(&component), sizeof(component));
+						storage[i] = {entity, component};
+					}
+				}(), ...);
+			};
+			readStorages(std::index_sequence_for<Cs...>{});
+
+			// Restore entities with NEW IDs (don't preserve old IDs)
+			Core::ArchiveHelpers::RestoreEntitiesAndComponents(_registry, archive);
+		};
+		loadEntities(static_cast<AppComponentTypes*>(nullptr));
+
+		bool success = file.good();
+		file.close();
+
+		if (success) {
+			LOG_DEBUG() << "Scene loaded from: " << filepath;
+			UpdateCameraMatrices(800, 600); // Update camera matrices
+		} else {
+			LOG_ERROR() << "Error reading scene from file: " << filepath;
+		}
+
+		return success;
+	}
+	catch (const std::exception& e) {
+		LOG_ERROR() << "Exception loading scene: " << e.what();
+		return false;
+	}
 }
 

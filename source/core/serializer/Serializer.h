@@ -1,66 +1,54 @@
 #pragma once
-#include <cereal/archives/binary.hpp>
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <type_traits>
 #include "core/Logger.h"
 
 namespace Core
 {
+	// Type trait to detect if a type has SaveToFile method
+	template<typename T>
+	concept HasSaveToFile = requires(const T& t, const std::string& path) {
+		{ t.SaveToFile(path) } -> std::convertible_to<bool>;
+	};
+
+	// Type trait to detect if a type has LoadFromFile method
+	template<typename T>
+	concept HasLoadFromFile = requires(T& t, const std::string& path) {
+		{ t.LoadFromFile(path) } -> std::convertible_to<bool>;
+	};
 
 	class Serializer
 	{
 	public:
-		template<class T>
+		// Specialized for types with SaveToFile method (like Scene)
+		template<typename T>
 		inline static bool Serialize(const std::shared_ptr<T>& data, const std::string& filepath) {
-
-			std::filesystem::path filePath(filepath);
-			std::filesystem::create_directories(filePath.parent_path());
-			bool success = false;
-
-			std::ofstream outputFile(filepath, std::ios::binary);
-			if (outputFile.good()) {
-				try {
-					cereal::BinaryOutputArchive outputArchive(outputFile);
-					outputArchive(*data);
-					LOG_DEBUG() << "Data saved to file: " << data->GetName();
-					success = true;
-				}
-				catch (const std::exception& e) {
-					LOG_ERROR() << "Failed to save data : " << e.what();
-				}
-				outputFile.close();
+			if constexpr (HasSaveToFile<T>) {
+				return data->SaveToFile(filepath);
+			} else {
+				LOG_ERROR() << "Serialization not implemented for this type";
+				return false;
 			}
-			else {
-				LOG_ERROR() << "Failed to open file for saving data";
-			}
-			return success;
 		}
 
-		template<class T>
+		// Specialized for types with LoadFromFile method (like Scene)
+		template<typename T>
 		inline static std::shared_ptr<T> Deserialize(const std::string& filepath) {
-
-			// Load data from file if it exists
-			std::shared_ptr<T> data = std::make_shared<T>();
-			std::ifstream inputFile(filepath, std::ios::binary);
-			if (inputFile.good()) {
-				try {
-					cereal::BinaryInputArchive inputArchive(inputFile);
-					inputArchive(*data);
-                    LOG_DEBUG() << "Data loaded from file: " << data->GetName();
+			if constexpr (HasLoadFromFile<T>) {
+				std::shared_ptr<T> data = std::make_shared<T>();
+				if (data->LoadFromFile(filepath)) {
+					LOG_DEBUG() << "Data loaded from file: " << filepath;
+					return data;
+				} else {
+					LOG_ERROR() << "Failed to load data from: " << filepath;
+					return nullptr;
 				}
-				catch (const std::exception& e) {
-					LOG_ERROR() << "Failed to load data: " << e.what();
-					data = nullptr;
-				}
-				inputFile.close();
+			} else {
+				LOG_ERROR() << "Deserialization not implemented for this type";
+				return nullptr;
 			}
-			else {
-				LOG_DEBUG() << "No saved data found";
-				data = nullptr;
-			}
-			return data;
 		}
-
 	};
 }

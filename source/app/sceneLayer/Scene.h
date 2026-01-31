@@ -3,28 +3,47 @@
 #include <memory>
 #include <string>
 #include <random>
+#include <fstream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/string.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/types/memory.hpp>
-
 #include <entt/entt.hpp>
 #include <core/renderer/DrawCommandRecorder.h>
 #include <core/UUID.h>
+#include <core/applicator/SelectionArchive.h>
 #include "components/Components.h"
 
-struct SceneData {
+// Scene metadata that gets saved separately
+struct SceneMetadata {
+	float sceneColor = 0.f;
+	String64 name;
+	glm::vec3 cameraPosition{0.0f, 5.0f, 10.0f};
+	glm::vec3 cameraTarget{0.0f, 0.0f, 0.0f};
+	float cameraFOV = 45.0f;
 
+	// Binary serialization
+	void SaveToFile(std::ofstream& file) const {
+		file.write(reinterpret_cast<const char*>(&sceneColor), sizeof(sceneColor));
+		file.write(reinterpret_cast<const char*>(&name), sizeof(name));
+		file.write(reinterpret_cast<const char*>(&cameraPosition), sizeof(cameraPosition));
+		file.write(reinterpret_cast<const char*>(&cameraTarget), sizeof(cameraTarget));
+		file.write(reinterpret_cast<const char*>(&cameraFOV), sizeof(cameraFOV));
+	}
+
+	void LoadFromFile(std::ifstream& file) {
+		file.read(reinterpret_cast<char*>(&sceneColor), sizeof(sceneColor));
+		file.read(reinterpret_cast<char*>(&name), sizeof(name));
+		file.read(reinterpret_cast<char*>(&cameraPosition), sizeof(cameraPosition));
+		file.read(reinterpret_cast<char*>(&cameraTarget), sizeof(cameraTarget));
+		file.read(reinterpret_cast<char*>(&cameraFOV), sizeof(cameraFOV));
+	}
+};
+
+// SceneData component attached to the scene root entity
+struct SceneData {
 	float sceneColor = 0.f;
 	String64 _name;
-	template<class Archive> 
-	void serialize(Archive& ar) {
-		ar(_name, sceneColor);
-	}
 };
 
 class Scene
@@ -55,68 +74,9 @@ class Scene
 		const glm::vec3& GetCameraPosition() const { return m_CameraPosition; }
 		const glm::vec3& GetCameraTarget() const { return m_CameraTarget; }
 
-		template<class Archive>
-		void save(Archive& archive) const
-		{
-			//Serialize scene-level components 
-			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
-			
-			// Collect entity data for saving
-			std::vector<Core::UUID> uuids;
-			std::vector<NameComponent> names;
-
-			for (auto entity : _registry.view<NameComponent>()) {
-				if (entity != _sceneEntity) {
-
-					uuids.push_back(_registry.get<Core::UUID>(entity));
-
-					if (_registry.all_of<NameComponent>(entity)) {
-						names.push_back(_registry.get<NameComponent>(entity));
-					} else {
-						names.push_back(NameComponent{}); // Generate new if missing
-					}
-				}
-			}
-
-			//serialize remaining components
-			std::vector<Transform> transforms;
-			for (auto entity : _registry.view<Transform>()) {
-				transforms.push_back(_registry.get<Transform>(entity));
-			}
-
-			// Serialize the data
-			archive(sceneData, uuids, names, transforms);
-		}
-
-		template<class Archive>
-		void load(Archive& archive)
-		{
-			auto& sceneData = _registry.get<SceneData>(_sceneEntity);
-			std::vector<Core::UUID> uuids;
-			std::vector<NameComponent> names;
-			std::vector<Transform> transforms;
-
-			archive(sceneData, uuids, names, transforms);
-
-			// Recreate entities from loaded data
-			for (size_t i = 0; i < uuids.size(); ++i) {
-				entt::entity newEntity = _registry.create();
-				_registry.emplace<Core::UUID>(newEntity, uuids[i]);
-
-				if (i < names.size()) {
-					_registry.emplace<NameComponent>(newEntity, names[i]);
-				} else {
-					_registry.emplace<NameComponent>(newEntity); // Generate new if missing
-				}
-
-				if (i < transforms.size()) {
-					_registry.emplace<Transform>(newEntity, transforms[i]);
-				}
-				else {
-					_registry.emplace<Transform>(newEntity); // Generate new if missing
-				}
-			}
-		}
+		 // Scene serialization using SelectionArchive
+		bool SaveToFile(const std::string& filepath) const;
+		bool LoadFromFile(const std::string& filepath);
 
 		// Access entt registry
 		inline entt::registry& GetRegistry() { return _registry; }
@@ -159,5 +119,6 @@ class Scene
 		float m_CameraNear = 0.1f;
 		float m_CameraFar = 100.0f;
 
-		SceneData& data() { return _registry.get<SceneData>(_sceneEntity); } // Updated return type to reference
+		SceneData& data() { return _registry.get<SceneData>(_sceneEntity); }
+		const SceneData& data() const { return _registry.get<SceneData>(_sceneEntity); }
 };

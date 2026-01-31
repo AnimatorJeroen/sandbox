@@ -6,19 +6,11 @@
 #include <array>
 #include <iostream> // Added for std::ostream
 
-#include <cereal/archives/binary.hpp>
 #include "core/UUID.h"
 #include <glm/glm.hpp>
 
 using vec4 = glm::vec4;
 using mat4 = glm::mat4;
-
-namespace cereal {
-    template<class Archive>
-    void serialize(Archive& ar, glm::vec4& v) {
-        ar(v.x, v.y, v.z, v.w);
-    }
-}
 
 // ----- Minimal data types
 struct String64 {
@@ -33,10 +25,6 @@ struct String64 {
 
     bool empty() const { return data[0] == '\0'; }
     size_t length() const { return std::strlen(data); }
-
-
-    template<class Archive>
-    void serialize(Archive& ar) { ar(data); }
 };
 
 // Add stream operator for String64 to support logging
