@@ -79,7 +79,10 @@ void Panel_SceneHierarchy::Render()
         // Skip the scene entity
         if (entity == _scene->GetSceneEntity())
             continue;
-        
+        // Skip the camera entity
+        if (registry.try_get<CameraComponent>(entity))
+            continue;
+
         // Display entity with its name
         ImGui::PushID(static_cast<int>(entt::to_integral(entity)));
         

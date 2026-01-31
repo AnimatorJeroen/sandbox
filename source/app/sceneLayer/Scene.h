@@ -22,6 +22,9 @@ class Scene
 			_registry.emplace<Core::UUID>(_sceneEntity);
 			_registry.emplace<SceneData>(_sceneEntity);
 			
+			 // Create default camera entity
+			_activeCamera = CreateCameraEntity();
+			
 			// Initialize default camera matrices
 			UpdateCameraMatrices(800, 600); // Default viewport size
 		}
@@ -38,14 +41,9 @@ class Scene
 		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		
-		void SetCameraPosition(const glm::vec3& position) { 
-			data().cameraPosition = position;
-		}
-		void SetCameraTarget(const glm::vec3& target) { 
-			data().cameraTarget = target;
-		}
-		const glm::vec3& GetCameraPosition() const { return data().cameraPosition; }
-		const glm::vec3& GetCameraTarget() const { return data().cameraTarget; }
+		// Active camera management
+		CameraComponent& GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }
+		void SetActiveCamera(entt::entity camera) { _activeCamera = camera; }
 
 		// Scene serialization using SelectionArchive
 		bool SaveToFile(const std::string& filepath) const;
@@ -60,6 +58,9 @@ class Scene
         
         // Create a named entity
         entt::entity CreateEntity(const std::string& name);
+        
+        // Create a camera entity with CameraComponent
+        entt::entity CreateCameraEntity();
 
 		const entt::entity& GetSceneEntity() const { return _sceneEntity; }
 
@@ -77,17 +78,15 @@ class Scene
 
 	private:
 		entt::entity _sceneEntity;
+		entt::entity _activeCamera = entt::null;
 		int a = 0;
 		entt::registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
 		std::string _fileName;
 		
-		// 3D Camera matrices (computed from SceneData)
+		// 3D Camera matrices (computed from CameraComponent)
 		glm::mat4 m_ViewMatrix;
 		glm::mat4 m_ProjectionMatrix;
-		glm::vec3 m_CameraUp{0.0f, 1.0f, 0.0f};
-		float m_CameraNear = 0.1f;
-		float m_CameraFar = 100.0f;
 
 		SceneData& data() { return _registry.get<SceneData>(_sceneEntity); }
 		const SceneData& data() const { return _registry.get<SceneData>(_sceneEntity); }

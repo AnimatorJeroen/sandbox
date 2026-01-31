@@ -4,6 +4,7 @@
 #include "MainMenu.h"
 #include "EditorContext.h"
 #include "PopupManager.h"
+#include "CameraController.h"
 #include "core/event/MouseEvent.h"
 #include "core/event/KeyEvent.h"
 #include "app/event/SceneEvent.h"
@@ -69,4 +70,14 @@ private:
 	
 	// Popup system
 	PopupManager _popupManager;
+	
+	// Camera controller
+	CameraController _cameraController;
+	
+	// Mouse button state tracking
+	bool _isLeftMouseDown = false;
+	bool _isMiddleMouseDown = false;
+	bool _isRightMouseDown = false;
+	double _lastMouseX = 0.0f;
+	double _lastMouseY = 0.0f;
 };

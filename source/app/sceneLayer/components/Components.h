@@ -16,15 +16,22 @@ struct Transform {
 	mat4 Matrix{ 1.0f };
 };
 
+// Camera component for camera entities
+struct CameraComponent {
+	glm::vec3 position{0.0f, 5.0f, 10.0f};
+	glm::vec3 target{0.0f, 0.0f, 0.0f};
+	glm::vec3 up{0.0f, 1.0f, 0.0f};
+	float fov = 45.0f;
+	float nearPlane = 0.1f;
+	float farPlane = 100.0f;
+
+	CameraComponent() = default;
+};
+
 // SceneData component - uniquely identifies the scene root entity
 struct SceneData {
 	float sceneColor = 0.f;
 	String64 _name;
-	
-	// Camera settings are part of scene data
-	glm::vec3 cameraPosition{0.0f, 5.0f, 10.0f};
-	glm::vec3 cameraTarget{0.0f, 0.0f, 0.0f};
-	float cameraFOV = 45.0f;
 };
 
 // Define all component types here as a tuple
@@ -33,5 +40,6 @@ using AppComponentTypes = std::tuple<
     Core::UUID,
     Transform,
     NameComponent,
+    CameraComponent,
     SceneData  // Scene root entity marker + metadata
 >;

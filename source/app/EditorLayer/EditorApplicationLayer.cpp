@@ -24,7 +24,8 @@ _mainMenu(_eventBus, _editorContext),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _editorContext),
 _openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get(), _editorContext),
 //popup system
-_popupManager()
+_popupManager(),
+_cameraController()
 {
 	// Set popup manager reference in editor context
 	_editorContext.SetPopupManager(&_popupManager);
@@ -69,6 +70,15 @@ void EditorApplicationLayer::OnRender()
 
 bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 {
+	if (e.identifier == 0)
+		_isLeftMouseDown = true;
+	else if (e.identifier == 1)
+		_isMiddleMouseDown = true;
+	else if (e.identifier == 2)
+		_isRightMouseDown = true;
+
+	_cameraController.OnMouseDown(_lastMouseX, _lastMouseY);
+
 	if(!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
@@ -78,6 +88,13 @@ bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 
 bool EditorApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 {
+	if (e.identifier == 0)
+		_isLeftMouseDown = false;
+	if (e.identifier == 1)
+		_isMiddleMouseDown = false;
+	if (e.identifier == 2)
+		_isRightMouseDown = false;
+
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
@@ -87,6 +104,12 @@ bool EditorApplicationLayer::OnMouseUpEvent(const Core::MouseUpEvent& e)
 
 bool EditorApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 {
+	_lastMouseX = e.posX;
+	_lastMouseY = e.posY;
+
+	if (!ImGui::GetIO().WantCaptureMouse)
+		_cameraController.OnMouseMove(e.posX, e.posY, _isLeftMouseDown, _isMiddleMouseDown, _isRightMouseDown);
+
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
@@ -96,6 +119,8 @@ bool EditorApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 
 bool EditorApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 {
+	_cameraController.OnMouseScroll(e.scrollY);
+
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;
 
@@ -321,6 +346,7 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
 	_editorContext.OnActiveSceneChanged();
+	_cameraController.SetContext(_sceneManager->GetActiveScene() ? &_sceneManager->GetActiveScene()->GetActiveCamera() : nullptr);
 	return false;
 }
 

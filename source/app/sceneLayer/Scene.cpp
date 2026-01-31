@@ -8,15 +8,10 @@
 
 void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight)
 {
-	// Get camera settings from SceneData
-	const auto& sceneData = data();
-	
-	// Update view matrix
-	m_ViewMatrix = glm::lookAt(sceneData.cameraPosition, sceneData.cameraTarget, m_CameraUp);
-	
-	// Update projection matrix
+	auto& camera = GetActiveCamera();
+	m_ViewMatrix = glm::lookAt(camera.position, camera.target, camera.up);
 	float aspect = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
-	m_ProjectionMatrix = glm::perspective(glm::radians(sceneData.cameraFOV), aspect, m_CameraNear, m_CameraFar);
+	m_ProjectionMatrix = glm::perspective(glm::radians(camera.fov), aspect, camera.nearPlane, camera.farPlane);
 }
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
@@ -27,7 +22,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		auto& transform = _registry.get<Transform>(entity);
 
 		float x = transform.Position.x;
-		float y = transform.Position.y + 0.100 + i * 0.15;
+		float y = transform.Position.y + 0.100f + i * 0.15f;
 
 		// Scale down coordinates to fit in camera view
 		// Camera is at (0,5,10) looking at (0,0,0)
@@ -103,6 +98,17 @@ entt::entity Scene::CreateEntity(const std::string& name)
 	float y = dis(gen);
 
 	_registry.emplace<Transform>(e, Transform{ vec4{x, y, 0.0f, 1.0f}});
+
+	return e;
+}
+
+entt::entity Scene::CreateCameraEntity()
+{
+	entt::entity e = _registry.create();
+
+	_registry.emplace<Core::UUID>(e);
+	_registry.emplace<NameComponent>(e, "Camera");
+	_registry.emplace<CameraComponent>(e);
 
 	return e;
 }
@@ -238,6 +244,16 @@ bool Scene::LoadFromFile(const std::string& filepath)
 
 		// Set _sceneEntity to the entity with SceneData
 		_sceneEntity = sceneDataView.front();
+		
+		// Find and set the first camera entity as active camera
+		auto cameraView = _registry.view<CameraComponent>();
+		if (!cameraView.empty()) {
+			_activeCamera = cameraView.front();
+		}
+		else {
+			// No camera entity found, create a default one
+			_activeCamera = CreateCameraEntity();
+		}
 
 		 // Camera settings are already in SceneData - just update matrices
 		UpdateCameraMatrices(800, 600);
