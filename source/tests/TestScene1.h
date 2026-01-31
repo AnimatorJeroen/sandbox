@@ -13,6 +13,41 @@ private:
 	Core::Renderer_OpenGL _renderer;
 	Core::Renderer_OpenGL::RenderTargetSpecs _renderSpecs;
 
+	// Helper function to render the grid floor
+	inline void RenderGrid(Core::DrawCommandRecorder& recorder, float gridSize = 20.0f, float gridStep = 1.0f)
+	{
+		Core::ColorRGBA gridColor = {0.5f, 0.5f, 0.5f, 0.5f}; // Gray color
+		Core::ColorRGBA axisColorX = {1.0f, 0.2f, 0.2f, 0.5f }; // Red for X axis
+		Core::ColorRGBA axisColorZ = {0.2f, 0.2f, 1.0f, 0.5f }; // Blue for Z axis
+		float thickness = 1.0f;
+		
+		float halfSize = gridSize * 0.5f;
+		
+		// Draw grid lines along X direction (parallel to X axis)
+		for (float z = -halfSize; z <= halfSize; z += gridStep)
+		{
+			Core::ColorRGBA color = (z == 0.0f) ? axisColorZ : gridColor;
+			recorder.Line(
+				Core::Vec3{-halfSize, 0.0f, z},
+				Core::Vec3{halfSize, 0.0f, z},
+				thickness,
+				color
+			);
+		}
+		
+		// Draw grid lines along Z direction (parallel to Z axis)
+		for (float x = -halfSize; x <= halfSize; x += gridStep)
+		{
+			Core::ColorRGBA color = (x == 0.0f) ? axisColorX : gridColor;
+			recorder.Line(
+				Core::Vec3{x, 0.0f, -halfSize},
+				Core::Vec3{x, 0.0f, halfSize},
+				thickness,
+				color
+			);
+		}
+	}
+
 public:
 	inline explicit TestScene1(std::shared_ptr<SceneManager> sceneManager) : _sceneManager(sceneManager)
 	{
@@ -57,6 +92,10 @@ public:
 			scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
 			_renderer.SetViewMatrix(scene->GetViewMatrix());
 			_renderer.SetProjectionMatrix(scene->GetProjectionMatrix());
+			
+			// Render the grid floor
+			RenderGrid(_recorder);
+			
 			scene->Draw(_recorder);
 		}
 
