@@ -57,13 +57,6 @@ project "Sandbox"
     filter "action:vs*"
         buildoptions { "/MP" }
     filter {}
-    --    buildoptions { "/MP" }
-    --filter {}
-
-    --     -- Enable multiprocessor compilation for Visual Studio
-    -- filter "action:vs*"
-    --     buildoptions { "/MP" }
-    -- filter {}
 
     filter "configurations:Debug"
         symbols "on"

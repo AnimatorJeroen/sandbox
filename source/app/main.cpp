@@ -35,5 +35,7 @@ int main() {
 	app.PushLayer<SceneApplicationLayer>();
     app.Run();
 
+	//const glm::mat4 viewMatrix = glm::lookAt(vec3(), vec3(), vec3());
+
     return 0;
 }
