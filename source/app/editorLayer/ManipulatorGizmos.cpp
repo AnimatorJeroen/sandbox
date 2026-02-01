@@ -77,14 +77,15 @@ void EditorApplicationLayer::RenderImGuizmo()
 	modelMatrix = glm::rotate(modelMatrix, glm::radians(averageRotation.z), vec3(0,0,1));
 	modelMatrix = glm::scale(modelMatrix, averageScale);
 
+	glm::mat4 deltaMatrix;
 	// Manipulate the gizmo
 	ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix),
-		operation, ImGuizmo::LOCAL, glm::value_ptr(modelMatrix));
+		operation, ImGuizmo::LOCAL, glm::value_ptr(modelMatrix), glm::value_ptr(deltaMatrix));
 
 	// Decompose the result to get new position and scale
-	glm::vec3 newTranslation, newRotation, newScale;
-	ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix),
-		glm::value_ptr(newTranslation), glm::value_ptr(newRotation), glm::value_ptr(newScale));
+	glm::vec3 deltaTranslation, deltaRotation, deltaScale;
+	ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(deltaMatrix),
+		glm::value_ptr(deltaTranslation), glm::value_ptr(deltaRotation), glm::value_ptr(deltaScale));
 
 	//Capture state and BeginUndo (aka OnMouseDown)
 	if (ImGuizmo::IsUsing() && !imGuizmoActivate)
@@ -133,10 +134,10 @@ void EditorApplicationLayer::RenderImGuizmo()
 	//apply the transformation (aka OnMouseMove)
 	if (imGuizmoActivate)
 	{
-		// Calculate deltas
-		glm::vec3 translationDelta = newTranslation - initialCentroid;
-		glm::vec3 rotationDelta = newRotation - averageRotation;
-		glm::vec3 scaleDelta = newScale / initialAverageScale;
+		//// Calculate deltas
+		//glm::vec3 translationDelta = newTranslation - initialCentroid;
+		//glm::vec3 rotationDelta = newRotation - averageRotation;
+		//glm::vec3 scaleDelta = newScale / initialAverageScale;
 
 		// Apply delta to all selected transforms
 		for (const auto& transformPair : selectedTransforms)
@@ -147,17 +148,17 @@ void EditorApplicationLayer::RenderImGuizmo()
 			if (operation == ImGuizmo::TRANSLATE)
 			{
 				// Apply translation delta to maintain relative positions
-				transform.Position = initialPositions[entity] + translationDelta;
+				transform.Position += deltaTranslation;
 			}
 			else if (operation == ImGuizmo::ROTATE)
 			{
 				// Apply translation delta to maintain relative positions
-				transform.Rotation = transform.Rotation + rotationDelta;
+				transform.Rotation += deltaRotation;
 			}
 			else if (operation == ImGuizmo::SCALE)
 			{
 				// Apply scale delta
-				transform.Scale = initialScales[entity] * scaleDelta;
+				transform.Scale += deltaScale;
 			}
 		}
 	}
