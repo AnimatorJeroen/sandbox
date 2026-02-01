@@ -134,11 +134,6 @@ void EditorApplicationLayer::RenderImGuizmo()
 	//apply the transformation (aka OnMouseMove)
 	if (imGuizmoActivate)
 	{
-		//// Calculate deltas
-		//glm::vec3 translationDelta = newTranslation - initialCentroid;
-		//glm::vec3 rotationDelta = newRotation - averageRotation;
-		//glm::vec3 scaleDelta = newScale / initialAverageScale;
-
 		// Apply delta to all selected transforms
 		for (const auto& transformPair : selectedTransforms)
 		{
@@ -158,7 +153,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 			else if (operation == ImGuizmo::SCALE)
 			{
 				// Apply scale delta
-				transform.Scale += deltaScale;
+				transform.Scale *= deltaScale;
 			}
 		}
 	}
