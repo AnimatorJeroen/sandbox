@@ -72,19 +72,25 @@ void EditorApplicationLayer::RenderImGuizmo()
 	averageScale /= static_cast<float>(currentTransforms.size());
 	averageRotation /= static_cast<float>(currentTransforms.size());
 
+	if (!imGuizmoActivate)
+	{
+		initialCentroid = centroid;
+		initialAverageScale = averageScale;
+		initialAverageRotation = averageRotation;
+	}
 
 	// Build model matrix at the centroid
-	glm::mat4 modelMatrix = glm::mat4(1.0f);
-	modelMatrix = glm::translate(modelMatrix, centroid);
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(averageRotation.y), vec3(0,1,0));
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(averageRotation.x), vec3(1,0,0));
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(averageRotation.z), vec3(0,0,1));
-	modelMatrix = glm::scale(modelMatrix, averageScale);
+	glm::mat4 rotation = glm::toMat4(glm::quat(glm::radians(averageRotation)));
+	mat4 manipulatorMatrix = glm::translate(glm::mat4(1.0f), operation == ImGuizmo::TRANSLATE ? centroid : initialCentroid)
+		* rotation
+		* glm::scale(glm::mat4(1.0f), averageScale);
+
+	mat4 transformedManipulatorMatrix = manipulatorMatrix;
 
 	glm::mat4 deltaMatrix;
 	// Manipulate the gizmo
 	ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix),
-		operation, mode, glm::value_ptr(modelMatrix), glm::value_ptr(deltaMatrix));
+		operation, mode, glm::value_ptr(transformedManipulatorMatrix), glm::value_ptr(deltaMatrix));
 
 	// Decompose the result to get new position and scale
 	glm::vec3 deltaTranslation, deltaRotation, deltaScale;
@@ -96,9 +102,6 @@ void EditorApplicationLayer::RenderImGuizmo()
 	{
 		// Cache the transforms and initial centroid
 		selectedTransforms = currentTransforms;
-		initialCentroid = centroid;
-		initialAverageScale = averageScale;
-		initialAverageRotation = averageRotation;
 
 		// Store initial positions and scales for all selected entities
 		initialPositions.clear();
@@ -147,17 +150,31 @@ void EditorApplicationLayer::RenderImGuizmo()
 			if (isWorldMultiSelect &&
 				(operation == ImGuizmo::TRANSLATE || operation == ImGuizmo::ROTATE || operation == ImGuizmo::SCALE))
 			{
-				// Calculate offset from initial centroid
-				mat4 currentMatrix = transform.GetTransform();
-				mat4 transformedMatrix = deltaMatrix * currentMatrix;
-				mat4 thisDeltaMatrix = glm::inverse(currentMatrix) * transformedMatrix;
+				mat4 originalMatrix = transform.GetTransform();
+				mat4 m = originalMatrix;
 
-				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(thisDeltaMatrix),
+				//bring to parent space
+				//m = glm::inverse(manipulatorMatrix) * m;
+				//now apply delta
+				//m = deltaMatrix * m;
+
+				//bring back to world space (apply parent space)
+				//m = manipulatorMatrix * m;
+
+				m = deltaMatrix * m;
+
+				//mat4 transformed_modelMatrixInParentSpace = glm::inverse(transformedManipulatorMatrix) * modelMatrix;
+
+				//mat4 thisDeltaMatrixInParentSpace = glm::inverse(modelMatrixInParentSpace) * transformed_modelMatrixInParentSpace;
+
+				//mat4 thisDeltaMatrix = glm::inverse(originalMatrix) * m;
+
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(m),
 					glm::value_ptr(deltaTranslation), glm::value_ptr(deltaRotation), glm::value_ptr(deltaScale));
 
-				transform.Position += deltaTranslation;
-				transform.Rotation += deltaRotation;
-				transform.Scale *= deltaScale;
+				transform.Position = deltaTranslation;
+				transform.Rotation = deltaRotation;
+				transform.Scale = deltaScale;
 			}
 			else if (operation == ImGuizmo::TRANSLATE)
 			{
