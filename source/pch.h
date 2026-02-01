@@ -23,6 +23,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui/imgui.h>
+#include <ImGuizmo/ImGuizmo.h>
 
 #include <glew/glew.h>
 #include <GLFW/glfw3.h>

@@ -42,6 +42,7 @@ namespace Core
 		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);
 		REGISTER_CALLBACK((*_eventBus), WindowCloseEvent, OnWindowCloseEvent);
 		// Note: ApplicationCloseEvent is registered in Run() after all layers are initialized
+
 	}
 
 	static bool shouldClose = false;

@@ -57,9 +57,22 @@ project "Sandbox"
     filter "action:vs*"
         buildoptions { "/MP" }
     filter {}
+    --    buildoptions { "/MP" }
+    --filter {}
+
+    --     -- Enable multiprocessor compilation for Visual Studio
+    -- filter "action:vs*"
+    --     buildoptions { "/MP" }
+    -- filter {}
 
     filter "configurations:Debug"
         symbols "on"
+        -- Enable Edit and Continue for hot reload (/ZI)
+        editandcontinue "On"
+        optimize "Off"
+        flags { "NoIncrementalLink" }
+        removeflags { "NoIncrementalLink" }
 
     filter "configurations:Release"
         optimize "on"
+        editandcontinue "Off"

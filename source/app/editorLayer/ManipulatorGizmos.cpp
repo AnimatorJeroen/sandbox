@@ -34,8 +34,8 @@ void EditorApplicationLayer::RenderImGuizmo()
 	static ImGuizmo::MODE mode = ImGuizmo::WORLD;
 	if (!ImGuizmo::IsUsing())
 	{
-		operation = _imGuizmoOperation;
-		mode = _imGuizmoMode;
+		operation = _editorContext.GetImGuizmoOperation();
+		mode = _editorContext.GetImGuizmoMode();
 	}
 
 	// Collect all transforms from selected entities
@@ -155,7 +155,6 @@ void EditorApplicationLayer::RenderImGuizmo()
 
 				transform.Position = deltaTranslation;
 				transform.Rotation = deltaRotation;
-				transform.Scale = deltaScale;
 			}
 			else if (operation == ImGuizmo::TRANSLATE)
 			{
@@ -167,7 +166,9 @@ void EditorApplicationLayer::RenderImGuizmo()
 				// Apply translation delta to maintain relative positions
 				transform.Rotation += deltaRotation;
 			}
-			else if (operation == ImGuizmo::SCALE)
+
+			//always scale locally (to avoid -nan)
+			if (operation == ImGuizmo::SCALE)
 			{
 				// Apply scale delta
 				transform.Scale *= deltaScale;

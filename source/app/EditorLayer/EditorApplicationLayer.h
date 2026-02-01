@@ -16,6 +16,7 @@
 #include "OpenDocumentsTopBar.h"
 
 #include <ImGuizmo/ImGuizmo.h>
+#include "PropertiesBar.h"
 
 class SceneManager;
 class EventBus;
@@ -71,6 +72,7 @@ private:
 	Panel_SceneHierarchy _sceneHierarchyPanel;
 	MainMenu _mainMenu;
 	OpenDocumentsTopBar _openDocumentsTopBar;
+	PropertiesBar _propertiesBar;
 	
 	// Popup system
 	PopupManager _popupManager;
@@ -84,7 +86,4 @@ private:
 	bool _isRightMouseDown = false;
 	double _lastMouseX = 0.0f;
 	double _lastMouseY = 0.0f;
-
-	ImGuizmo::OPERATION _imGuizmoOperation = ImGuizmo::TRANSLATE;
-	ImGuizmo::MODE _imGuizmoMode = ImGuizmo::WORLD;
 };

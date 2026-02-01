@@ -95,9 +95,16 @@ public:
     /// </summary>
     PopupManager* GetPopupManager() { return _popupManager; }
 
+	void SetImGuizmoMode(ImGuizmo::MODE mode) { _imGuizmoMode = mode; }
+	ImGuizmo::MODE GetImGuizmoMode() const { return _imGuizmoMode; }
+	void SetImGuizmoOperation(ImGuizmo::OPERATION operation) { _imGuizmoOperation = operation; }
+	ImGuizmo::OPERATION GetImGuizmoOperation() const { return _imGuizmoOperation; }
+
 private:
     // State
     std::set<entt::entity> _selectedEntities;
+	ImGuizmo::MODE _imGuizmoMode = ImGuizmo::LOCAL;
+	ImGuizmo::OPERATION _imGuizmoOperation = ImGuizmo::TRANSLATE;
 
     // Services (references to externally owned objects)
     SceneManager& _sceneManager;

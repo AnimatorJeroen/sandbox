@@ -24,6 +24,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		float x = transform.Position.x;
 		float y = transform.Position.y;
 
+
 		// Scale down coordinates to fit in camera view
 		// Camera is at (0,5,10) looking at (0,0,0)
 		// So we need coordinates near the origin

@@ -27,6 +27,7 @@ _editorContext(*_sceneManager, _eventBus, _applicator, _undoManager, _windowHand
 _mainMenu(_eventBus, _editorContext),
 _sceneHierarchyPanel(*_sceneManager->GetActiveScene(), _editorContext),
 _openDocumentsTopBar(*_sceneManager, *ctx.Get<Core::EventBus>().get(), _editorContext),
+_propertiesBar(_editorContext),
 //popup system
 _popupManager(),
 _cameraController()
@@ -66,6 +67,7 @@ void EditorApplicationLayer::OnRender()
 {
 	_mainMenu.Render();
 	_openDocumentsTopBar.Render();
+	_propertiesBar.Render();
 	_sceneHierarchyPanel.Render();
 	
 	RenderImGuizmo();
@@ -215,13 +217,13 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 		}
 	}
 	else if (e.key == 'W' && !e.repeated) {
-		_imGuizmoOperation = ImGuizmo::TRANSLATE;
+		_editorContext.SetImGuizmoOperation(ImGuizmo::TRANSLATE);
 	}
 	else if (e.key == 'E' && !e.repeated) {
-		_imGuizmoOperation = ImGuizmo::ROTATE;
+		_editorContext.SetImGuizmoOperation(ImGuizmo::ROTATE);
 	}
 	else if (e.key == 'R' && !e.repeated) {
-		_imGuizmoOperation = ImGuizmo::SCALE;
+		_editorContext.SetImGuizmoOperation(ImGuizmo::SCALE);
 	}
 
 	
@@ -363,6 +365,7 @@ PopupResult EditorApplicationLayer::InvokePopupRequestSaveChanges(const int scen
 bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent& e)
 {
 	LOG_TRACE() << e.GetName() << " received in editor layer.";
+	_propertiesBar.SetContext(*_sceneManager->GetActiveScene());
 	_sceneHierarchyPanel.SetContext(*_sceneManager->GetActiveScene());
 	_editorContext.OnActiveSceneChanged();
 	_cameraController.SetContext(_sceneManager->GetActiveScene() ? &_sceneManager->GetActiveScene()->GetActiveCamera() : nullptr);
