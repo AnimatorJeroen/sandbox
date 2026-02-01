@@ -86,4 +86,5 @@ private:
 	double _lastMouseY = 0.0f;
 
 	ImGuizmo::OPERATION _imGuizmoOperation = ImGuizmo::TRANSLATE;
+	ImGuizmo::MODE _imGuizmoMode = ImGuizmo::WORLD;
 };

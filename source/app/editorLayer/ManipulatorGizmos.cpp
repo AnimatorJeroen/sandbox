@@ -35,9 +35,11 @@ void EditorApplicationLayer::RenderImGuizmo()
 	static glm::vec3 initialAverageScale{};
 	static glm::vec3 initialAverageRotation{};
 	static ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
+	static ImGuizmo::MODE mode = ImGuizmo::WORLD;
 	if (!ImGuizmo::IsUsing())
 	{
 		operation = _imGuizmoOperation;
+		mode = _imGuizmoMode;
 	}
 
 	// Collect all transforms from selected entities
@@ -53,6 +55,8 @@ void EditorApplicationLayer::RenderImGuizmo()
 
 	if (currentTransforms.empty())
 		return;
+
+	bool isWorldMultiSelect = (mode == ImGuizmo::WORLD) && (currentTransforms.size() > 1);
 
 	// Calculate centroid (average position) of all selected objects
 	glm::vec3 centroid(0.0f);
@@ -80,7 +84,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 	glm::mat4 deltaMatrix;
 	// Manipulate the gizmo
 	ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix),
-		operation, ImGuizmo::LOCAL, glm::value_ptr(modelMatrix), glm::value_ptr(deltaMatrix));
+		operation, mode, glm::value_ptr(modelMatrix), glm::value_ptr(deltaMatrix));
 
 	// Decompose the result to get new position and scale
 	glm::vec3 deltaTranslation, deltaRotation, deltaScale;
@@ -116,15 +120,15 @@ void EditorApplicationLayer::RenderImGuizmo()
 			auto entity = transformPair.first;
 			auto& transform = *transformPair.second;
 
-			if (operation == ImGuizmo::TRANSLATE)
+			if (operation == ImGuizmo::TRANSLATE || isWorldMultiSelect)
 			{
 				_applicator.SetField(entity, "Transform.Position", transform.Position);
 			}
-			else if (operation == ImGuizmo::ROTATE)
+			if (operation == ImGuizmo::ROTATE || isWorldMultiSelect)
 			{
 				_applicator.SetField(entity, "Transform.Rotation", transform.Rotation);
 			}
-			else if (operation == ImGuizmo::SCALE)
+			if (operation == ImGuizmo::SCALE || isWorldMultiSelect)
 			{
 				_applicator.SetField(entity, "Transform.Scale", transform.Scale);
 			}
@@ -140,7 +144,22 @@ void EditorApplicationLayer::RenderImGuizmo()
 			auto entity = transformPair.first;
 			auto& transform = *transformPair.second;
 
-			if (operation == ImGuizmo::TRANSLATE)
+			if (isWorldMultiSelect &&
+				(operation == ImGuizmo::TRANSLATE || operation == ImGuizmo::ROTATE || operation == ImGuizmo::SCALE))
+			{
+				// Calculate offset from initial centroid
+				mat4 currentMatrix = transform.GetTransform();
+				mat4 transformedMatrix = deltaMatrix * currentMatrix;
+				mat4 thisDeltaMatrix = glm::inverse(currentMatrix) * transformedMatrix;
+
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(thisDeltaMatrix),
+					glm::value_ptr(deltaTranslation), glm::value_ptr(deltaRotation), glm::value_ptr(deltaScale));
+
+				transform.Position += deltaTranslation;
+				transform.Rotation += deltaRotation;
+				transform.Scale *= deltaScale;
+			}
+			else if (operation == ImGuizmo::TRANSLATE)
 			{
 				// Apply translation delta to maintain relative positions
 				transform.Position += deltaTranslation;
@@ -167,15 +186,15 @@ void EditorApplicationLayer::RenderImGuizmo()
 			auto entity = transformPair.first;
 			auto& transform = *transformPair.second;
 
-			if (operation == ImGuizmo::TRANSLATE)
+			if (operation == ImGuizmo::TRANSLATE || isWorldMultiSelect)
 			{
 				_applicator.SetField(entity, "Transform.Position", transform.Position);
 			}
-			else if (operation == ImGuizmo::ROTATE)
+			if (operation == ImGuizmo::ROTATE || isWorldMultiSelect)
 			{
 				_applicator.SetField(entity, "Transform.Rotation", transform.Rotation);
 			}
-			else if (operation == ImGuizmo::SCALE)
+			if (operation == ImGuizmo::SCALE || isWorldMultiSelect)
 			{
 				_applicator.SetField(entity, "Transform.Scale", transform.Scale);
 			}
