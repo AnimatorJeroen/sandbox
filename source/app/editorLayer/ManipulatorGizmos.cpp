@@ -16,24 +16,20 @@ void EditorApplicationLayer::RenderImGuizmo()
 		return;
 
 	// Setup ImGuizmo
-	int windowWidth = 1280, windowHeight = 720;
-	ImGuizmo::SetRect(0, 0, static_cast<float>(windowWidth), static_cast<float>(windowHeight));
+	ImGuiIO& io = ImGui::GetIO();
+	float windowWidth = io.DisplaySize.x, windowHeight = io.DisplaySize.y;
+	ImGuizmo::SetRect(0, 0, windowWidth, windowHeight);
 
 	// Get camera matrices  
 	auto& cameraComponent = scene->GetActiveCamera();
 	const glm::mat4 viewMatrix = glm::lookAt(cameraComponent.position, cameraComponent.target, cameraComponent.up);
 	const glm::mat4 projectionMatrix = glm::perspective(glm::radians(cameraComponent.fov),
-		static_cast<float>(windowWidth) / static_cast<float>(windowHeight),
+		windowWidth / windowHeight,
 		cameraComponent.nearPlane, cameraComponent.farPlane);
 
 	static bool imGuizmoActivate = false;
 	static std::vector<std::pair<entt::entity, Transform*>> selectedTransforms;
-	static std::unordered_map<entt::entity, glm::vec3> initialPositions;
-	static std::unordered_map<entt::entity, glm::vec3> initialRotations;
-	static std::unordered_map<entt::entity, glm::vec3> initialScales;
 	static glm::vec3 initialCentroid{};
-	static glm::vec3 initialAverageScale{};
-	static glm::vec3 initialAverageRotation{};
 	static ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
 	static ImGuizmo::MODE mode = ImGuizmo::WORLD;
 	if (!ImGuizmo::IsUsing())
@@ -75,8 +71,6 @@ void EditorApplicationLayer::RenderImGuizmo()
 	if (!imGuizmoActivate)
 	{
 		initialCentroid = centroid;
-		initialAverageScale = averageScale;
-		initialAverageRotation = averageRotation;
 	}
 
 	// Build model matrix at the centroid
@@ -87,8 +81,8 @@ void EditorApplicationLayer::RenderImGuizmo()
 
 	mat4 transformedManipulatorMatrix = manipulatorMatrix;
 
-	glm::mat4 deltaMatrix;
 	// Manipulate the gizmo
+	glm::mat4 deltaMatrix;
 	ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix),
 		operation, mode, glm::value_ptr(transformedManipulatorMatrix), glm::value_ptr(deltaMatrix));
 
@@ -102,18 +96,6 @@ void EditorApplicationLayer::RenderImGuizmo()
 	{
 		// Cache the transforms and initial centroid
 		selectedTransforms = currentTransforms;
-
-		// Store initial positions and scales for all selected entities
-		initialPositions.clear();
-		initialScales.clear();
-		initialRotations.clear();
-		for (const auto& [entity, transform] : selectedTransforms)
-		{
-			initialPositions[entity] = transform->Position;
-			initialScales[entity] = transform->Scale;
-			initialRotations[entity] = transform->Rotation;
-		}
-
 		_editorContext.BeginUndo();
 		imGuizmoActivate = true;
 
@@ -147,27 +129,26 @@ void EditorApplicationLayer::RenderImGuizmo()
 			auto entity = transformPair.first;
 			auto& transform = *transformPair.second;
 
-			if (isWorldMultiSelect &&
+			if (mode == ImGuizmo::WORLD &&
 				(operation == ImGuizmo::TRANSLATE || operation == ImGuizmo::ROTATE || operation == ImGuizmo::SCALE))
 			{
 				mat4 originalMatrix = transform.GetTransform();
 				mat4 m = originalMatrix;
 
-				//bring to parent space
-				//m = glm::inverse(manipulatorMatrix) * m;
-				//now apply delta
-				//m = deltaMatrix * m;
+				if (operation == ImGuizmo::SCALE)
+				{
+					//bring to parent space
+					m = glm::inverse(manipulatorMatrix) * m;
+					//now apply delta
+					m = deltaMatrix * m;
 
-				//bring back to world space (apply parent space)
-				//m = manipulatorMatrix * m;
-
-				m = deltaMatrix * m;
-
-				//mat4 transformed_modelMatrixInParentSpace = glm::inverse(transformedManipulatorMatrix) * modelMatrix;
-
-				//mat4 thisDeltaMatrixInParentSpace = glm::inverse(modelMatrixInParentSpace) * transformed_modelMatrixInParentSpace;
-
-				//mat4 thisDeltaMatrix = glm::inverse(originalMatrix) * m;
+					//bring back to world space (apply parent space)
+					m = manipulatorMatrix * m;
+				}
+				else
+				{
+					m = deltaMatrix * m;
+				}
 
 				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(m),
 					glm::value_ptr(deltaTranslation), glm::value_ptr(deltaRotation), glm::value_ptr(deltaScale));
@@ -219,7 +200,5 @@ void EditorApplicationLayer::RenderImGuizmo()
 		_editorContext.EndUndo();
 		imGuizmoActivate = false;
 		selectedTransforms.clear();
-		initialPositions.clear();
-		initialScales.clear();
 	}
 }
