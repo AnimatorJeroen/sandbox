@@ -54,7 +54,6 @@ void EditorApplicationLayer::RenderImGuizmo()
 
 	bool isWorldMultiSelect = (mode == ImGuizmo::WORLD) && (currentTransforms.size() > 1);
 
-	// Calculate centroid (average position) of all selected objects
 	glm::vec3 centroid(0.0f);
 	glm::vec3 averageScale(0.0f);
 	glm::vec3 averageRotation(0.0f);
@@ -69,9 +68,10 @@ void EditorApplicationLayer::RenderImGuizmo()
 	averageRotation /= static_cast<float>(currentTransforms.size());
 
 	if (!imGuizmoActivate)
-	{
 		initialCentroid = centroid;
-	}
+
+	if(isWorldMultiSelect && operation == ImGuizmo::SCALE)
+		averageRotation = vec3();
 
 	// Build model matrix at the centroid
 	glm::mat4 rotation = glm::toMat4(glm::quat(glm::radians(averageRotation)));
