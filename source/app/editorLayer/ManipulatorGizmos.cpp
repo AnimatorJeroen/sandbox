@@ -135,7 +135,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 	{
 		// Calculate deltas
 		glm::vec3 translationDelta = newTranslation - initialCentroid;
-		glm::vec3 rotationDelta = newRotation - initialAverageRotation;
+		glm::vec3 rotationDelta = newRotation - averageRotation;
 		glm::vec3 scaleDelta = newScale / initialAverageScale;
 
 		// Apply delta to all selected transforms
@@ -152,7 +152,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 			else if (operation == ImGuizmo::ROTATE)
 			{
 				// Apply translation delta to maintain relative positions
-				transform.Rotation = initialRotations[entity] + rotationDelta;
+				transform.Rotation = transform.Rotation + rotationDelta;
 			}
 			else if (operation == ImGuizmo::SCALE)
 			{
