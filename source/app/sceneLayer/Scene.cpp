@@ -49,8 +49,10 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		// Draw 3D cube for each entity
 		glm::mat4 cubeTransform = glm::mat4(1.0f);
 		cubeTransform = glm::translate(cubeTransform, transform.Position);
-		cubeTransform = glm::rotate(cubeTransform, glm::radians(i * 15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		cubeTransform = glm::scale(cubeTransform, glm::vec3(0.5f));
+		cubeTransform = glm::rotate(cubeTransform, glm::radians(transform.Rotation.y), vec3(0.0f, 1.f, 0));
+		cubeTransform = glm::rotate(cubeTransform, glm::radians(transform.Rotation.x), vec3(1.0f, 0, 0));
+		cubeTransform = glm::rotate(cubeTransform, glm::radians(transform.Rotation.z), vec3(0.0f, 0.f, 1.f));
+		cubeTransform = glm::scale(cubeTransform, transform.Scale);
 		recorder.Cube(cubeTransform, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 
 		i++;

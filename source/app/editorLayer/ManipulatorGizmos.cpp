@@ -29,9 +29,11 @@ void EditorApplicationLayer::RenderImGuizmo()
 	static bool imGuizmoActivate = false;
 	static std::vector<std::pair<entt::entity, Transform*>> selectedTransforms;
 	static std::unordered_map<entt::entity, glm::vec3> initialPositions;
+	static std::unordered_map<entt::entity, glm::vec3> initialRotations;
 	static std::unordered_map<entt::entity, glm::vec3> initialScales;
 	static glm::vec3 initialCentroid{};
 	static glm::vec3 initialAverageScale{};
+	static glm::vec3 initialAverageRotation{};
 	static ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
 	if (!ImGuizmo::IsUsing())
 	{
@@ -55,17 +57,24 @@ void EditorApplicationLayer::RenderImGuizmo()
 	// Calculate centroid (average position) of all selected objects
 	glm::vec3 centroid(0.0f);
 	glm::vec3 averageScale(0.0f);
+	glm::vec3 averageRotation(0.0f);
 	for (const auto& [entity, transform] : currentTransforms)
 	{
 		centroid += transform->Position;
 		averageScale += transform->Scale;
+		averageRotation += transform->Rotation;
 	}
 	centroid /= static_cast<float>(currentTransforms.size());
 	averageScale /= static_cast<float>(currentTransforms.size());
+	averageRotation /= static_cast<float>(currentTransforms.size());
+
 
 	// Build model matrix at the centroid
 	glm::mat4 modelMatrix = glm::mat4(1.0f);
 	modelMatrix = glm::translate(modelMatrix, centroid);
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(averageRotation.y), vec3(0,1,0));
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(averageRotation.x), vec3(1,0,0));
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(averageRotation.z), vec3(0,0,1));
 	modelMatrix = glm::scale(modelMatrix, averageScale);
 
 	// Manipulate the gizmo
@@ -84,14 +93,17 @@ void EditorApplicationLayer::RenderImGuizmo()
 		selectedTransforms = currentTransforms;
 		initialCentroid = centroid;
 		initialAverageScale = averageScale;
+		initialAverageRotation = averageRotation;
 
 		// Store initial positions and scales for all selected entities
 		initialPositions.clear();
 		initialScales.clear();
+		initialRotations.clear();
 		for (const auto& [entity, transform] : selectedTransforms)
 		{
 			initialPositions[entity] = transform->Position;
 			initialScales[entity] = transform->Scale;
+			initialRotations[entity] = transform->Rotation;
 		}
 
 		_editorContext.BeginUndo();
@@ -107,6 +119,10 @@ void EditorApplicationLayer::RenderImGuizmo()
 			{
 				_applicator.SetField(entity, "Transform.Position", transform.Position);
 			}
+			else if (operation == ImGuizmo::ROTATE)
+			{
+				_applicator.SetField(entity, "Transform.Rotation", transform.Rotation);
+			}
 			else if (operation == ImGuizmo::SCALE)
 			{
 				_applicator.SetField(entity, "Transform.Scale", transform.Scale);
@@ -119,6 +135,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 	{
 		// Calculate deltas
 		glm::vec3 translationDelta = newTranslation - initialCentroid;
+		glm::vec3 rotationDelta = newRotation - initialAverageRotation;
 		glm::vec3 scaleDelta = newScale / initialAverageScale;
 
 		// Apply delta to all selected transforms
@@ -131,6 +148,11 @@ void EditorApplicationLayer::RenderImGuizmo()
 			{
 				// Apply translation delta to maintain relative positions
 				transform.Position = initialPositions[entity] + translationDelta;
+			}
+			else if (operation == ImGuizmo::ROTATE)
+			{
+				// Apply translation delta to maintain relative positions
+				transform.Rotation = initialRotations[entity] + rotationDelta;
 			}
 			else if (operation == ImGuizmo::SCALE)
 			{
@@ -152,6 +174,10 @@ void EditorApplicationLayer::RenderImGuizmo()
 			if (operation == ImGuizmo::TRANSLATE)
 			{
 				_applicator.SetField(entity, "Transform.Position", transform.Position);
+			}
+			else if (operation == ImGuizmo::ROTATE)
+			{
+				_applicator.SetField(entity, "Transform.Rotation", transform.Rotation);
 			}
 			else if (operation == ImGuizmo::SCALE)
 			{

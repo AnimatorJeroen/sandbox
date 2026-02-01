@@ -28,6 +28,7 @@ void ReflectTypes() {
     entt::meta_factory<Transform>()
         .type("Transform"_hs)  // Register type name - THIS IS CRITICAL!
         .data<&Transform::Position, entt::as_ref_t>("Position"_hs)
+        .data<&Transform::Rotation, entt::as_ref_t>("Rotation"_hs)
         .data<&Transform::Scale, entt::as_ref_t>("Scale"_hs);
 
     entt::meta_factory<SceneData>()

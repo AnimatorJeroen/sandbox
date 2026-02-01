@@ -12,6 +12,7 @@ struct NameComponent {
 
 struct Transform {
     vec3 Position{};
+	vec3 Rotation{};
     vec3 Scale{ 1.f, 1.f, 1.f };
 	mat4 Matrix{ 1.0f };
 };
