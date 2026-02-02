@@ -305,8 +305,13 @@ bool Scene::LoadFromFile(const std::string& filepath)
 
 void Scene::SetParent(Entity child, Entity parent)
 {
-	if (!child || !parent) {
-		LOG_ERROR() << "SetParent: Invalid child or parent entity";
+	if (!child) {
+		LOG_ERROR() << "SetParent: Invalid child entity";
+		return;
+	}
+
+	if (!parent) {
+		child.RemoveComponent<Parent>();
 		return;
 	}
 

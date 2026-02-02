@@ -307,8 +307,19 @@ void Panel_SceneHierarchy::HandleDragDropTarget(Entity entity)
                 }
                 
                 if (!isCircular) {
-                    _editorContext.BeginUndo();
+                    
+                    auto before = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+                        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+
                     _scene->SetParent(draggedEntity, entity);
+
+                    auto after = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+                        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+
+
+                    _editorContext.BeginUndo();
+                    _editorContext.applicator().CaptureComponentChange<Core::UUID, Parent>(
+                        { draggedEntity.GetHandle() }, std::move(before), std::move(after));
                     _editorContext.EndUndo();
                 }
             }

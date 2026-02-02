@@ -119,6 +119,39 @@ namespace Core {
 
     }
 
+    template<typename FieldTypes>
+    template<typename... Cs>
+    void UndoManager<FieldTypes>::CaptureComponentChange(
+        const std::unordered_set<entt::entity>& entities,
+        SelectionArchive<Cs...>&& beforeState,
+        SelectionArchive<Cs...>&& afterState)
+    {
+        if (!_ctx) {
+            throw std::runtime_error("No active context. Call SetContext() first.");
+        }
+        
+        auto op = std::make_unique<Core::CaptureComponentChangeOp<Cs...>>(
+            *_ctx->registry, entities, std::move(beforeState), std::move(afterState));
+
+        // Apply the change (sets to "after" state)
+        op->Apply();
+
+        // If we're recording, add to current command
+        if (_ctx->recording && _ctx->currentCommand.has_value()) {
+            _ctx->currentCommand->AddOp(std::move(op));
+        }
+        else {
+            // Otherwise, push as a single-op command to undo stack
+            UndoableCommand command;
+            command.AddOp(std::move(op));
+            _ctx->undoStack.push(std::move(command));
+
+            // Clear redo stack when a new action is performed
+            while (!_ctx->redoStack.empty()) {
+                _ctx->redoStack.pop();
+            }
+        }
+    }
 
     // Begin recording operations for bundling
     template<typename FieldTypes>

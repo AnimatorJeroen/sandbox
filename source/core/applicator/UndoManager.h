@@ -14,6 +14,10 @@
 
 namespace Core {
 
+    // Forward declaration
+    template<class... Cs>
+    struct SelectionArchive;
+
     // Context struct that holds undo/redo state for a specific registry
     struct UndoContext {
         entt::registry* registry = nullptr;
@@ -86,6 +90,13 @@ namespace Core {
         // Delete entities from selection snapshot
         template<typename... Cs>
         void CaptureDelete(const std::unordered_set<entt::entity>& selection);
+
+        // Capture component add/remove changes (takes before and after snapshots)
+        template<typename... Cs>
+        void CaptureComponentChange(
+            const std::unordered_set<entt::entity>& entities,
+            SelectionArchive<Cs...>&& beforeState,
+            SelectionArchive<Cs...>&& afterState);
 
         // Begin recording patches for bundling
         void BeginUndo();

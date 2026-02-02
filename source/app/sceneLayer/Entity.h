@@ -45,6 +45,17 @@ public:
         return _registry->emplace<T>(_entityHandle, std::forward<Args>(args)...);
     }
 
+    template<typename T>
+    bool RemoveComponent()
+    {
+        if (HasComponent<T>())
+        {
+            _registry->remove<T>(_entityHandle);
+            return true;
+        }
+        return false;
+    }
+
     /// <summary>
     /// Get a component from this entity
     /// </summary>

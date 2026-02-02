@@ -74,6 +74,16 @@ namespace Core {
             CaptureDeleteImpl(selectionSet, ComponentTypes{});
 		}
 
+        // Capture component add/remove - captures specified component types
+        template<typename... Cs>
+        void CaptureComponentChange(
+            const std::unordered_set<entt::entity>& entities,
+            SelectionArchive<Cs...>&& beforeState,
+            SelectionArchive<Cs...>&& afterState)
+        {
+            _undoManager.template CaptureComponentChange<Cs...>(entities, std::move(beforeState), std::move(afterState));
+        }
+
         // Copy selection to clipboard
         template<typename SelectionContainer>
         void CopyToClipboard(const SelectionContainer& selection) {

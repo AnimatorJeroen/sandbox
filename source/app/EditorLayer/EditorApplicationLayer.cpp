@@ -375,11 +375,23 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 {
 	_editorContext.Undo();
+	if (_sceneManager->GetActiveScene())
+	{
+		for(auto& e : _sceneManager->GetActiveScene()->GetAllEntities())
+			_sceneManager->GetActiveScene()->RebuildChildrenForEntity(e);
+
+	}
 	return true;
 }
 
 bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
 {
 	_editorContext.Redo();
+	if (_sceneManager->GetActiveScene())
+	{
+		for (auto& e : _sceneManager->GetActiveScene()->GetAllEntities())
+			_sceneManager->GetActiveScene()->RebuildChildrenForEntity(e);
+
+	}
 	return true;
 }
