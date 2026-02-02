@@ -311,7 +311,25 @@ void Scene::SetParent(Entity child, Entity parent)
 	}
 
 	if (!parent) {
+		Entity oldParent = Entity::Null();
+		if (child.HasComponent<Parent>()) {
+			Parent& parentComp = child.GetComponent<Parent>();
+
+			// Find the old parent entity by UUID to rebuild its children
+			if (parentComp.HasParent()) {
+				auto view = _registry.view<Core::UUID>();
+				for (auto entity : view) {
+					if (_registry.get<Core::UUID>(entity).value == parentComp.parentUUID.value) {
+						oldParent = Entity(entity, &_registry);
+						break;
+					}
+				}
+			}
+		}
 		child.RemoveComponent<Parent>();
+		if (oldParent)
+			RebuildChildrenForEntity(oldParent);
+
 		return;
 	}
 

@@ -80,53 +80,20 @@ void Panel_SceneHierarchy::Render()
         return a.UUID().value < b.UUID().value;
     });
     
+    // Reset drop target state at the start of each frame
+    _dropTargetEntity = Entity::Null();
+    _dropLocation = DropLocation::None;
+    _lastRenderedEntity = Entity::Null();
+    _lastEntityRectMax = ImVec2(0, 0);
+    
     // Render the tree starting from root entities
 	bool deleteEntitiesPressed = false;
     for (Entity entity : rootEntities) {
         RenderEntityNode(entity, selectedEntities, deleteEntitiesPressed);
     }
     
-    // Allow dropping on empty space to unparent entities (make them root)
-    if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_HIERARCHY")) {
-            // Get the dragged entity's UUID from payload
-            uint64_t draggedUUID = *(const uint64_t*)payload->Data;
-            
-            // Find the dragged entity by UUID
-            Entity draggedEntity = Entity::Null();
-            auto view = _scene->GetRegistry().view<Core::UUID>();
-            for (auto e : view) {
-                if (_scene->GetRegistry().get<Core::UUID>(e).value == draggedUUID) {
-                    draggedEntity = Entity(e, &_scene->GetRegistry());
-                    break;
-                }
-            }
-            
-            // Remove parent component to make it a root entity
-            if (draggedEntity && draggedEntity.HasComponent<Parent>()) {
-                _editorContext.BeginUndo();
-                
-                // Get old parent and rebuild its children
-                Parent& parentComp = draggedEntity.GetComponent<Parent>();
-                if (parentComp.HasParent()) {
-                    auto parentView = _scene->GetRegistry().view<Core::UUID>();
-                    for (auto e : parentView) {
-                        if (_scene->GetRegistry().get<Core::UUID>(e).value == parentComp.parentUUID.value) {
-                            Entity oldParent(e, &_scene->GetRegistry());
-                            parentComp.parentUUID = Core::UUID(0); // Clear parent
-                            _scene->RebuildChildrenForEntity(oldParent);
-                            break;
-                        }
-                    }
-                } else {
-                    parentComp.parentUUID = Core::UUID(0); // Clear parent
-                }
-                
-                _editorContext.EndUndo();
-            }
-        }
-        ImGui::EndDragDropTarget();
-    }
+    // Handle empty space drop (below last entity or in empty area)
+    HandleEmptySpaceDrop(rootEntities);
 
     if(deleteEntitiesPressed && !selectedEntities.empty())
     {
@@ -165,10 +132,32 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
         flags |= ImGuiTreeNodeFlags_Selected;
     }
     
+    // Check if this entity should be expanded (after a drop operation)
+    uint64_t entityUUID = entity.UUID().value;
+    if (_entitiesToExpand.find(entityUUID) != _entitiesToExpand.end()) {
+        ImGui::SetNextItemOpen(true);
+        _entitiesToExpand.erase(entityUUID);
+    }
+    
+    // Draw visual feedback line above entity if this is the drop target
+    if (_dropTargetEntity == entity && _dropLocation == DropLocation::BeforeEntity) {
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        drawList->AddLine(
+            ImVec2(pos.x, pos.y),
+            ImVec2(pos.x + ImGui::GetContentRegionAvail().x, pos.y),
+            IM_COL32(255, 255, 0, 255), 2.0f
+        );
+    }
+    
     bool nodeOpen = ImGui::TreeNodeEx(
         nameComp ? nameComp->name.data : "Unnamed",
         flags
     );
+    
+    // Track this entity as the last rendered (for empty space drop detection)
+    _lastRenderedEntity = entity;
+    _lastEntityRectMax = ImGui::GetItemRectMax();
     
     // Handle selection
     if (ImGui::IsItemClicked()) {
@@ -201,9 +190,10 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
         deleteEntitiesPressed = true;
     }
 
-    // Handle drag-drop
-    HandleDragDropSource(entity);
+    // Handle drag-drop - ORDER MATTERS: Between must be checked first to override Target
+    HandleDragDropBetween(entity);
     HandleDragDropTarget(entity);
+    HandleDragDropSource(entity);
 
     // Show entity ID in tooltip
     if (ImGui::IsItemHovered()) {
@@ -214,6 +204,17 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
             ImGui::Text("(%zu entities selected)", selectedEntities.size());
         }
         ImGui::EndTooltip();
+    }
+    
+    // Draw visual feedback line below entity if this is the drop target
+    if (_dropTargetEntity == entity && _dropLocation == DropLocation::AfterEntity) {
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        drawList->AddLine(
+            ImVec2(pos.x, pos.y),
+            ImVec2(pos.x + ImGui::GetContentRegionAvail().x, pos.y),
+            IM_COL32(255, 255, 0, 255), 2.0f
+        );
     }
     
     // Render children if node is open
@@ -264,66 +265,268 @@ void Panel_SceneHierarchy::HandleDragDropSource(Entity entity)
 void Panel_SceneHierarchy::HandleDragDropTarget(Entity entity)
 {
     if (ImGui::BeginDragDropTarget()) {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_HIERARCHY")) {
-            // Get the dragged entity's UUID from payload
-            uint64_t draggedUUID = *(const uint64_t*)payload->Data;
-            
-            // Find the dragged entity by UUID
-            Entity draggedEntity = Entity::Null();
-            auto view = _scene->GetRegistry().view<Core::UUID>();
-            for (auto e : view) {
-                if (_scene->GetRegistry().get<Core::UUID>(e).value == draggedUUID) {
-                    draggedEntity = Entity(e, &_scene->GetRegistry());
-                    break;
+        // Check for hover without accepting to provide visual feedback
+        if (const ImGuiPayload* payload = ImGui::GetDragDropPayload()) {
+            if (payload->IsDataType("ENTITY_HIERARCHY")) {
+                // Only set OnEntity feedback if not in top/bottom regions
+                ImVec2 itemMin = ImGui::GetItemRectMin();
+                ImVec2 itemMax = ImGui::GetItemRectMax();
+                ImVec2 mousePos = ImGui::GetMousePos();
+                float itemHeight = itemMax.y - itemMin.y;
+                float relativeY = mousePos.y - itemMin.y;
+                
+                // Only show OnEntity feedback in the middle region (smaller now: 35%-65%)
+                if (relativeY >= itemHeight * 0.35f && relativeY <= itemHeight * 0.65f) {
+                    _dropTargetEntity = entity;
+                    _dropLocation = DropLocation::OnEntity;
                 }
             }
-            
-            // Set parent relationship if entities are valid and not the same
-            if (draggedEntity && entity && draggedEntity != entity) {
-                // Prevent circular parent relationships
-                bool isCircular = false;
-                Entity checkParent = entity;
-                while (checkParent.HasComponent<Parent>()) {
-                    const Parent& parentComp = checkParent.GetComponent<Parent>();
-                    if (!parentComp.HasParent()) break;
-                    
-                    // Find parent entity by UUID
-                    auto parentView = _scene->GetRegistry().view<Core::UUID>();
-                    Entity parentEntity = Entity::Null();
-                    for (auto e : parentView) {
-                        if (_scene->GetRegistry().get<Core::UUID>(e).value == parentComp.parentUUID.value) {
-                            parentEntity = Entity(e, &_scene->GetRegistry());
-                            break;
-                        }
-                    }
-                    
-                    if (parentEntity == draggedEntity) {
-                        isCircular = true;
+        }
+        
+        // Only accept drops in the middle region (not in top/bottom regions)
+        ImVec2 itemMin = ImGui::GetItemRectMin();
+        ImVec2 itemMax = ImGui::GetItemRectMax();
+        ImVec2 mousePos = ImGui::GetMousePos();
+        float itemHeight = itemMax.y - itemMin.y;
+        float relativeY = mousePos.y - itemMin.y;
+        
+        // Only accept in middle region (smaller now: 35%-65%)
+        if (relativeY >= itemHeight * 0.35f && relativeY <= itemHeight * 0.65f) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_HIERARCHY")) {
+                // Get the dragged entity's UUID from payload
+                uint64_t draggedUUID = *(const uint64_t*)payload->Data;
+                
+                // Find the dragged entity by UUID
+                Entity draggedEntity = Entity::Null();
+                auto view = _scene->GetRegistry().view<Core::UUID>();
+                for (auto e : view) {
+                    if (_scene->GetRegistry().get<Core::UUID>(e).value == draggedUUID) {
+                        draggedEntity = Entity(e, &_scene->GetRegistry());
                         break;
                     }
-                    
-                    checkParent = parentEntity;
-                    if (!checkParent) break;
                 }
                 
-                if (!isCircular) {
+                // Set parent relationship if entities are valid and not the same
+                if (draggedEntity && entity && draggedEntity != entity) {
+                    // Prevent circular parent relationships
+                    bool isCircular = false;
+                    Entity checkParent = entity;
+                    while (checkParent.HasComponent<Parent>()) {
+                        const Parent& parentComp = checkParent.GetComponent<Parent>();
+                        if (!parentComp.HasParent()) break;
+                        
+                        // Find parent entity by UUID
+                        auto parentView = _scene->GetRegistry().view<Core::UUID>();
+                        Entity parentEntity = Entity::Null();
+                        for (auto e : parentView) {
+                            if (_scene->GetRegistry().get<Core::UUID>(e).value == parentComp.parentUUID.value) {
+                                parentEntity = Entity(e, &_scene->GetRegistry());
+                                break;
+                            }
+                        }
+                        
+                        if (parentEntity == draggedEntity) {
+                            isCircular = true;
+                            break;
+                        }
+                        
+                        checkParent = parentEntity;
+                        if (!checkParent) break;
+                    }
                     
-                    auto before = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
-                        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+                    if (!isCircular) {
+                        auto before = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+                            _scene->GetRegistry(), { draggedEntity.GetHandle() });
 
-                    _scene->SetParent(draggedEntity, entity);
+                        _scene->SetParent(draggedEntity, entity);
 
-                    auto after = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
-                        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+                        auto after = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+                            _scene->GetRegistry(), { draggedEntity.GetHandle() });
 
-
-                    _editorContext.BeginUndo();
-                    _editorContext.applicator().CaptureComponentChange<Core::UUID, Parent>(
-                        { draggedEntity.GetHandle() }, std::move(before), std::move(after));
-                    _editorContext.EndUndo();
+                        _editorContext.BeginUndo();
+                        _editorContext.applicator().CaptureComponentChange<Core::UUID, Parent>(
+                            { draggedEntity.GetHandle() }, std::move(before), std::move(after));
+                        _editorContext.EndUndo();
+                        
+                        // Expand the parent entity next frame to show the newly added child
+                        _entitiesToExpand.insert(entity.UUID().value);
+                    }
                 }
             }
         }
         ImGui::EndDragDropTarget();
     }
+}
+
+void Panel_SceneHierarchy::HandleDragDropBetween(Entity entity)
+{
+    // Check if we're currently dragging an entity
+    const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+    if (!payload || !payload->IsDataType("ENTITY_HIERARCHY"))
+        return;
+    
+    // Get the item rectangle
+    ImVec2 itemMin = ImGui::GetItemRectMin();
+    ImVec2 itemMax = ImGui::GetItemRectMax();
+    ImVec2 mousePos = ImGui::GetMousePos();
+    
+    // Check if mouse is hovering over this item
+    if (mousePos.x < itemMin.x || mousePos.x > itemMax.x ||
+        mousePos.y < itemMin.y || mousePos.y > itemMax.y)
+        return;
+    
+    // Determine if mouse is in top, middle, or bottom region
+    float itemHeight = itemMax.y - itemMin.y;
+    float relativeY = mousePos.y - itemMin.y;
+    
+    // Larger regions for drop-between: top 35% and bottom 35%
+    bool isTopRegion = relativeY < itemHeight * 0.35f;
+    bool isBottomRegion = relativeY > itemHeight * 0.65f;
+    
+    // Only handle drop between if in top or bottom regions
+    if (!isTopRegion && !isBottomRegion)
+        return;
+    
+    // Set visual feedback
+    if (isTopRegion)
+    {
+        _dropTargetEntity = entity;
+        _dropLocation = DropLocation::BeforeEntity;
+    }
+    else // isBottomRegion
+    {
+        _dropTargetEntity = entity;
+        _dropLocation = DropLocation::AfterEntity;
+    }
+    
+    // Accept the drop if mouse is released
+    if (!ImGui::IsMouseReleased(0))
+        return;
+    
+    // Get the dragged entity's UUID from payload
+    uint64_t draggedUUID = *(const uint64_t*)payload->Data;
+    
+    // Find the dragged entity by UUID
+    Entity draggedEntity = Entity::Null();
+    auto view = _scene->GetRegistry().view<Core::UUID>();
+    for (auto e : view) {
+        if (_scene->GetRegistry().get<Core::UUID>(e).value == draggedUUID) {
+            draggedEntity = Entity(e, &_scene->GetRegistry());
+            break;
+        }
+    }
+    
+    if (!draggedEntity || draggedEntity == entity)
+        return;
+    
+    // Get the parent of the target entity (if any)
+    Entity targetParent = Entity::Null();
+    if (entity.HasComponent<Parent>()) {
+        const Parent& parentComp = entity.GetComponent<Parent>();
+        if (parentComp.HasParent()) {
+            auto parentView = _scene->GetRegistry().view<Core::UUID>();
+            for (auto e : parentView) {
+                if (_scene->GetRegistry().get<Core::UUID>(e).value == parentComp.parentUUID.value) {
+                    targetParent = Entity(e, &_scene->GetRegistry());
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Set same parent as target entity (or null if target is root)
+    auto before = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+
+    _scene->SetParent(draggedEntity, targetParent);
+
+    auto after = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+
+    _editorContext.BeginUndo();
+    _editorContext.applicator().CaptureComponentChange<Core::UUID, Parent>(
+        { draggedEntity.GetHandle() }, std::move(before), std::move(after));
+    _editorContext.EndUndo();
+}
+
+void Panel_SceneHierarchy::HandleEmptySpaceDrop(const std::vector<Entity>& rootEntities)
+{
+    // Check if we're currently dragging an entity
+    const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+    if (!payload || !payload->IsDataType("ENTITY_HIERARCHY"))
+        return;
+    
+    ImVec2 mousePos = ImGui::GetMousePos();
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+    
+    // Check if mouse is below the last rendered entity
+    bool isBelowLastEntity = false;
+    if (_lastRenderedEntity && _lastEntityRectMax.y > 0) {
+        // Extend drop zone all the way to the bottom of the window
+        if (mousePos.y > _lastEntityRectMax.y && 
+            mousePos.x >= windowPos.x &&
+            mousePos.x <= windowPos.x + windowSize.x &&
+            mousePos.y <= windowPos.y + windowSize.y) {
+            isBelowLastEntity = true;
+        }
+    }
+    
+    // Also handle case when there are no entities at all
+    if (rootEntities.empty()) {
+        // If empty and dragging, allow drop anywhere in window
+        if (ImGui::IsWindowHovered()) {
+            isBelowLastEntity = true;
+            _lastRenderedEntity = Entity::Null();
+        }
+    }
+    
+    if (!isBelowLastEntity)
+        return;
+    
+    // Set visual feedback for dropping after the last entity
+    _dropTargetEntity = _lastRenderedEntity;
+    _dropLocation = DropLocation::AfterEntity;
+    
+    // Draw the line below the last entity
+    if (_lastRenderedEntity) {
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        ImVec2 lineStart(_lastEntityRectMax.x - ImGui::GetContentRegionAvail().x, _lastEntityRectMax.y);
+        ImVec2 lineEnd(_lastEntityRectMax.x, _lastEntityRectMax.y);
+        drawList->AddLine(lineStart, lineEnd, IM_COL32(255, 255, 0, 255), 2.0f);
+    }
+    
+    // Accept the drop if mouse is released
+    if (!ImGui::IsMouseReleased(0))
+        return;
+    
+    // Get the dragged entity's UUID from payload
+    uint64_t draggedUUID = *(const uint64_t*)payload->Data;
+    
+    // Find the dragged entity by UUID
+    Entity draggedEntity = Entity::Null();
+    auto view = _scene->GetRegistry().view<Core::UUID>();
+    for (auto e : view) {
+        if (_scene->GetRegistry().get<Core::UUID>(e).value == draggedUUID) {
+            draggedEntity = Entity(e, &_scene->GetRegistry());
+            break;
+        }
+    }
+    
+    if (!draggedEntity)
+        return;
+    
+    // Drop below last entity means make it a root entity (null parent)
+    auto before = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+
+    _scene->SetParent(draggedEntity, Entity::Null());
+
+    auto after = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
+        _scene->GetRegistry(), { draggedEntity.GetHandle() });
+
+    _editorContext.BeginUndo();
+    _editorContext.applicator().CaptureComponentChange<Core::UUID, Parent>(
+        { draggedEntity.GetHandle() }, std::move(before), std::move(after));
+    _editorContext.EndUndo();
 }
