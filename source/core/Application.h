@@ -30,6 +30,8 @@ namespace Core
 			bool OnRequestApplicationCloseEvent(const RequestApplicationCloseEvent& e);
 			bool OnApplicationCloseEvent(const ApplicationCloseEvent& e);
 			bool OnWindowCloseEvent(const WindowCloseEvent& e);
+			bool OnWindowIconifiedEvent(const WindowIconifiedEvent& e);
+			bool OnWindowUnIconifiedEvent(const WindowUnIconifiedEvent& e);
 			template<typename TLayer>
 			inline void PushLayer()
 			{
@@ -42,5 +44,6 @@ namespace Core
 			std::shared_ptr<Window> _window;
 			std::vector<std::unique_ptr<IApplicationLayer>> _applicationLayers;
 			std::shared_ptr<EventBus> _eventBus = std::make_shared<EventBus>();
+			bool _isPaused = false;
 	};
 }

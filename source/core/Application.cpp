@@ -41,6 +41,8 @@ namespace Core
 		//register callbacks
 		REGISTER_CALLBACK((*_eventBus), WindowResizeEvent, OnWindowResizeEvent);
 		REGISTER_CALLBACK((*_eventBus), WindowCloseEvent, OnWindowCloseEvent);
+		REGISTER_CALLBACK((*_eventBus), WindowIconifiedEvent, OnWindowIconifiedEvent);
+		REGISTER_CALLBACK((*_eventBus), WindowUnIconifiedEvent, OnWindowUnIconifiedEvent);
 		// Note: ApplicationCloseEvent is registered in Run() after all layers are initialized
 
 	}
@@ -60,6 +62,12 @@ namespace Core
 		{
 			_window->PollEvents();
 			_eventBus->HandleEvents();
+
+			// Skip update and render if the application is paused
+			if (_isPaused)
+			{
+				continue;
+			}
 
 #ifdef USE_IMGUI
 			ImGui_ImplOpenGL3_NewFrame();
@@ -144,5 +152,26 @@ namespace Core
 		return false;
 	}
 
+	bool Application::OnWindowIconifiedEvent(const WindowIconifiedEvent& e)
+	{
+		LOG_DEBUG() << e.GetName() << " received.";
+		if (e.windowHandle == _window->GetHandle())
+		{
+			_isPaused = true;
+			LOG_INFO() << "Application paused (window iconified).";
+		}
+		return false;
+	}
+
+	bool Application::OnWindowUnIconifiedEvent(const WindowUnIconifiedEvent& e)
+	{
+		LOG_DEBUG() << e.GetName() << " received.";
+		if (e.windowHandle == _window->GetHandle())
+		{
+			_isPaused = false;
+			LOG_INFO() << "Application unpaused (window restored).";
+		}
+		return false;
+	}
 
 }

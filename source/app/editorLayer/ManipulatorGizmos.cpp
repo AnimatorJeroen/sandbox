@@ -18,6 +18,9 @@ void EditorApplicationLayer::RenderImGuizmo()
 	// Setup ImGuizmo
 	ImGuiIO& io = ImGui::GetIO();
 	float windowWidth = io.DisplaySize.x, windowHeight = io.DisplaySize.y;
+	if(windowWidth <= 1.f || windowHeight <= 1.f || isnan(windowWidth))
+		return;
+
 	ImGuizmo::SetRect(0, 0, windowWidth, windowHeight);
 
 	// Get camera matrices  

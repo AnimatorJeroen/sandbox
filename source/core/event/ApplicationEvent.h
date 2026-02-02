@@ -37,4 +37,20 @@ namespace Core
 			WindowCloseEvent(void* handle) : windowHandle(handle) {}
 			SET_EVENT_TYPE_FUNCTIONS(WindowCloseEvent)
 	};
+
+	class WindowIconifiedEvent : public Core::IEvent
+	{
+	public:
+		void* windowHandle;
+		WindowIconifiedEvent(void* handle) : windowHandle(handle) {}
+		SET_EVENT_TYPE_FUNCTIONS(WindowIconifiedEvent)
+	};
+
+	class WindowUnIconifiedEvent : public Core::IEvent
+	{
+	public:
+		void* windowHandle;
+		WindowUnIconifiedEvent(void* handle) : windowHandle(handle) {}
+		SET_EVENT_TYPE_FUNCTIONS(WindowUnIconifiedEvent)
+	};
 }

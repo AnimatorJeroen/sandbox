@@ -35,6 +35,19 @@ namespace Core
 				self->_eventBus->PushEvent(WindowCloseEvent(window));
             });
 
+        glfwSetWindowIconifyCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window, int iconified)
+            {
+                auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+                if (iconified)
+                {
+                    self->_eventBus->PushEvent(WindowIconifiedEvent(window));
+                }
+                else
+                {
+                    self->_eventBus->PushEvent(WindowUnIconifiedEvent(window));
+                }
+            });
+
         //Mouse events
         glfwSetMouseButtonCallback((GLFWwindow*)_glfwWindow, [](GLFWwindow* window, int button, int action, int mods)
             {
