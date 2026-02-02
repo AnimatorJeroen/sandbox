@@ -88,11 +88,6 @@ void EditorApplicationLayer::RenderImGuizmo()
 	ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix),
 		operation, mode, glm::value_ptr(transformedManipulatorMatrix), glm::value_ptr(deltaMatrix));
 
-	// Decompose the result to get new position and scale
-	glm::vec3 deltaTranslation, deltaRotation, deltaScale;
-	ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(deltaMatrix),
-		glm::value_ptr(deltaTranslation), glm::value_ptr(deltaRotation), glm::value_ptr(deltaScale));
-
 	//Capture state and BeginUndo (aka OnMouseDown)
 	if (ImGuizmo::IsUsing() && !imGuizmoActivate)
 	{
@@ -154,29 +149,36 @@ void EditorApplicationLayer::RenderImGuizmo()
 					m = deltaMatrix * m;
 				}
 
-				vec3 thisDeltaTranslation, thisDeltaRotation, thisDeltaScale;
+				vec3 translation, rotation, scale;
 				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(m),
-					glm::value_ptr(thisDeltaTranslation), glm::value_ptr(thisDeltaRotation), glm::value_ptr(thisDeltaScale));
+					glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
 
-				transform.Position = thisDeltaTranslation;
-				transform.Rotation = thisDeltaRotation;
+				transform.Position = translation;
+				transform.Rotation = rotation;
+				transform.Scale = scale;
 			}
-			else if (operation == ImGuizmo::TRANSLATE)
+			else
 			{
-				// Apply translation delta to maintain relative positions
-				transform.Position += deltaTranslation;
-			}
-			else if (operation == ImGuizmo::ROTATE)
-			{
-				// Apply translation delta to maintain relative positions
-				transform.Rotation += deltaRotation;
-			}
+				vec3 translation, rotation, scale;
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transformedManipulatorMatrix),
+					glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
 
-			//always scale locally (to avoid -nan)
-			if (operation == ImGuizmo::SCALE)
-			{
-				// Apply scale delta
-				transform.Scale *= deltaScale;
+				if (operation == ImGuizmo::TRANSLATE)
+				{
+					// Apply translation delta to maintain relative positions
+					transform.Position = translation;
+				}
+				else if (operation == ImGuizmo::ROTATE)
+				{
+					// Apply translation delta to maintain relative positions
+					transform.Rotation = rotation;
+				}
+				else if (operation == ImGuizmo::SCALE)
+				{
+					// Apply scale delta
+					transform.Scale = scale;
+				}
+
 			}
 		}
 	}
