@@ -12,7 +12,16 @@
 #include "app/sceneLayer/Scene.h"
 #include "app/sceneLayer/types/ReflectTypes.h"
 
+#ifdef _DEBUG
+#include "app/PreseedEditAndContinue.h"
+#endif
+
 int main() {
+
+#ifdef _DEBUG
+    // Preseed common function templates for better Edit and Continue support
+    PreseedEditAndContinue::Preseed();
+#endif
 
     ReflectTypes();
 
@@ -35,7 +44,11 @@ int main() {
 	app.PushLayer<SceneApplicationLayer>();
     app.Run();
 
-	//const glm::mat4 viewMatrix = glm::lookAt(vec3(), vec3(), vec3());
+	glm::mat4 view = glm::lookAt(
+		glm::vec3(0.0f, 5.0f, 10.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f)
+	);
 
     return 0;
 }

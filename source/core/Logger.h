@@ -95,7 +95,7 @@ namespace Core {
 
         // When hot reload is enabled, use simple logging without file/line/function info
         // to avoid issues with Edit and Continue
-#ifdef DEBUG
+#ifdef _DEBUG
 #define LOG_TRACE()    Core::Log::LogStream(Core::Log::Level::Trace,    "", 0, "")
 #define LOG_DEBUG()    Core::Log::LogStream(Core::Log::Level::Debug,    "", 0, "")
 #define LOG_INFO()     Core::Log::LogStream(Core::Log::Level::Info,     "", 0, "")

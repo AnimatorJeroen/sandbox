@@ -110,6 +110,8 @@ entt::entity Scene::CreateCameraEntity()
 	return e;
 }
 
+inline CameraComponent& Scene::GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }
+
 bool Scene::SaveToFile(const std::string& filepath) const
 {
 	try {

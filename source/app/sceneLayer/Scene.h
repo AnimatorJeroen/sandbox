@@ -42,7 +42,7 @@ class Scene
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		
 		// Active camera management
-		CameraComponent& GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }
+		CameraComponent& GetActiveCamera();
 		void SetActiveCamera(entt::entity camera) { _activeCamera = camera; }
 
 		// Scene serialization using SelectionArchive
