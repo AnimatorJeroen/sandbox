@@ -10,7 +10,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 	if (!scene)
 		return;
 	auto& registry = scene->GetRegistry();
-	auto selectedEntities = _editorContext.GetSelectedEntities();
+	auto& selectedEntities = _editorContext.GetSelectedEntities();
 
 	if (selectedEntities.empty())
 		return;
@@ -28,7 +28,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 		cameraComponent.nearPlane, cameraComponent.farPlane);
 
 	static bool imGuizmoActivate = false;
-	static std::vector<std::pair<entt::entity, Transform*>> selectedTransforms;
+	static std::vector<std::pair<Entity, Transform*>> selectedTransforms;
 	static glm::vec3 initialCentroid{};
 	static ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
 	static ImGuizmo::MODE mode = ImGuizmo::WORLD;
@@ -39,20 +39,20 @@ void EditorApplicationLayer::RenderImGuizmo()
 	}
 
 	// Collect all transforms from selected entities
-	std::vector<std::pair<entt::entity, Transform*>> currentTransforms;
-	for (const auto& entity : selectedEntities)
+	std::vector<std::pair<Entity, Transform*>> currentTransforms;
+	for (auto& entity : selectedEntities)
 	{
-		if (registry.any_of<Transform>(entity))
+		if (entity.HasComponent<Transform>())
 		{
-			auto& transform = registry.get<Transform>(entity);
-			currentTransforms.push_back({ entity, &transform });
+			Transform& transform = const_cast<Entity&>(entity).GetComponent<Transform>();
+			currentTransforms.emplace_back(entity, &transform);
 		}
 	}
 
 	if (currentTransforms.empty())
 		return;
 
-	bool isWorldMultiSelect = (mode == ImGuizmo::WORLD) && (currentTransforms.size() > 1);
+	bool multiSelect = (currentTransforms.size() > 1);
 
 	glm::vec3 centroid(0.0f);
 	glm::vec3 averageScale(0.0f);
@@ -70,7 +70,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 	if (!imGuizmoActivate)
 		initialCentroid = centroid;
 
-	if(isWorldMultiSelect && operation == ImGuizmo::SCALE)
+	if(mode == ImGuizmo::WORLD && multiSelect && operation == ImGuizmo::SCALE)
 		averageRotation = vec3();
 
 	// Build model matrix at the centroid
@@ -105,17 +105,17 @@ void EditorApplicationLayer::RenderImGuizmo()
 			auto entity = transformPair.first;
 			auto& transform = *transformPair.second;
 
-			if (operation == ImGuizmo::TRANSLATE || isWorldMultiSelect)
+			if (operation == ImGuizmo::TRANSLATE || multiSelect)
 			{
-				_applicator.SetField(entity, "Transform.Position", transform.Position);
+				_applicator.SetField(entity.GetHandle(), "Transform.Position", transform.Position);
 			}
-			if (operation == ImGuizmo::ROTATE || isWorldMultiSelect)
+			if (operation == ImGuizmo::ROTATE || multiSelect)
 			{
-				_applicator.SetField(entity, "Transform.Rotation", transform.Rotation);
+				_applicator.SetField(entity.GetHandle(), "Transform.Rotation", transform.Rotation);
 			}
-			if (operation == ImGuizmo::SCALE || isWorldMultiSelect)
+			if (operation == ImGuizmo::SCALE || multiSelect)
 			{
-				_applicator.SetField(entity, "Transform.Scale", transform.Scale);
+				_applicator.SetField(entity.GetHandle(), "Transform.Scale", transform.Scale);
 			}
 		}
 	}
@@ -129,7 +129,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 			auto entity = transformPair.first;
 			auto& transform = *transformPair.second;
 
-			if (mode == ImGuizmo::WORLD &&
+			if (mode == ImGuizmo::WORLD || multiSelect &&
 				(operation == ImGuizmo::TRANSLATE || operation == ImGuizmo::ROTATE || operation == ImGuizmo::SCALE))
 			{
 				mat4 originalMatrix = transform.GetTransform();
@@ -150,11 +150,12 @@ void EditorApplicationLayer::RenderImGuizmo()
 					m = deltaMatrix * m;
 				}
 
+				vec3 thisDeltaTranslation, thisDeltaRotation, thisDeltaScale;
 				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(m),
-					glm::value_ptr(deltaTranslation), glm::value_ptr(deltaRotation), glm::value_ptr(deltaScale));
+					glm::value_ptr(thisDeltaTranslation), glm::value_ptr(thisDeltaRotation), glm::value_ptr(thisDeltaScale));
 
-				transform.Position = deltaTranslation;
-				transform.Rotation = deltaRotation;
+				transform.Position = thisDeltaTranslation;
+				transform.Rotation = thisDeltaRotation;
 			}
 			else if (operation == ImGuizmo::TRANSLATE)
 			{
@@ -185,17 +186,17 @@ void EditorApplicationLayer::RenderImGuizmo()
 			auto entity = transformPair.first;
 			auto& transform = *transformPair.second;
 
-			if (operation == ImGuizmo::TRANSLATE || isWorldMultiSelect)
+			if (operation == ImGuizmo::TRANSLATE || multiSelect)
 			{
-				_applicator.SetField(entity, "Transform.Position", transform.Position);
+				_applicator.SetField(entity.GetHandle(), "Transform.Position", transform.Position);
 			}
-			if (operation == ImGuizmo::ROTATE || isWorldMultiSelect)
+			if (operation == ImGuizmo::ROTATE || multiSelect)
 			{
-				_applicator.SetField(entity, "Transform.Rotation", transform.Rotation);
+				_applicator.SetField(entity.GetHandle(), "Transform.Rotation", transform.Rotation);
 			}
-			if (operation == ImGuizmo::SCALE || isWorldMultiSelect)
+			if (operation == ImGuizmo::SCALE || multiSelect)
 			{
-				_applicator.SetField(entity, "Transform.Scale", transform.Scale);
+				_applicator.SetField(entity.GetHandle(), "Transform.Scale", transform.Scale);
 			}
 		}
 		_editorContext.EndUndo();

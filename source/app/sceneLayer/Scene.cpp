@@ -180,7 +180,7 @@ Entity Scene::CreateEntity(const std::string& name)
 	// Generate random position between 0 and 400
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> dis(0.0f, 0.5f);
+	static std::uniform_real_distribution<float> dis(0.0f, 4.5f);
 	
 	float x = dis(gen);
 	float y = dis(gen);
