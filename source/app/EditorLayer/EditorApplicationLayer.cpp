@@ -188,11 +188,11 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 			{
 				auto& registry = scene->GetRegistry();
 				auto view = registry.view<Core::UUID>();
-
-				std::set<entt::entity> entities(view.begin(), view.end());
-				if(entities.find(scene->GetSceneEntity()) != entities.end())
+				std::set<Entity> entities;
+				for (auto e : view)
 				{
-					entities.erase(scene->GetSceneEntity());
+					if(scene->GetSceneEntity().GetHandle() != e)
+						entities.insert(Entity(e, &registry));
 				}
 				_editorContext.SetSelection(entities);
 			}

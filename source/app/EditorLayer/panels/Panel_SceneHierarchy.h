@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <set>
+#include "app/sceneLayer/Entity.h"
 
 class Scene;
 class EditorContext;
@@ -20,5 +21,5 @@ public:
 private:
 	Scene* _scene;
 	EditorContext& _editorContext;
-	entt::entity _lastClickedEntity = entt::null;
+	Entity _lastClickedEntity;
 };

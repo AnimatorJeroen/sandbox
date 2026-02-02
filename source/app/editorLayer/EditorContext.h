@@ -3,6 +3,7 @@
 #include <memory>
 #include <entt/entt.hpp>
 #include "app/sceneLayer/types/Types.h"
+#include "app/sceneLayer/Entity.h"
 
 // Forward declarations
 class SceneManager;
@@ -34,12 +35,12 @@ public:
     ~EditorContext() = default;
 
     // === Selection Management ===
-    const std::set<entt::entity>& GetSelectedEntities() const { return _selectedEntities; }
-    void SetSelection(const std::set<entt::entity>& entities) { _selectedEntities = entities; }
-    void AddToSelection(entt::entity entity) { _selectedEntities.insert(entity); }
-    void RemoveFromSelection(entt::entity entity) { _selectedEntities.erase(entity); }
+    const std::set<Entity>& GetSelectedEntities() const { return _selectedEntities; }
+    void SetSelection(const std::set<Entity>& entities) { _selectedEntities = entities; }
+    void AddToSelection(Entity entity) { _selectedEntities.insert(entity); }
+    void RemoveFromSelection(Entity entity) { _selectedEntities.erase(entity); }
     void ClearSelection() { _selectedEntities.clear(); }
-    bool IsSelected(entt::entity entity) const { return _selectedEntities.find(entity) != _selectedEntities.end(); }
+    bool IsSelected(Entity entity) const { return _selectedEntities.find(entity) != _selectedEntities.end(); }
 
     // === Edit Operations ===
     void Copy();
@@ -102,7 +103,7 @@ public:
 
 private:
     // State
-    std::set<entt::entity> _selectedEntities;
+    std::set<Entity> _selectedEntities;
 	ImGuizmo::MODE _imGuizmoMode = ImGuizmo::LOCAL;
 	ImGuizmo::OPERATION _imGuizmoOperation = ImGuizmo::TRANSLATE;
 

@@ -13,6 +13,7 @@
 #include <core/UUID.h>
 #include <core/applicator/SelectionArchive.h>
 #include "components/Components.h"
+#include "Entity.h"
 
 class Scene
 {
@@ -43,7 +44,7 @@ class Scene
 		
 		// Active camera management
 		CameraComponent& GetActiveCamera();
-		void SetActiveCamera(entt::entity camera) { _activeCamera = camera; }
+		void SetActiveCamera(Entity camera) { _activeCamera = camera.GetHandle(); }
 
 		// Scene serialization using SelectionArchive
 		bool SaveToFile(const std::string& filepath) const;
@@ -54,15 +55,17 @@ class Scene
 		inline const entt::registry& GetRegistry() const { return _registry; }
 
         // Create a new entity with DummyComponent and unique name
-        entt::entity CreateEntity();
+        Entity CreateEntity();
         
         // Create a named entity
-        entt::entity CreateEntity(const std::string& name);
+        Entity CreateEntity(const std::string& name);
         
         // Create a camera entity with CameraComponent
-        entt::entity CreateCameraEntity();
+        Entity CreateCameraEntity();
 
-		const entt::entity& GetSceneEntity() const { return _sceneEntity; }
+		std::set<Entity> GetAllEntities() const;
+
+		Entity GetSceneEntity() const { return Entity(_sceneEntity, const_cast<entt::registry*>(&_registry)); }
 
 		void SetName(const std::string& name);
 		const String64& GetName();

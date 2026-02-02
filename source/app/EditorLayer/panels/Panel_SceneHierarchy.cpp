@@ -32,7 +32,7 @@ void Panel_SceneHierarchy::Render()
     if (ImGui::IsItemDeactivatedAfterEdit())
     {
         _editorContext.BeginUndo();
-        _editorContext.applicator().SetField(_scene->GetSceneEntity(), "Scene.sceneColor", sceneColor);
+        _editorContext.applicator().SetField(_scene->GetSceneEntity().GetHandle(), "Scene.sceneColor", sceneColor);
         _editorContext.EndUndo();
     }
 	// Update scene name when input changes
@@ -40,9 +40,8 @@ void Panel_SceneHierarchy::Render()
     ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer));
     if (ImGui::IsItemDeactivatedAfterEdit())
     {
-        //_scene->SetName(std::string(inputTextbuffer));
         _editorContext.BeginUndo();
-        _editorContext.applicator().SetField(_scene->GetSceneEntity(), "Scene.name", String64(inputTextbuffer));
+        _editorContext.applicator().SetField(_scene->GetSceneEntity().GetHandle(), "Scene.name", String64(inputTextbuffer));
         _editorContext.EndUndo();
     }
 
@@ -50,22 +49,20 @@ void Panel_SceneHierarchy::Render()
     {
         _editorContext.BeginUndo();
         auto e = _scene->CreateEntity();
-        _editorContext.applicator().CaptureCreate({e});
+        _editorContext.applicator().CaptureCreate({e.GetHandle()});
         _editorContext.EndUndo();
     }
 
     ImGui::Separator();
     ImGui::Text("Scene Entities:");
     
-    // Display all entities in the registry (except the scene entity itself)
-    auto& registry = _scene->GetRegistry();
-    auto view = registry.view<Core::UUID>();
-
-    std::vector<entt::entity> entities(view.begin(), view.end());
-    std::sort(entities.begin(), entities.end(), [&registry](entt::entity a, entt::entity b) {
-        const auto& uuidA = registry.get<Core::UUID>(a);
-        const auto& uuidB = registry.get<Core::UUID>(b);
-        return uuidA.value < uuidB.value;
+    // Get all entities from scene
+    auto entitiesSet = _scene->GetAllEntities();
+    
+    // Convert to vector and sort by UUID
+    std::vector<Entity> entities(entitiesSet.begin(), entitiesSet.end());
+    std::sort(entities.begin(), entities.end(), [](const Entity& a, const Entity& b) {
+        return a.UUID().value < b.UUID().value;
     });
 
     // Get selection from EditorContext
@@ -73,18 +70,20 @@ void Panel_SceneHierarchy::Render()
     
 	bool deleteEntitiesPressed = false;
     for (size_t i = 0; i < entities.size(); ++i) {
-        auto entity = entities[i];
-        const auto& nameComp = registry.try_get<NameComponent>(entity);
+        Entity entity = entities[i];
+        const NameComponent* nameComp = entity.HasComponent<NameComponent>() 
+            ? &entity.GetComponent<NameComponent>() 
+            : nullptr;
         
         // Skip the scene entity
         if (entity == _scene->GetSceneEntity())
             continue;
         // Skip the camera entity
-        if (registry.try_get<CameraComponent>(entity))
+        if (entity.HasComponent<CameraComponent>())
             continue;
 
         // Display entity with its name
-        ImGui::PushID(static_cast<int>(entt::to_integral(entity)));
+        ImGui::PushID(static_cast<int>(entity.UUID().value));
         
         // Determine tree node flags
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow 
@@ -106,19 +105,18 @@ void Panel_SceneHierarchy::Render()
             bool isShiftDown = ImGui::GetIO().KeyShift;
             bool isCtrlDown = ImGui::GetIO().KeyCtrl;
             
-            if (isShiftDown && _lastClickedEntity != entt::null) {
+            if (isShiftDown && _lastClickedEntity) {
                 // Shift+Click: Select range from last clicked to current
                 // Find indices of last clicked and current entity
                 auto lastIt = std::find(entities.begin(), entities.end(), _lastClickedEntity);
-                auto currentIt = entities.begin() + i;
                 
                 if (lastIt != entities.end()) {
                     // Determine range direction
-                    auto startIt = (lastIt < currentIt) ? lastIt : currentIt;
-                    auto endIt = (lastIt < currentIt) ? currentIt : lastIt;
+                    size_t startIdx = std::min(static_cast<size_t>(lastIt - entities.begin()), i);
+                    size_t endIdx = std::max(static_cast<size_t>(lastIt - entities.begin()), i);
                     
                     // Build new selection
-                    std::set<entt::entity> newSelection;
+                    std::set<Entity> newSelection;
                     
                     // Keep existing selection if holding ctrl
                     if (isCtrlDown) {
@@ -126,9 +124,10 @@ void Panel_SceneHierarchy::Render()
                     }
                     
                     // Select all entities in range
-                    for (auto it = startIt; it <= endIt; ++it) {
-                        if (*it != _scene->GetSceneEntity()) {
-                            newSelection.insert(*it);
+                    for (size_t idx = startIdx; idx <= endIdx; ++idx) {
+                        Entity e = entities[idx];
+                        if (e != _scene->GetSceneEntity()) {
+                            newSelection.insert(e);
                         }
                     }
                     
@@ -137,7 +136,7 @@ void Panel_SceneHierarchy::Render()
             }
             else if (isCtrlDown) {
                 // Ctrl+Click: Toggle selection
-                std::set<entt::entity> newSelection = selectedEntities;
+                std::set<Entity> newSelection = selectedEntities;
                 if (selectedEntities.find(entity) != selectedEntities.end()) {
                     newSelection.erase(entity);
                 } else {
@@ -148,7 +147,9 @@ void Panel_SceneHierarchy::Render()
             }
             else {
                 // Normal click: Replace selection
-                _editorContext.SetSelection({entity});
+                std::set<Entity> newSelection;
+                newSelection.insert(entity);
+                _editorContext.SetSelection(newSelection);
                 _lastClickedEntity = entity;
             }
         }
@@ -162,12 +163,10 @@ void Panel_SceneHierarchy::Render()
         // Show entity ID in tooltip
         if (ImGui::IsItemHovered()) {
             ImGui::BeginTooltip();
-            ImGui::Text("Entity ID: %u", entt::to_integral(entity));
-            
-            // Show UUID if present
-            if (auto* uuid = registry.try_get<Core::UUID>(entity)) {
-                ImGui::Text("UUID: %llu", uuid->value);
-            }
+            ImGui::Text("Entity ID: %u", static_cast<uint32_t>(entt::to_integral(entity.GetHandle())));
+
+            // Show UUID
+            ImGui::Text("UUID: %llu", entity.UUID().value);
 
             // Show selection info
             if (selectedEntities.size() > 1) {
@@ -191,7 +190,7 @@ void Panel_SceneHierarchy::Render()
         
         // Clear last clicked if it was deleted
         if (selectedEntities.find(_lastClickedEntity) == selectedEntities.end()) {
-            _lastClickedEntity = entt::null;
+            _lastClickedEntity = Entity::Null();
         }
 	}
 

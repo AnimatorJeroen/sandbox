@@ -37,7 +37,13 @@ void EditorContext::Copy()
     if (_selectedEntities.empty())
         return;
 
-    _applicator.CopyToClipboard(_selectedEntities);
+    // Convert Entity to entt::entity for applicator
+    std::unordered_set<entt::entity> entityHandles;
+    for (const auto& entity : _selectedEntities) {
+        entityHandles.insert(entity.GetHandle());
+    }
+
+    _applicator.CopyToClipboard(entityHandles);
     LOG_DEBUG() << "Copied " << _selectedEntities.size() << " entities to clipboard";
 }
 
@@ -46,12 +52,18 @@ void EditorContext::Cut()
     if (_selectedEntities.empty())
         return;
 
+    // Convert Entity to entt::entity for applicator
+    std::unordered_set<entt::entity> entityHandles;
+    for (const auto& entity : _selectedEntities) {
+        entityHandles.insert(entity.GetHandle());
+    }
+
     // Copy to clipboard first
-    _applicator.CopyToClipboard(_selectedEntities);
+    _applicator.CopyToClipboard(entityHandles);
 
     // Then delete
     _applicator.BeginUndo();
-    _applicator.CaptureDelete(_selectedEntities);
+    _applicator.CaptureDelete(entityHandles);
     _applicator.EndUndo();
 
     LOG_DEBUG() << "Cut " << _selectedEntities.size() << " entities";
@@ -71,8 +83,14 @@ void EditorContext::DeleteSelection()
     if (_selectedEntities.empty())
         return;
 
+    // Convert Entity to entt::entity for applicator
+    std::unordered_set<entt::entity> entityHandles;
+    for (const auto& entity : _selectedEntities) {
+        entityHandles.insert(entity.GetHandle());
+    }
+
     _applicator.BeginUndo();
-    _applicator.CaptureDelete(_selectedEntities);
+    _applicator.CaptureDelete(entityHandles);
     _applicator.EndUndo();
 
     LOG_DEBUG() << "Deleted " << _selectedEntities.size() << " entities";

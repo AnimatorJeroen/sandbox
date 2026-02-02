@@ -160,7 +160,7 @@ const std::string& Scene::GetFileName()
 	return _fileName;
 }
 
-entt::entity Scene::CreateEntity()
+Entity Scene::CreateEntity()
 {
 	static int _entityCounter = 0;
 	// Generate unique name
@@ -168,7 +168,7 @@ entt::entity Scene::CreateEntity()
 	return CreateEntity(entityName);
 }
 
-entt::entity Scene::CreateEntity(const std::string& name)
+Entity Scene::CreateEntity(const std::string& name)
 {
 	entt::entity e = _registry.create();
 
@@ -187,10 +187,10 @@ entt::entity Scene::CreateEntity(const std::string& name)
 
 	_registry.emplace<Transform>(e, Transform{ vec3{x, y, 0.0f} });
 
-	return e;
+	return Entity(e, &_registry);
 }
 
-entt::entity Scene::CreateCameraEntity()
+Entity Scene::CreateCameraEntity()
 {
 	entt::entity e = _registry.create();
 
@@ -198,7 +198,20 @@ entt::entity Scene::CreateCameraEntity()
 	_registry.emplace<NameComponent>(e, "Camera");
 	_registry.emplace<CameraComponent>(e);
 
-	return e;
+	return Entity(e, &_registry);
+}
+
+std::set<Entity> Scene::GetAllEntities() const
+{
+	auto view = _registry.view<Core::UUID>();
+	std::set<Entity> entities;
+	for (auto e : view)
+	{
+		// Exclude the scene entity itself
+		if (_sceneEntity != e)
+			entities.insert(Entity(e, const_cast<entt::registry*>(&_registry)));
+	}
+	return entities;
 }
 
 inline CameraComponent& Scene::GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }
