@@ -21,8 +21,9 @@ public:
 private:
 	void RenderEntityNode(Entity entity, const std::set<Entity>& selectedEntities, bool& deleteEntitiesPressed);
 	void HandleDragDropSource(Entity entity);
-	void HandleDragDropTarget(Entity entity);
-	void HandleDragDropBetween(Entity entity);
+	void HandleDragDrop(Entity entity);
+	void HandleDragDropAsParent(Entity entity, float relativeY, float itemHeight);
+	void HandleDragDropBetween(Entity entity, float relativeY, float itemHeight);
 	void HandleEmptySpaceDrop(const std::vector<Entity>& rootEntities);
 	
 	Scene* _scene;
