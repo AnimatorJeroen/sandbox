@@ -71,6 +71,9 @@ public:
 		auto scene = _sceneManager->GetActiveScene();
 		if (!scene) return;
 
+		scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
+		scene->UpdateMatrices();
+
 		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
 		pingpong = std::min(1.0f, std::max(0.0f, pingpong + incr * deltaTime));
 
@@ -89,13 +92,11 @@ public:
 		auto scene = _sceneManager->GetActiveScene();
 		if (scene)
 		{
-			scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
 			_renderer.SetViewMatrix(scene->GetViewMatrix());
 			_renderer.SetProjectionMatrix(scene->GetProjectionMatrix());
 			
 			// Render the grid floor
 			RenderGrid(_recorder);
-			
 			scene->Draw(_recorder);
 		}
 

@@ -2,6 +2,29 @@
 #include <entt/entt.hpp>
 #include <core/UUID.h>
 
+// TransformBundle - Helper struct to access transform-related components together
+struct TransformBundle {
+    vec3& Position;
+    vec3& Rotation;
+    vec3& Scale;
+    mat4& localToWorld;
+
+    TransformBundle() : Position(vec3()),
+        Rotation(vec3()),
+        Scale(vec3()),
+        localToWorld(mat4()) {
+    }
+    TransformBundle(const TransformBundle& other) = default;
+
+    TransformBundle(vec3& position, vec3& rotation, vec3& scale, mat4& localToWorld) :
+        Position(position),
+        Rotation(rotation),
+        Scale(scale),
+        localToWorld(localToWorld) {}
+
+    static TransformBundle Null() { return TransformBundle(); }
+};
+
 /// <summary>
 /// Entity is a wrapper around entt::entity that provides convenient component management.
 /// It holds a reference to the scene's registry to enable component operations.
@@ -48,6 +71,11 @@ public:
     {
         return _registry->all_of<T>(_entityHandle);
     }
+
+    /// <summary>
+    /// Get transform info - helper to access all transform-related components
+    /// </summary>
+    TransformBundle GetTransformBundle();
 
     /// <summary>
     /// Get the UUID of this entity

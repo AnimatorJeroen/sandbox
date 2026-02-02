@@ -31,7 +31,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 		cameraComponent.nearPlane, cameraComponent.farPlane);
 
 	static bool imGuizmoActivate = false;
-	static std::vector<std::pair<Entity, Transform*>> selectedTransforms;
+	static std::vector<std::pair<Entity, TransformBundle>> selectedTransforms;
 	static glm::vec3 initialCentroid{};
 	static ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
 	static ImGuizmo::MODE mode = ImGuizmo::WORLD;
@@ -42,13 +42,12 @@ void EditorApplicationLayer::RenderImGuizmo()
 	}
 
 	// Collect all transforms from selected entities
-	std::vector<std::pair<Entity, Transform*>> currentTransforms;
+	std::vector<std::pair<Entity, TransformBundle>> currentTransforms;
 	for (auto& entity : selectedEntities)
 	{
 		if (entity.HasComponent<Transform>())
 		{
-			Transform& transform = const_cast<Entity&>(entity).GetComponent<Transform>();
-			currentTransforms.emplace_back(entity, &transform);
+			currentTransforms.emplace_back(entity, const_cast<Entity&>(entity).GetTransformBundle());
 		}
 	}
 
@@ -60,11 +59,11 @@ void EditorApplicationLayer::RenderImGuizmo()
 	glm::vec3 centroid(0.0f);
 	glm::vec3 averageScale(0.0f);
 	glm::vec3 averageRotation(0.0f);
-	for (const auto& [entity, transform] : currentTransforms)
+	for (auto& [entity, transform] : currentTransforms)
 	{
-		centroid += transform->Position;
-		averageScale += transform->Scale;
-		averageRotation += transform->Rotation;
+		centroid += transform.Position;
+		averageScale += transform.Scale;
+		averageRotation += transform.Rotation;
 	}
 	centroid /= static_cast<float>(currentTransforms.size());
 	averageScale /= static_cast<float>(currentTransforms.size());
@@ -98,7 +97,11 @@ void EditorApplicationLayer::RenderImGuizmo()
 	if (ImGuizmo::IsUsing() && !imGuizmoActivate)
 	{
 		// Cache the transforms and initial centroid
-		selectedTransforms = currentTransforms;
+		selectedTransforms.clear();
+		for (auto& currentTransform : currentTransforms)
+		{
+			selectedTransforms.emplace_back(currentTransform);
+		}
 		_editorContext.BeginUndo();
 		imGuizmoActivate = true;
 
@@ -106,7 +109,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 		for (const auto& transformPair : selectedTransforms)
 		{
 			auto entity = transformPair.first;
-			auto& transform = *transformPair.second;
+			auto& transform = transformPair.second;
 
 			if (operation == ImGuizmo::TRANSLATE || multiSelect)
 			{
@@ -130,14 +133,12 @@ void EditorApplicationLayer::RenderImGuizmo()
 		for (const auto& transformPair : selectedTransforms)
 		{
 			auto entity = transformPair.first;
-			auto& transform = *transformPair.second;
+			auto& transform = transformPair.second;
 
 			if (mode == ImGuizmo::WORLD || multiSelect &&
 				(operation == ImGuizmo::TRANSLATE || operation == ImGuizmo::ROTATE || operation == ImGuizmo::SCALE))
 			{
-				mat4 originalMatrix = transform.GetTransform();
-				mat4 m = originalMatrix;
-
+				mat4 m = transform.localToWorld;
 				if (operation == ImGuizmo::SCALE)
 				{
 					//bring to parent space
@@ -187,7 +188,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 		for (const auto& transformPair : selectedTransforms)
 		{
 			auto entity = transformPair.first;
-			auto& transform = *transformPair.second;
+			auto& transform = transformPair.second;
 
 			if (operation == ImGuizmo::TRANSLATE || multiSelect)
 			{

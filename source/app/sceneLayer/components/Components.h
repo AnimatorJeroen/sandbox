@@ -17,15 +17,15 @@ struct Transform {
     vec3 Position{};
 	vec3 Rotation{};
     vec3 Scale{ 1.f, 1.f, 1.f };
+};
 
-	// Helper method to build transform matrix from components
-	mat4 GetTransform() const
-	{
-		glm::mat4 rotation = glm::toMat4(glm::quat(glm::radians(Rotation)));
-		return glm::translate(glm::mat4(1.0f), Position)
-			* rotation
-			* glm::scale(glm::mat4(1.0f), Scale);
-	}
+// LocalToWorld component - stores the computed world transformation matrix
+// Similar to Unity DOTS LocalToWorld component
+struct LocalToWorld {
+	mat4 Value{ 1.0f };
+
+	LocalToWorld() = default;
+	LocalToWorld(const mat4& matrix) : Value(matrix) {}
 };
 
 // Camera component for camera entities
@@ -51,6 +51,7 @@ struct SceneData {
 using AppComponentTypes = std::tuple<
     Core::UUID,
     Transform,
+    LocalToWorld,
     NameComponent,
     CameraComponent,
     SceneData  // Scene root entity marker + metadata

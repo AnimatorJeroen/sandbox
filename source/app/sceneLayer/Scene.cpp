@@ -3,6 +3,7 @@
 #include <random>
 #include "core/UUID.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <filesystem>
 #include <core/Logger.h>
 
@@ -105,42 +106,26 @@ void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight
 	m_ProjectionMatrix = glm::perspective(glm::radians(camera.fov), aspect, camera.nearPlane, camera.farPlane);
 }
 
+void Scene::UpdateMatrices()
+{
+	for (auto entity : _registry.view<Transform>()) {
+		auto& transform = _registry.get<Transform>(entity);
+		auto& localToWorld = _registry.get<LocalToWorld>(entity);
+		// Build transform matrix from components
+		glm::mat4 rotation = glm::toMat4(glm::quat(glm::radians(transform.Rotation)));
+		localToWorld.Value = glm::translate(glm::mat4(1.0f), transform.Position)
+			* rotation
+			* glm::scale(glm::mat4(1.0f), transform.Scale);
+	}
+}
+
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
 
 	int i = 0;
-	for (auto entity : _registry.view<Transform>()) {
-		auto& transform = _registry.get<Transform>(entity);
-
-		float x = transform.Position.x;
-		float y = transform.Position.y;
-
-
-		// Scale down coordinates to fit in camera view
-		// Camera is at (0,5,10) looking at (0,0,0)
-		// So we need coordinates near the origin
-		float worldX = (x - 200.0f) * 0.01f;  // Center around 0, scale down
-		float worldY = (y - 200.0f) * 0.01f;  // Center around 0, scale down
-
-		recorder.PolygonBegin(Core::Vec3{ worldX - 0.1f, worldY - 0.1f, -5.0f }, 2.0f,
-			{ 0.0f, 1.0f, 0.0f, 1.0f }, true
-		);
-		recorder.PolygonPoint(Core::Vec3{ worldX + 0.1f, worldY - 0.1f, -5.0f });
-		recorder.PolygonPoint(Core::Vec3{ worldX + 0.1f, worldY + 0.1f, -5.0f });
-		recorder.PolygonPoint(Core::Vec3{ worldX - 0.1f, worldY + 0.1f, -5.0f });
-		recorder.PolygonEnd(Core::Vec3{ worldX - 0.1f, worldY - 0.1f, -5.0f });
-
-		// Draw 2D line (explicitly using Vec2)
-		recorder.Line(
-			Core::Vec3{ worldX, worldY, -5.0f },
-			Core::Vec3{ worldX + 0.1f, worldY, -5.0f },
-			2,
-			{ 1.0f, 0.0f, 0.0f, 1.0f }
-		);
-
-		// Draw 3D cube for each entity
-		recorder.Cube(transform.GetTransform(), { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
-
+	for (auto entity : _registry.view<LocalToWorld>()) {
+		auto& localToWorld = _registry.get<LocalToWorld>(entity);
+		recorder.Cube(localToWorld.Value, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 		i++;
 	}
 }
@@ -186,6 +171,7 @@ Entity Scene::CreateEntity(const std::string& name)
 	float y = dis(gen);
 
 	_registry.emplace<Transform>(e, Transform{ vec3{x, y, 0.0f} });
+	_registry.emplace<LocalToWorld>(e, LocalToWorld());
 
 	return Entity(e, &_registry);
 }
