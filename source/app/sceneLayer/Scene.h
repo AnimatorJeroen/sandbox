@@ -80,6 +80,10 @@ class Scene
 		}
 		const std::string& GetFilepath() const { return _filepath; }
 
+		// Hierarchy management
+		void SetParent(Entity child, Entity parent);
+		void RebuildChildrenForEntity(Entity entity);
+
 	private:
 		entt::entity _sceneEntity;
 		entt::entity _activeCamera = entt::null;

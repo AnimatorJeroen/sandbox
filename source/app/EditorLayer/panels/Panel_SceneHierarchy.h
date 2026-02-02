@@ -19,6 +19,10 @@ public:
 	void Render();
 	void SetContext(Scene& scene);
 private:
+	void RenderEntityNode(Entity entity, const std::set<Entity>& selectedEntities, bool& deleteEntitiesPressed);
+	void HandleDragDropSource(Entity entity);
+	void HandleDragDropTarget(Entity entity);
+	
 	Scene* _scene;
 	EditorContext& _editorContext;
 	Entity _lastClickedEntity;

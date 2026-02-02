@@ -303,3 +303,81 @@ bool Scene::LoadFromFile(const std::string& filepath)
 	}
 }
 
+void Scene::SetParent(Entity child, Entity parent)
+{
+	if (!child || !parent) {
+		LOG_ERROR() << "SetParent: Invalid child or parent entity";
+		return;
+	}
+
+	// Get the child's UUID
+	Core::UUID childUUID = child.UUID();
+	Core::UUID parentUUID = parent.UUID();
+
+	// Check if the child already has a parent
+	Entity oldParent = Entity::Null();
+	if (child.HasComponent<Parent>()) {
+		Parent& parentComp = child.GetComponent<Parent>();
+		
+		// If setting the same parent, nothing to do
+		if (parentComp.parentUUID.value == parentUUID.value) {
+			return;
+		}
+
+		// Find the old parent entity by UUID to rebuild its children
+		if (parentComp.HasParent()) {
+			auto view = _registry.view<Core::UUID>();
+			for (auto entity : view) {
+				if (_registry.get<Core::UUID>(entity).value == parentComp.parentUUID.value) {
+					oldParent = Entity(entity, &_registry);
+					break;
+				}
+			}
+		}
+
+		// Update the parent UUID
+		parentComp.parentUUID = parentUUID;
+	}
+	else {
+		// Add new Parent component
+		child.AddComponent<Parent>(parentUUID);
+	}
+
+	// Rebuild children for the old parent (if any)
+	if (oldParent) {
+		RebuildChildrenForEntity(oldParent);
+	}
+
+	// Rebuild children for the new parent
+	RebuildChildrenForEntity(parent);
+
+	LOG_DEBUG() << "Set parent: child UUID=" << childUUID.value << ", parent UUID=" << parentUUID.value;
+}
+
+void Scene::RebuildChildrenForEntity(Entity entity)
+{
+	if (!entity) {
+		return;
+	}
+
+	Core::UUID entityUUID = entity.UUID();
+	std::vector<entt::entity> childList;
+
+	// Find all entities that have this entity as their parent
+	auto view = _registry.view<Parent>();
+	for (auto childEntity : view) {
+		const Parent& parentComp = _registry.get<Parent>(childEntity);
+		if (parentComp.parentUUID.value == entityUUID.value) {
+			childList.push_back(childEntity);
+		}
+	}
+
+	// Update or add Children component
+	if (entity.HasComponent<Children>()) {
+		entity.GetComponent<Children>().children = childList;
+	}
+	else if (!childList.empty()) {
+		entity.AddComponent<Children>(childList);
+	}
+}
+
