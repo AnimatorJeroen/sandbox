@@ -103,19 +103,19 @@ namespace Core {
                 // Navigate through a field
                 const auto id = std::get<entt::id_type>(element);
                 auto data = cur.type().data(id);
-                if (!data) [[unlikely]] throw std::runtime_error("Missing field id");
+                if (!data) throw std::runtime_error("Missing field id");
                 cur = data.get(cur).as_ref();
-                if (!cur) [[unlikely]] throw std::runtime_error("Failed to read field");
+                if (!cur) throw std::runtime_error("Failed to read field");
             }
             else if (std::holds_alternative<size_t>(element)) {
                 // Navigate through an index (sequence container)
                 const auto index = std::get<size_t>(element);
                 auto seq_container = cur.as_sequence_container();
-                if (!seq_container) [[unlikely]] {
+                if (!seq_container) {
                     throw std::runtime_error("Element is not a sequence container");
                 }
 
-                if (index >= seq_container.size()) [[unlikely]] {
+                if (index >= seq_container.size()) {
                     throw std::runtime_error("Index out of bounds");
                 }
 
@@ -123,7 +123,7 @@ namespace Core {
                 std::advance(it, index);
                 cur = *it;
                 cur = cur.as_ref();
-                if (!cur) [[unlikely]] throw std::runtime_error("Failed to read element at index");
+                if (!cur) throw std::runtime_error("Failed to read element at index");
             }
         }
 
@@ -140,7 +140,7 @@ namespace Core {
         // Find the length (last non-sentinel element)
         size_t length = reflection::PathLength(chain);
 
-        if (length == 0) [[unlikely]] throw std::runtime_error("Empty path");
+        if (length == 0) throw std::runtime_error("Empty path");
 
         // descend to parent of final element
         for (size_t i = 0; i < length - 1; ++i) {
@@ -150,20 +150,20 @@ namespace Core {
                 // Navigate through a field
                 const auto id = std::get<entt::id_type>(element);
                 auto data = cur.type().data(id);
-                if (!data) [[unlikely]] throw std::runtime_error("Missing intermediate field id");
+                if (!data) throw std::runtime_error("Missing intermediate field id");
 
                 cur = data.get(cur).as_ref();
-                if (!cur) [[unlikely]] throw std::runtime_error("Failed to read intermediate field");
+                if (!cur) throw std::runtime_error("Failed to read intermediate field");
             }
             else if (std::holds_alternative<size_t>(element)) {
                 // Navigate through an index
                 const auto index = std::get<size_t>(element);
                 auto seq_container = cur.as_sequence_container();
-                if (!seq_container) [[unlikely]] {
+                if (!seq_container) {
                     throw std::runtime_error("Intermediate element is not a sequence container");
                 }
 
-                if (index >= seq_container.size()) [[unlikely]] {
+                if (index >= seq_container.size()) {
                     throw std::runtime_error("Index out of bounds");
                 }
 
@@ -171,7 +171,7 @@ namespace Core {
                 std::advance(seq_it, index);
                 cur = *seq_it;
                 cur = cur.as_ref();
-                if (!cur) [[unlikely]] throw std::runtime_error("Failed to read element at index");
+                if (!cur) throw std::runtime_error("Failed to read element at index");
             }
         }
 
@@ -182,10 +182,10 @@ namespace Core {
             // Setting a field
             const auto finalId = std::get<entt::id_type>(final_element);
             auto final = cur.type().data(finalId);
-            if (!final) [[unlikely]] throw std::runtime_error("Missing final field id");
+            if (!final) throw std::runtime_error("Missing final field id");
 
             entt::meta_any newAny = FromValue<ValueTypes>(v);
-            if (!final.set(cur, newAny)) [[unlikely]] {
+            if (!final.set(cur, newAny)) {
                 throw std::runtime_error("Write failed");
             }
         }
@@ -193,11 +193,11 @@ namespace Core {
             // Setting an element in a sequence container using operator[]
             const auto index = std::get<size_t>(final_element);
             auto seq_container = cur.as_sequence_container();
-            if (!seq_container) [[unlikely]] {
+            if (!seq_container) {
                 throw std::runtime_error("Final element parent is not a sequence container");
             }
 
-            if (index >= seq_container.size()) [[unlikely]] {
+            if (index >= seq_container.size()) {
                 throw std::runtime_error("Index out of bounds");
             }
 
@@ -206,7 +206,7 @@ namespace Core {
             entt::meta_any newAny = FromValue<ValueTypes>(v);
 
             // Assign the new value to the element
-            if (!element.assign(newAny)) [[unlikely]] {
+            if (!element.assign(newAny)) {
                 throw std::runtime_error("Write failed on sequence element");
             }
         }

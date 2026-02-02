@@ -78,7 +78,7 @@ namespace Core {
     entt::meta_any SetFieldOp<FieldTypes>::resolve() const {
         // Generic path using EnTT's storage system
         auto* storage = _reg.storage(_componentType);
-        if (!storage) [[unlikely]] {
+        if (!storage) {
             return entt::meta_any{};
         }
 
@@ -90,7 +90,7 @@ namespace Core {
             }
         }
 
-        if (!storage->contains(entity)) [[unlikely]] {
+        if (!storage->contains(entity)) {
             return entt::meta_any{};
         }
 
@@ -101,7 +101,7 @@ namespace Core {
 
         // Resolve the meta type using the type_info
         auto meta_type = entt::resolve(type_info);
-        if (!meta_type) [[unlikely]] {
+        if (!meta_type) {
             return entt::meta_any{};
         }
 
@@ -111,7 +111,7 @@ namespace Core {
     template<typename FieldTypes>
     bool SetFieldOp<FieldTypes>::setField(const FieldTypes& value) const {
         auto inst = resolve();
-        if (!inst) [[unlikely]] {
+        if (!inst) {
             return false;
         }
         SetByPath<FieldTypes>(inst, _pathIds, value);
