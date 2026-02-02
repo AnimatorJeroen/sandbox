@@ -23,7 +23,8 @@ namespace Core {
     namespace detail {
         template<typename T>
         struct meta_any_to_variant_alternative {
-            static bool try_convert(const entt::meta_any& any, auto& result) {
+            template<typename ResultType>
+            static bool try_convert(const entt::meta_any& any, ResultType& result) {
                 if (any.type() == entt::resolve<T>()) {
                     result = any.cast<T>();
                     return true;
@@ -48,6 +49,13 @@ namespace Core {
             }
             return false;
         }
+
+        // Helper to check if a type is a variant (C++17 compatible)
+        template<typename T>
+        struct is_variant : std::false_type {};
+        
+        template<typename... Ts>
+        struct is_variant<std::variant<Ts...>> : std::true_type {};
     }
 
     // ----- meta_any <-> Value helpers (fully templated implementation)
@@ -59,9 +67,8 @@ namespace Core {
         static_assert(std::is_same_v<ValueTypes, std::decay_t<ValueTypes>>,
             "ValueTypes must be a non-cv-qualified type");
 
-        // Ensure ValueTypes is a variant
-        static_assert([]<typename... Ts>(std::variant<Ts...>*) { return true; }
-        (static_cast<ValueTypes*>(nullptr)),
+        // Ensure ValueTypes is a variant (C++17 compatible)
+        static_assert(detail::is_variant<ValueTypes>::value,
             "ValueTypes must be a std::variant");
 
         ValueTypes result;

@@ -7,17 +7,26 @@
 
 namespace Core
 {
-	// Type trait to detect if a type has SaveToFile method
+	// Type trait to detect if a type has SaveToFile method (C++17 compatible)
+	template<typename T, typename = void>
+	struct has_save_to_file : std::false_type {};
+	
 	template<typename T>
-	concept HasSaveToFile = requires(const T& t, const std::string& path) {
-		{ t.SaveToFile(path) } -> std::convertible_to<bool>;
-	};
+	struct has_save_to_file<T, std::void_t<decltype(std::declval<const T&>().SaveToFile(std::declval<const std::string&>()))>> : std::true_type {};
 
-	// Type trait to detect if a type has LoadFromFile method
+	// Type trait to detect if a type has LoadFromFile method (C++17 compatible)
+	template<typename T, typename = void>
+	struct has_load_from_file : std::false_type {};
+	
 	template<typename T>
-	concept HasLoadFromFile = requires(T& t, const std::string& path) {
-		{ t.LoadFromFile(path) } -> std::convertible_to<bool>;
-	};
+	struct has_load_from_file<T, std::void_t<decltype(std::declval<T&>().LoadFromFile(std::declval<const std::string&>()))>> : std::true_type {};
+
+	// Helper variable templates
+	template<typename T>
+	constexpr bool HasSaveToFile = has_save_to_file<T>::value;
+	
+	template<typename T>
+	constexpr bool HasLoadFromFile = has_load_from_file<T>::value;
 
 	class Serializer
 	{

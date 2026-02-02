@@ -216,10 +216,8 @@ namespace Core {
             }
 
             // Restore all component types using fold expression
-            auto restore_all = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-                (restore_component_set(reg, std::get<Is>(archive.storages), remap), ...);
-            };
-            restore_all(std::index_sequence_for<Cs...>{});
+            // C++17 compatible version using helper function
+            restore_all_components(reg, archive, remap, std::index_sequence_for<Cs...>{});
 
             // Collect the new entities
             std::unordered_set<entt::entity> newEntities;
@@ -228,6 +226,17 @@ namespace Core {
             }
 
             return newEntities;
+        }
+        
+        // Helper function for C++17 compatibility
+        template<class... Cs, std::size_t... Is>
+        void restore_all_components(
+            entt::registry& reg,
+            const SelectionArchive<Cs...>& archive,
+            const std::unordered_map<entt::entity, entt::entity>& remap,
+            std::index_sequence<Is...>)
+        {
+            (restore_component_set(reg, std::get<Is>(archive.storages), remap), ...);
         }
 
         // Create a snapshot of ALL entities in registry (for full scene save)

@@ -6,6 +6,97 @@
 #include <filesystem>
 #include <core/Logger.h>
 
+// C++17 compatible helper structs for Scene serialization
+// Must be defined outside function scope for member templates to work
+namespace {
+	struct SceneSaveHelper {
+		template<typename... Cs>
+		static void save(std::ofstream& file, entt::registry& registry, std::tuple<Cs...>*) {
+			auto archive = Core::ArchiveHelpers::MakeFullSnapshot<Cs...>(registry);
+			
+			// Write entity count
+			uint64_t entityCount = archive.entities.size();
+			file.write(reinterpret_cast<const char*>(&entityCount), sizeof(entityCount));
+
+			// Write all entity IDs
+			file.write(reinterpret_cast<const char*>(archive.entities.data()),
+				entityCount * sizeof(entt::entity));
+
+			// Write each component storage
+			writeStorages(file, archive, std::index_sequence_for<Cs...>{});
+		}
+		
+		template<typename... Cs, std::size_t... Is>
+		static void writeStorages(std::ofstream& file, 
+			const Core::SelectionArchive<Cs...>& archive,
+			std::index_sequence<Is...>) {
+			// Use dummy array initialization trick for C++17 fold expression alternative
+			int dummy[] = {0, (writeStorageAtIndex<Is>(file, archive), 0)...};
+			(void)dummy; // Suppress unused variable warning
+		}
+		
+		template<std::size_t I, typename... Cs>
+		static void writeStorageAtIndex(std::ofstream& file, const Core::SelectionArchive<Cs...>& archive) {
+			const auto& storage = std::get<I>(archive.storages);
+			uint64_t count = storage.size();
+			file.write(reinterpret_cast<const char*>(&count), sizeof(count));
+
+			for (const auto& [entity, component] : storage) {
+				file.write(reinterpret_cast<const char*>(&entity), sizeof(entity));
+				file.write(reinterpret_cast<const char*>(&component), sizeof(component));
+			}
+		}
+	};
+
+	struct SceneLoadHelper {
+		template<typename... Cs>
+		static void load(std::ifstream& file, entt::registry& registry, std::tuple<Cs...>*) {
+			Core::SelectionArchive<Cs...> archive;
+
+			// Read entity count
+			uint64_t entityCount = 0;
+			file.read(reinterpret_cast<char*>(&entityCount), sizeof(entityCount));
+
+			// Read all entity IDs
+			archive.entities.resize(entityCount);
+			file.read(reinterpret_cast<char*>(archive.entities.data()),
+				entityCount * sizeof(entt::entity));
+
+			// Read each component storage
+			readStorages(file, archive, std::index_sequence_for<Cs...>{});
+
+			// Restore all entities (including the scene entity)
+			Core::ArchiveHelpers::RestoreEntitiesAndComponents(registry, archive);
+		}
+		
+		template<typename... Cs, std::size_t... Is>
+		static void readStorages(std::ifstream& file, 
+			Core::SelectionArchive<Cs...>& archive,
+			std::index_sequence<Is...>) {
+			// Use dummy array initialization trick for C++17 fold expression alternative
+			int dummy[] = {0, (readStorageAtIndex<Is>(file, archive), 0)...};
+			(void)dummy; // Suppress unused variable warning
+		}
+		
+		template<std::size_t I, typename... Cs>
+		static void readStorageAtIndex(std::ifstream& file, Core::SelectionArchive<Cs...>& archive) {
+			auto& storage = std::get<I>(archive.storages);
+			uint64_t count = 0;
+			file.read(reinterpret_cast<char*>(&count), sizeof(count));
+
+			using ComponentType = typename std::tuple_element<I, std::tuple<Cs...>>::type;
+			storage.resize(count);
+			for (uint64_t i = 0; i < count; ++i) {
+				entt::entity entity;
+				ComponentType component;
+				file.read(reinterpret_cast<char*>(&entity), sizeof(entity));
+				file.read(reinterpret_cast<char*>(&component), sizeof(component));
+				storage[i] = {entity, component};
+			}
+		}
+	};
+}
+
 void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight)
 {
 	auto& camera = GetActiveCamera();
@@ -131,34 +222,7 @@ bool Scene::SaveToFile(const std::string& filepath) const
 
 		// Create archive with all component types (including SceneData on _sceneEntity)
 		// No need to sync camera - SceneData is already the source of truth
-		auto saveEntities = [&]<typename... Cs>(std::tuple<Cs...>*) {
-			auto archive = Core::ArchiveHelpers::MakeFullSnapshot<Cs...>(
-				const_cast<entt::registry&>(_registry));
-			
-			// Write entity count
-			uint64_t entityCount = archive.entities.size();
-			file.write(reinterpret_cast<const char*>(&entityCount), sizeof(entityCount));
-
-			// Write all entity IDs
-			file.write(reinterpret_cast<const char*>(archive.entities.data()),
-				entityCount * sizeof(entt::entity));
-
-			// Write each component storage
-			auto writeStorages = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-				([&] {
-					const auto& storage = std::get<Is>(archive.storages);
-					uint64_t count = storage.size();
-					file.write(reinterpret_cast<const char*>(&count), sizeof(count));
-
-					for (const auto& [entity, component] : storage) {
-						file.write(reinterpret_cast<const char*>(&entity), sizeof(entity));
-						file.write(reinterpret_cast<const char*>(&component), sizeof(component));
-					}
-				}(), ...);
-			};
-			writeStorages(std::index_sequence_for<Cs...>{});
-		};
-		saveEntities(static_cast<AppComponentTypes*>(nullptr));
+		SceneSaveHelper::save(file, const_cast<entt::registry&>(_registry), static_cast<AppComponentTypes*>(nullptr));
 
 		bool success = file.good();
 		file.close();
@@ -198,41 +262,7 @@ bool Scene::LoadFromFile(const std::string& filepath)
 		_registry.clear();
 
 		// Load entities and components using RestoreEntitiesAndComponents
-		auto loadEntities = [&]<typename... Cs>(std::tuple<Cs...>*) {
-			Core::SelectionArchive<Cs...> archive;
-
-			// Read entity count
-			uint64_t entityCount = 0;
-			file.read(reinterpret_cast<char*>(&entityCount), sizeof(entityCount));
-
-			// Read all entity IDs
-			archive.entities.resize(entityCount);
-			file.read(reinterpret_cast<char*>(archive.entities.data()),
-				entityCount * sizeof(entt::entity));
-
-			// Read each component storage
-			auto readStorages = [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-				([&] {
-					auto& storage = std::get<Is>(archive.storages);
-					uint64_t count = 0;
-					file.read(reinterpret_cast<char*>(&count), sizeof(count));
-
-					storage.resize(count);
-					for (uint64_t i = 0; i < count; ++i) {
-						entt::entity entity;
-						typename std::tuple_element_t<Is, std::tuple<Cs...>> component;
-						file.read(reinterpret_cast<char*>(&entity), sizeof(entity));
-						file.read(reinterpret_cast<char*>(&component), sizeof(component));
-						storage[i] = {entity, component};
-					}
-				}(), ...);
-			};
-			readStorages(std::index_sequence_for<Cs...>{});
-
-			// Restore all entities (including the scene entity)
-			Core::ArchiveHelpers::RestoreEntitiesAndComponents(_registry, archive);
-		};
-		loadEntities(static_cast<AppComponentTypes*>(nullptr));
+		SceneLoadHelper::load(file, _registry, static_cast<AppComponentTypes*>(nullptr));
 
 		// Find the scene entity by looking for SceneData component
 		auto sceneDataView = _registry.view<SceneData>();
