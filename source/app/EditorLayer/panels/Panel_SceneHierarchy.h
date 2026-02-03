@@ -44,4 +44,8 @@ private:
 	
 	// Track all entities in render order for shift-select
 	std::vector<Entity> _entitiesInRenderOrder;
+	
+	// Pending shift-select operation (processed after all entities are rendered)
+	Entity _pendingShiftSelectEntity = Entity::Null();
+	std::set<Entity> _pendingShiftSelectBaseSelection;
 };

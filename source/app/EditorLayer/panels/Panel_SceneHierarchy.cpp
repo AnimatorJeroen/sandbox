@@ -89,10 +89,42 @@ void Panel_SceneHierarchy::Render()
     // Clear and rebuild the render order list for shift-select
     _entitiesInRenderOrder.clear();
     
+    // Reset pending shift-select
+    _pendingShiftSelectEntity = Entity::Null();
+    _pendingShiftSelectBaseSelection.clear();
+    
     // Render the tree starting from root entities
 	bool deleteEntitiesPressed = false;
     for (Entity entity : rootEntities) {
         RenderEntityNode(entity, selectedEntities, deleteEntitiesPressed);
+    }
+    
+    // Process pending shift-select operation if any
+    if (_pendingShiftSelectEntity && _lastClickedEntity) {
+        int lastClickedIndex = -1;
+        int currentIndex = -1;
+        
+        for (int i = 0; i < static_cast<int>(_entitiesInRenderOrder.size()); ++i) {
+            if (_entitiesInRenderOrder[i] == _lastClickedEntity) {
+                lastClickedIndex = i;
+            }
+            if (_entitiesInRenderOrder[i] == _pendingShiftSelectEntity) {
+                currentIndex = i;
+            }
+        }
+        
+        // Select all entities in the range
+        if (lastClickedIndex != -1 && currentIndex != -1) {
+            std::set<Entity> newSelection = _pendingShiftSelectBaseSelection;
+            int start = std::min(lastClickedIndex, currentIndex);
+            int end = std::max(lastClickedIndex, currentIndex);
+            
+            for (int i = start; i <= end; ++i) {
+                newSelection.insert(_entitiesInRenderOrder[i]);
+            }
+            
+            _editorContext.SetSelection(newSelection);
+        }
     }
     
     // Handle empty space drop (below last entity or in empty area)
@@ -161,31 +193,10 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
         
         if (isShiftDown && _lastClickedEntity) {
             // Shift+Click: Range selection from last clicked to current
-            // Find indices of both entities in the render order list
-            int lastClickedIndex = -1;
-            int currentIndex = -1;
-            
-            for (int i = 0; i < static_cast<int>(_entitiesInRenderOrder.size()); ++i) {
-                if (_entitiesInRenderOrder[i] == _lastClickedEntity) {
-                    lastClickedIndex = i;
-                }
-                if (_entitiesInRenderOrder[i] == entity) {
-                    currentIndex = i;
-                }
-            }
-            
-            // Select all entities in the range
-            if (lastClickedIndex != -1 && currentIndex != -1) {
-                std::set<Entity> newSelection = selectedEntities;
-                int start = std::min(lastClickedIndex, currentIndex);
-                int end = std::max(lastClickedIndex, currentIndex);
-                
-                for (int i = start; i <= end; ++i) {
-                    newSelection.insert(_entitiesInRenderOrder[i]);
-                }
-                
-                _editorContext.SetSelection(newSelection);
-            }
+            // Defer this operation until after all entities are rendered
+            // so we have the complete _entitiesInRenderOrder list
+            _pendingShiftSelectEntity = entity;
+            _pendingShiftSelectBaseSelection = selectedEntities;
             // Don't update _lastClickedEntity on shift-click to allow extending the range
         }
         else if (isCtrlDown) {
