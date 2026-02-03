@@ -2,6 +2,8 @@
 #include <entt/entt.hpp>
 #include <core/UUID.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 // TransformBundle - Helper struct to access transform-related components together
 struct TransformBundle {
@@ -35,8 +37,13 @@ struct TransformBundle {
         ChildrenEntities(childrenEntities)
     {
         // Decompose the LocalToWorld matrix to get world space transform
-        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(localToWorld),
-            glm::value_ptr(worldPosition), glm::value_ptr(worldRotation), glm::value_ptr(worldScale));
+        glm::quat orientation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(localToWorld, worldScale, orientation, worldPosition, skew, perspective);
+        
+        // Convert quaternion to Euler angles in degrees
+        worldRotation = glm::degrees(glm::eulerAngles(orientation));
     }
 
     static TransformBundle Null() { return TransformBundle(); }

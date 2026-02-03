@@ -150,8 +150,11 @@ void EditorApplicationLayer::RenderImGuizmo()
 				}
 
 				vec3 translation, rotation, scale;
-				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(m),
-					glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
+				glm::quat orientation;
+				glm::vec3 skew;
+				glm::vec4 perspective;
+				glm::decompose(m, scale, orientation, translation, skew, perspective);
+				rotation = glm::degrees(glm::eulerAngles(orientation));
 
 				transform.Position = translation;
 				transform.Rotation = rotation;
@@ -160,8 +163,11 @@ void EditorApplicationLayer::RenderImGuizmo()
 			else
 			{
 				vec3 translation, rotation, scale;
-				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transformedManipulatorMatrix),
-					glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
+				glm::quat orientation;
+				glm::vec3 skew;
+				glm::vec4 perspective;
+				glm::decompose(transformedManipulatorMatrix, scale, orientation, translation, skew, perspective);
+				rotation = glm::degrees(glm::eulerAngles(orientation));
 
 				if (operation == ImGuizmo::TRANSLATE)
 				{
