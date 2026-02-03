@@ -41,4 +41,7 @@ private:
 	
 	// Track entities that should be expanded next frame (after drop)
 	std::set<uint64_t> _entitiesToExpand;
+	
+	// Track all entities in render order for shift-select
+	std::vector<Entity> _entitiesInRenderOrder;
 };

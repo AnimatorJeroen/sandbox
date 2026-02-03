@@ -86,6 +86,9 @@ void Panel_SceneHierarchy::Render()
     _lastRenderedEntity = Entity::Null();
     _lastEntityRectMax = ImVec2(0, 0);
     
+    // Clear and rebuild the render order list for shift-select
+    _entitiesInRenderOrder.clear();
+    
     // Render the tree starting from root entities
 	bool deleteEntitiesPressed = false;
     for (Entity entity : rootEntities) {
@@ -113,6 +116,9 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
     const NameComponent* nameComp = entity.HasComponent<NameComponent>() 
         ? &entity.GetComponent<NameComponent>() 
         : nullptr;
+    
+    // Add this entity to the render order list for shift-select
+    _entitiesInRenderOrder.push_back(entity);
     
     // Display entity with its name
     ImGui::PushID(static_cast<int>(entity.UUID().value));
@@ -153,7 +159,36 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
         bool isShiftDown = ImGui::GetIO().KeyShift;
         bool isCtrlDown = ImGui::GetIO().KeyCtrl;
         
-        if (isCtrlDown) {
+        if (isShiftDown && _lastClickedEntity) {
+            // Shift+Click: Range selection from last clicked to current
+            // Find indices of both entities in the render order list
+            int lastClickedIndex = -1;
+            int currentIndex = -1;
+            
+            for (int i = 0; i < static_cast<int>(_entitiesInRenderOrder.size()); ++i) {
+                if (_entitiesInRenderOrder[i] == _lastClickedEntity) {
+                    lastClickedIndex = i;
+                }
+                if (_entitiesInRenderOrder[i] == entity) {
+                    currentIndex = i;
+                }
+            }
+            
+            // Select all entities in the range
+            if (lastClickedIndex != -1 && currentIndex != -1) {
+                std::set<Entity> newSelection = selectedEntities;
+                int start = std::min(lastClickedIndex, currentIndex);
+                int end = std::max(lastClickedIndex, currentIndex);
+                
+                for (int i = start; i <= end; ++i) {
+                    newSelection.insert(_entitiesInRenderOrder[i]);
+                }
+                
+                _editorContext.SetSelection(newSelection);
+            }
+            // Don't update _lastClickedEntity on shift-click to allow extending the range
+        }
+        else if (isCtrlDown) {
             // Ctrl+Click: Toggle selection
             std::set<Entity> newSelection = selectedEntities;
             if (selectedEntities.find(entity) != selectedEntities.end()) {
