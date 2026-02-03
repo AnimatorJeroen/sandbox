@@ -38,7 +38,7 @@ void EditorContext::Copy()
         return;
 
     // Convert Entity to entt::entity for applicator
-    std::unordered_set<entt::entity> entityHandles;
+    std::set<entt::entity> entityHandles;
     for (const auto& entity : _selectedEntities) {
         entityHandles.insert(entity.GetHandle());
     }
@@ -53,7 +53,7 @@ void EditorContext::Cut()
         return;
 
     // Convert Entity to entt::entity for applicator
-    std::unordered_set<entt::entity> entityHandles;
+    std::set<entt::entity> entityHandles;
     for (const auto& entity : _selectedEntities) {
         entityHandles.insert(entity.GetHandle());
     }
@@ -84,7 +84,7 @@ void EditorContext::DeleteSelection()
         return;
 
     // Convert Entity to entt::entity for applicator
-    std::unordered_set<entt::entity> entityHandles;
+    std::set<entt::entity> entityHandles;
     for (const auto& entity : _selectedEntities) {
         entityHandles.insert(entity.GetHandle());
     }
