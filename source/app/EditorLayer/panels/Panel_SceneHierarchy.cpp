@@ -314,7 +314,7 @@ void Panel_SceneHierarchy::HandleDragDrop(Entity entity)
     // Top 35%: Drop before entity
     // Middle 30%: Drop as parent
     // Bottom 35%: Drop after entity
-    if (relativeY < itemHeight * 0.35f) {
+    if (relativeY < itemHeight * 0.15f) {
         // Top region - drop before
         HandleDragDropBetween(entity, relativeY, itemHeight);
         // Draw visual feedback line above entity if this is the drop target
@@ -328,7 +328,7 @@ void Panel_SceneHierarchy::HandleDragDrop(Entity entity)
             );
         }
     }
-    else if (relativeY > itemHeight * 0.65f) {
+    else if (relativeY > itemHeight * 0.85f) {
         // Bottom region - drop after
         HandleDragDropBetween(entity, relativeY, itemHeight);
 
