@@ -148,16 +148,6 @@ namespace Core {
             // Create a snapshot of the selection with all component types
             auto archive = ArchiveHelpers::MakeSnapshot<Cs...>(*registry, selection);
 
-            // Build UUID remap table: old UUID -> new UUID
-            // This maps all UUIDs in the selection to fresh UUIDs
-            std::unordered_map<uint64_t, uint64_t> uuidRemap;
-            
-            // First pass: collect all UUIDs from entities in the selection and generate new ones
-            CollectAndRemapUUIDs(archive, uuidRemap);
-            
-            // Second pass: remap any UUID fields in components that reference UUIDs within the selection
-            RemapUUIDsInArchive(archive, uuidRemap);
-
             // Store in clipboard
             _clipboard.StoreEntities(std::move(archive));
         }
@@ -175,80 +165,80 @@ namespace Core {
                 throw std::runtime_error("Registry not set in UndoManager");
             }
 
-            // Get the archive from clipboard
+            // Get the archive from clipboard (remains unchanged)
             const auto* archive = _clipboard.GetEntitiesArchive<Cs...>();
             if (!archive || archive->entities.empty()) {
                 return; // Nothing to paste
             }
 
-            // Use unified restore function to create entities and restore components
-            // The archive already has UUIDs remapped from the copy operation
+            // Restore entities from clipboard archive (this creates entities with original UUIDs)
             auto newEntities = ArchiveHelpers::RestoreEntitiesAndComponents(*registry, *archive);
+
+            // Build UUID remap table: old UUID -> new UUID
+            // Each paste generates fresh UUIDs for all pasted entities
+            std::unordered_map<uint64_t, uint64_t> uuidRemap;
+            CollectUUIDsFromEntities(newEntities, *registry, uuidRemap);
+
+            // Remap any UUID fields in components on the newly created entities
+            RemapUUIDsInEntities<Cs...>(newEntities, *registry, uuidRemap);
 
             // Capture the creation for undo/redo
             CaptureCreate(newEntities);
         }
 
-        // Collect all UUIDs from the UUID component in the archive
-        // and generate new UUIDs for them (builds the remap table)
-        template<typename... Cs>
-        void CollectAndRemapUUIDs(
-            SelectionArchive<Cs...>& archive,
+        // Collect all UUIDs from newly created entities and generate new UUIDs for them
+        void CollectUUIDsFromEntities(
+            const std::unordered_set<entt::entity>& entities,
+            entt::registry& registry,
             std::unordered_map<uint64_t, uint64_t>& uuidRemap)
         {
-            // Use fold expression to search for UUID component type
-            (CollectAndRemapUUIDsFromStorage<Cs>(archive, uuidRemap), ...);
-        }
-
-        // Helper to collect and remap UUIDs from a specific component storage
-        template<typename C, typename... Cs>
-        void CollectAndRemapUUIDsFromStorage(
-            SelectionArchive<Cs...>& archive,
-            std::unordered_map<uint64_t, uint64_t>& uuidRemap)
-        {
-            // Special handling for UUID component type
-            if constexpr (std::is_same_v<C, UUID>) {
-                auto& storage = std::get<std::vector<std::pair<entt::entity, C>>>(archive.storages);
-                for (auto& [entity, uuidComponent] : storage) {
-                    uint64_t oldUUID = uuidComponent.value;
+            for (auto entity : entities) {
+                if (registry.all_of<UUID>(entity)) {
+                    // Get the old UUID
+                    uint64_t oldUUID = registry.get<UUID>(entity).value;
+                    
+                    // Generate a new UUID
                     uint64_t newUUID = UUID::generate();
                     
-                    // Store mapping
+                    // Store the mapping
                     uuidRemap[oldUUID] = newUUID;
                     
-                    // Update the UUID component in the archive with the new UUID
-                    uuidComponent.value = newUUID;
+                    // Update the UUID component on the entity
+                    registry.get<UUID>(entity).value = newUUID;
                 }
             }
         }
 
-        // Remap any UUID fields in all components in the archive
+        // Remap any UUID fields in all components on the entities
         // Uses reflection to find UUID-typed fields
         template<typename... Cs>
-        void RemapUUIDsInArchive(
-            SelectionArchive<Cs...>& archive,
+        void RemapUUIDsInEntities(
+            const std::unordered_set<entt::entity>& entities,
+            entt::registry& registry,
             const std::unordered_map<uint64_t, uint64_t>& uuidRemap)
         {
             // Process each component type
-            (RemapUUIDsInComponentStorage<Cs>(archive, uuidRemap), ...);
+            (RemapUUIDsInComponentsOnEntities<Cs>(entities, registry, uuidRemap), ...);
         }
 
-        // Helper to remap UUIDs in a specific component storage
-        template<typename C, typename... Cs>
-        void RemapUUIDsInComponentStorage(
-            SelectionArchive<Cs...>& archive,
+        // Helper to remap UUIDs in a specific component type on the entities
+        template<typename C>
+        void RemapUUIDsInComponentsOnEntities(
+            const std::unordered_set<entt::entity>& entities,
+            entt::registry& registry,
             const std::unordered_map<uint64_t, uint64_t>& uuidRemap)
         {
-            // Skip UUID component itself (already handled in CollectAndRemapUUIDs)
+            // Skip UUID component itself (already handled in CollectUUIDsFromEntities)
             if constexpr (std::is_same_v<C, UUID>) {
                 return;
             }
 
-            auto& storage = std::get<std::vector<std::pair<entt::entity, C>>>(archive.storages);
-            
-            for (auto& [entity, component] : storage) {
-                // Use reflection to find and update UUID fields in the component
-                RemapUUIDFieldsInComponent(component, uuidRemap);
+            for (auto entity : entities) {
+                if (registry.all_of<C>(entity)) {
+                    C& component = registry.get<C>(entity);
+                    // Use reflection to find and update UUID fields in the component
+                    RemapUUIDFieldsInComponent(component, uuidRemap);
+                }
             }
         }
 
@@ -264,27 +254,35 @@ namespace Core {
                 return; // Component not reflected
             }
 
+            // Get the resolved UUID type
+            auto uuidType = entt::resolve<UUID>();
+            if (!uuidType) {
+                return; // UUID type not reflected
+            }
+
             // Iterate over all data members (fields) of the component
             for (auto&& [id, metaData] : metaType.data()) {
                 // Check if this field is of type Core::UUID
-                if (metaData.type() == entt::resolve<UUID>()) {
-                    // Get the field value as a meta_any
-                    entt::meta_any fieldHandle = metaData.get(component);
-                    if (!fieldHandle) {
+                if (metaData.type() == uuidType) {
+                    // Use set() to modify the value through the metadata
+                    // First get the current value
+                    entt::meta_any currentValue = metaData.get(component);
+                    if (!currentValue) {
                         continue;
                     }
 
-                    // Cast to UUID and check if it needs remapping
-                    UUID* uuidPtr = fieldHandle.try_cast<UUID>();
-                    if (uuidPtr && uuidPtr->value != 0) {
-                        auto it = uuidRemap.find(uuidPtr->value);
-                        if (it != uuidRemap.end()) {
-                            // UUID references an entity within the selection - remap it
-                            UUID newUUID(it->second);
-                            metaData.set(component, newUUID);
+                    // Try to get the UUID value
+                    if (const auto* currentUUID = currentValue.try_cast<UUID>()) {
+                        if (currentUUID->value != 0) {
+                            auto it = uuidRemap.find(currentUUID->value);
+                            if (it != uuidRemap.end()) {
+                                // UUID references an entity within the selection - create new UUID and set it
+                                UUID newUUID(it->second);
+                                metaData.set(component, newUUID);
+                            }
+                            // If UUID is not in the remap table, it references something outside
+                            // the selection, so we leave it unchanged
                         }
-                        // If UUID is not in the remap table, it references something outside
-                        // the selection, so we leave it unchanged
                     }
                 }
             }
