@@ -22,17 +22,8 @@ TransformBundle Entity::GetTransformBundle()
 
     if (!transform || !localToWorld)
         return TransformBundle::Null();
-    
-    entt::entity parentEntity = entt::null;
-    if (_registry->all_of<Parent>(_entityHandle))
-    {
-        auto parent = _registry->get<Parent>(_entityHandle);
-        _registry->view<Core::UUID>().each([&](auto entity, const Core::UUID& uuid) {
-            if (uuid.value == parent.parentUUID.value) {
-                parentEntity = entity;
-            }
-        });
-    }
+
+    entt::entity parentEntity = GetParent().GetHandle();
 
     std::vector<entt::entity> children;
     if (_registry->all_of<Children>(_entityHandle))
@@ -41,6 +32,23 @@ TransformBundle Entity::GetTransformBundle()
 		children = childrenComp.children;
     }
 
-    return TransformBundle(transform->Position, transform->Rotation, transform->Scale,
+    return TransformBundle(_registry, transform->Position, transform->Rotation, transform->Scale,
         localToWorld->Value, parentEntity, children);
+}
+
+Entity Entity::GetParent() const
+{
+    Entity parentEntity = Entity::Null();
+    if (_registry->all_of<Parent>(_entityHandle))
+    {
+        auto parent = _registry->get<Parent>(_entityHandle);
+        auto view = _registry->view<Core::UUID>();
+        for (auto entity : view) {
+            if (_registry->get<Core::UUID>(entity).value == parent.parentUUID.value) {
+                parentEntity = Entity(entity, _registry);
+                break;
+            }
+        }
+    }
+    return parentEntity;
 }

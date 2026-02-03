@@ -6,7 +6,9 @@
 #include <glm/gtx/euler_angles.hpp>
 
 // TransformBundle - Helper struct to access transform-related components together
-struct TransformBundle {
+class TransformBundle {
+
+public:
     vec3& Position;
     vec3& Rotation;
     vec3& Scale;
@@ -19,7 +21,10 @@ struct TransformBundle {
     vec3 worldRotation;
     vec3 worldScale;
 
+private:
+	entt::registry* _registry;
 
+public:
     TransformBundle() : Position(vec3()),
         Rotation(vec3()),
         Scale(vec3()),
@@ -27,8 +32,9 @@ struct TransformBundle {
     }
     TransformBundle(const TransformBundle& other) = default;
 
-    TransformBundle(vec3& position, vec3& rotation, vec3& scale,
+    TransformBundle(entt::registry* registry, vec3& position, vec3& rotation, vec3& scale,
         mat4& localToWorld, entt::entity parent = entt::null, const std::vector<entt::entity>& childrenEntities = {}) :
+		_registry(registry),
         Position(position),
         Rotation(rotation),
         Scale(scale),
@@ -44,6 +50,13 @@ struct TransformBundle {
         
         // Convert quaternion to Euler angles in degrees
         worldRotation = glm::degrees(glm::eulerAngles(orientation));
+    }
+
+    mat4 GetParentMatrix() const {
+        if (parentEntity != entt::null) {
+			return _registry->get<::LocalToWorld>(parentEntity).Value;
+        }
+        return mat4(1.0f);
     }
 
     static TransformBundle Null() { return TransformBundle(); }

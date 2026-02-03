@@ -67,6 +67,8 @@ public:
     /// </summary>
     TransformBundle GetTransformBundle();
 
+	Entity GetParent() const;
+
     /// <summary>
     /// Get the UUID of this entity
     /// </summary>

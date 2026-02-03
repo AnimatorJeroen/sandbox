@@ -50,6 +50,30 @@ void EditorApplicationLayer::RenderImGuizmo()
 			currentTransforms.emplace_back(entity, const_cast<Entity&>(entity).GetTransformBundle());
 		}
 	}
+	//remove any entities that are children of other selected entities
+	{
+		std::vector<std::pair<Entity, TransformBundle>> filteredTransforms;
+		for (auto& [entity, transform] : currentTransforms)
+		{
+			bool isChildOfSelected = false;
+			Entity parent = entity.GetParent();
+			while (parent)
+			{
+				if (std::any_of(selectedEntities.begin(), selectedEntities.end(),
+					[&parent](const Entity& e) { return e.GetHandle() == parent.GetHandle(); }))
+				{
+					isChildOfSelected = true;
+					break;
+				}
+				parent = parent.GetParent();
+			}
+			if (!isChildOfSelected)
+			{
+				filteredTransforms.emplace_back(entity, transform);
+			}
+		}
+		currentTransforms = std::move(filteredTransforms);
+	}
 
 	if (currentTransforms.empty())
 		return;
@@ -169,20 +193,32 @@ void EditorApplicationLayer::RenderImGuizmo()
 				glm::decompose(transformedManipulatorMatrix, scale, orientation, translation, skew, perspective);
 				rotation = glm::degrees(glm::eulerAngles(orientation));
 
+
 				if (operation == ImGuizmo::TRANSLATE)
 				{
-					// Apply translation delta to maintain relative positions
-					transform.Position = translation;
+					glm::mat4 parentSpace = glm::inverse(transform.GetParentMatrix());
+					transform.Position = parentSpace * glm::vec4(translation, 1);
 				}
 				else if (operation == ImGuizmo::ROTATE)
 				{
-					// Apply translation delta to maintain relative positions
-					transform.Rotation = rotation;
+					glm::mat4 parentMatrix = transform.GetParentMatrix();
+					glm::quat parentRotation;
+					glm::vec3 parentPos, parentScale, parentSkew;
+					glm::vec4 parentPerspective;
+					glm::decompose(parentMatrix, parentScale, parentRotation, parentPos, parentSkew, parentPerspective);
+
+					glm::quat localRotationQuat = glm::inverse(parentRotation) * orientation;
+					transform.Rotation = glm::degrees(glm::eulerAngles(localRotationQuat));
 				}
 				else if (operation == ImGuizmo::SCALE)
 				{
-					// Apply scale delta
-					transform.Scale = scale;
+					glm::mat4 parentMatrix = transform.GetParentMatrix();
+					glm::quat parentRotation;
+					glm::vec3 parentPos, parentScale, parentSkew;
+					glm::vec4 parentPerspective;
+					glm::decompose(parentMatrix, parentScale, parentRotation, parentPos, parentSkew, parentPerspective);
+
+					transform.Scale = scale / parentScale;
 				}
 
 			}
