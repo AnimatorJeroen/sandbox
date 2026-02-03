@@ -31,6 +31,10 @@ void ReflectTypes() {
         .data<&Transform::Rotation, entt::as_ref_t>("Rotation"_hs)
         .data<&Transform::Scale, entt::as_ref_t>("Scale"_hs);
 
+    entt::meta_factory<Parent>()
+        .type("Parent"_hs)  // Register type name
+        .data<&Parent::parentUUID, entt::as_ref_t>("parentUUID"_hs);
+
     entt::meta_factory<SceneData>()
         .type("Scene"_hs)  // Register type name - THIS IS CRITICAL!
         .data<&SceneData::_name, entt::as_ref_t>("name"_hs)
@@ -40,4 +44,6 @@ void ReflectTypes() {
     entt::meta_factory<NameComponent>()
         .type("NameComponent"_hs)  // Register type name
         .data<&NameComponent::name, entt::as_ref_t>("name"_hs);
+
+
 }

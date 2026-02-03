@@ -286,6 +286,8 @@ bool Scene::LoadFromFile(const std::string& filepath)
 		 // Camera settings are already in SceneData - just update matrices
 		UpdateCameraMatrices(800, 600);
 
+		RebuildChildrenForAllEntities();
+
 		bool success = file.good();
 		file.close();
 
@@ -401,6 +403,14 @@ void Scene::RebuildChildrenForEntity(Entity entity)
 	}
 	else if (!childList.empty()) {
 		entity.AddComponent<Children>(childList);
+	}
+}
+
+void Scene::RebuildChildrenForAllEntities()
+{
+	auto view = _registry.view<Core::UUID>();
+	for (auto entity : view) {
+		RebuildChildrenForEntity(Entity(entity, &_registry));
 	}
 }
 

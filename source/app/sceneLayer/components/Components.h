@@ -82,6 +82,5 @@ using AppComponentTypes = std::tuple<
     NameComponent,
     CameraComponent,
     SceneData,  // Scene root entity marker + metadata
-    Parent,     // Hierarchy: parent reference (source of truth)
-    Children    // Hierarchy: children list (computed)
+    Parent     // Hierarchy: parent reference (source of truth)
 >;

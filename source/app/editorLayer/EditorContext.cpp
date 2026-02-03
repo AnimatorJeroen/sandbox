@@ -30,6 +30,39 @@ Core::Applicator<AppFieldTypes, AppComponentTypes>& EditorContext::applicator()
     return _applicator;
 }
 
+// Helper function to recursively collect all descendants of an entity
+static void CollectDescendantsRecursive(Entity entity, entt::registry* registry, std::set<entt::entity>& descendants)
+{
+    if (!entity || !entity.HasComponent<Children>())
+        return;
+    
+    const Children& childrenComp = entity.GetComponent<Children>();
+    for (entt::entity childHandle : childrenComp.children) {
+        // Add the child
+        descendants.insert(childHandle);
+        
+        // Recursively add descendants of this child
+        Entity childEntity(childHandle, registry);
+        CollectDescendantsRecursive(childEntity, registry, descendants);
+    }
+}
+
+// Helper function to collect entities and all their descendants
+static std::set<entt::entity> CollectEntitiesWithDescendants(const std::set<Entity>& entities, entt::registry* registry)
+{
+    std::set<entt::entity> result;
+    
+    for (const auto& entity : entities) {
+        // Add the entity itself
+        result.insert(entity.GetHandle());
+        
+        // Add all descendants recursively
+        CollectDescendantsRecursive(entity, registry, result);
+    }
+    
+    return result;
+}
+
 // === Edit Operations ===
 
 void EditorContext::Copy()
@@ -37,14 +70,15 @@ void EditorContext::Copy()
     if (_selectedEntities.empty())
         return;
 
-    // Convert Entity to entt::entity for applicator
-    std::set<entt::entity> entityHandles;
-    for (const auto& entity : _selectedEntities) {
-        entityHandles.insert(entity.GetHandle());
-    }
+    auto scene = _sceneManager.GetActiveScene();
+    if (!scene)
+        return;
+
+    // Collect selected entities and all their descendants
+    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntities, &scene->GetRegistry());
 
     _applicator.CopyToClipboard(entityHandles);
-    LOG_DEBUG() << "Copied " << _selectedEntities.size() << " entities to clipboard";
+    LOG_DEBUG() << "Copied " << entityHandles.size() << " entities (including descendants) to clipboard";
 }
 
 void EditorContext::Cut()
@@ -52,11 +86,12 @@ void EditorContext::Cut()
     if (_selectedEntities.empty())
         return;
 
-    // Convert Entity to entt::entity for applicator
-    std::set<entt::entity> entityHandles;
-    for (const auto& entity : _selectedEntities) {
-        entityHandles.insert(entity.GetHandle());
-    }
+    auto scene = _sceneManager.GetActiveScene();
+    if (!scene)
+        return;
+
+    // Collect selected entities and all their descendants
+    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntities, &scene->GetRegistry());
 
     // Copy to clipboard first
     _applicator.CopyToClipboard(entityHandles);
@@ -66,8 +101,11 @@ void EditorContext::Cut()
     _applicator.CaptureDelete(entityHandles);
     _applicator.EndUndo();
 
-    LOG_DEBUG() << "Cut " << _selectedEntities.size() << " entities";
-}
+    LOG_DEBUG() << "Cut " << entityHandles.size() << " entities (including descendants)";
+
+    if (_sceneManager.GetActiveScene())
+        _sceneManager.GetActiveScene()->RebuildChildrenForAllEntities();
+}   
 
 void EditorContext::Paste()
 {
@@ -76,6 +114,9 @@ void EditorContext::Paste()
     _applicator.EndUndo();
 
     LOG_DEBUG() << "Pasted entities from clipboard";
+
+    if (_sceneManager.GetActiveScene())
+        _sceneManager.GetActiveScene()->RebuildChildrenForAllEntities();
 }
 
 void EditorContext::DeleteSelection()
@@ -83,17 +124,18 @@ void EditorContext::DeleteSelection()
     if (_selectedEntities.empty())
         return;
 
-    // Convert Entity to entt::entity for applicator
-    std::set<entt::entity> entityHandles;
-    for (const auto& entity : _selectedEntities) {
-        entityHandles.insert(entity.GetHandle());
-    }
+    auto scene = _sceneManager.GetActiveScene();
+    if (!scene)
+        return;
+
+    // Collect selected entities and all their descendants
+    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntities, &scene->GetRegistry());
 
     _applicator.BeginUndo();
     _applicator.CaptureDelete(entityHandles);
     _applicator.EndUndo();
 
-    LOG_DEBUG() << "Deleted " << _selectedEntities.size() << " entities";
+    LOG_DEBUG() << "Deleted " << entityHandles.size() << " entities (including descendants)";
 
     // Clear selection after deletion
     _selectedEntities.clear();

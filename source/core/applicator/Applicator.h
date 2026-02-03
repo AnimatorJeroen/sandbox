@@ -174,18 +174,72 @@ namespace Core {
             // Use unified restore function to create entities and restore components
             auto newEntities = ArchiveHelpers::RestoreEntitiesAndComponents(*registry, *archive);
 
+            // Build a map from old UUIDs to new UUIDs
+            std::unordered_map<uint64_t, uint64_t> uuidRemap;
+            
             // Generate NEW UUIDs for all pasted entities (don't copy old UUIDs)
             for (auto entity : newEntities) {
-                // Remove the old UUID if it was copied
+                // Store the old UUID before removing it
+                uint64_t oldUUID = 0;
                 if (registry->all_of<UUID>(entity)) {
+                    oldUUID = registry->get<UUID>(entity).value;
                     registry->remove<UUID>(entity);
                 }
+                
                 // Add a fresh UUID
-                registry->emplace<UUID>(entity);
+                UUID newUUID = registry->emplace<UUID>(entity);
+                
+                // Store the mapping from old UUID to new UUID
+                if (oldUUID != 0) {
+                    uuidRemap[oldUUID] = newUUID.value;
+                }
             }
+            
+            // Update Parent components to reference new UUIDs
+            // This iterates through all component types and updates any that have a parentUUID field
+            (UpdateIfParentComponent<Cs>(newEntities, uuidRemap, registry), ...);
 
             // Capture the creation for undo/redo
             CaptureCreate(newEntities);
+        }
+
+        // Type trait to detect if a type has a parentUUID member of type Core::UUID
+        template<typename T, typename = void>
+        struct HasParentUUID : std::false_type {};
+        
+        template<typename T>
+        struct HasParentUUID<T, std::void_t<decltype(std::declval<T>().parentUUID)>> : 
+            std::is_same<decltype(std::declval<T>().parentUUID), Core::UUID> {};
+        
+        // Helper template to update component if it's a Parent type
+        template<typename C>
+        void UpdateIfParentComponent(
+            const std::unordered_set<entt::entity>& entities,
+            const std::unordered_map<uint64_t, uint64_t>& uuidRemap,
+            entt::registry* registry)
+        {
+            // Check if C has a member called 'parentUUID' of type Core::UUID
+            // This is a compile-time check that identifies the Parent component
+            if constexpr (HasParentUUID<C>::value) {
+                for (auto entity : entities) {
+                    if (registry->all_of<C>(entity)) {
+                        C& comp = registry->get<C>(entity);
+                        
+                        // Check if parent UUID is valid and in the remap table
+                        if (comp.parentUUID.value != 0) {
+                            auto it = uuidRemap.find(comp.parentUUID.value);
+                            if (it != uuidRemap.end()) {
+                                // Parent was also pasted, update to new UUID
+                                comp.parentUUID = UUID(it->second);
+                            } else {
+                                // Parent was not pasted (external reference), clear the parent
+                                // to avoid referencing an entity that doesn't exist in paste context
+                                comp.parentUUID = UUID(0);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Helper: Resolve component name hash to actual component type ID

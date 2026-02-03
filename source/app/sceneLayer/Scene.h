@@ -25,9 +25,6 @@ class Scene
 			
 			 // Create default camera entity
 			_activeCamera = CreateCameraEntity();
-			
-			// Initialize default camera matrices
-			UpdateCameraMatrices(800, 600); // Default viewport size
 		}
 		~Scene() {
 			_registry.clear();
@@ -83,6 +80,7 @@ class Scene
 		// Hierarchy management
 		void SetParent(Entity child, Entity parent);
 		void RebuildChildrenForEntity(Entity entity);
+		void RebuildChildrenForAllEntities();
 
 	private:
 		entt::entity _sceneEntity;
