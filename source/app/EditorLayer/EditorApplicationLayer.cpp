@@ -375,6 +375,7 @@ bool EditorApplicationLayer::OnChangeActiveScene(const OnChangeActiveSceneEvent&
 bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 {
 	_editorContext.Undo();
+	//@Todo dit moet met een flag of een Do command gebeuren alleen wanneer nodig ipv brute force
 	if (_sceneManager->GetActiveScene())
 	{
 		_sceneManager->GetActiveScene()->RebuildChildrenForAllEntities();
