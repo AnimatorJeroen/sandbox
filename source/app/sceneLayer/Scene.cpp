@@ -108,14 +108,42 @@ void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight
 
 void Scene::UpdateMatrices()
 {
-	for (auto entity : _registry.view<Transform>()) {
-		auto& transform = _registry.get<Transform>(entity);
-		auto& localToWorld = _registry.get<LocalToWorld>(entity);
-		// Build transform matrix from components
-		glm::mat4 rotation = glm::toMat4(glm::quat(glm::radians(transform.Rotation)));
-		localToWorld.Value = glm::translate(glm::mat4(1.0f), transform.Position)
-			* rotation
-			* glm::scale(glm::mat4(1.0f), transform.Scale);
+	// Find all root entities (entities with Transform but no Parent component)
+	auto transformView = _registry.view<Transform, LocalToWorld>();
+	
+	for (auto entity : transformView) {
+		// Only process entities without a parent - they are roots of hierarchy trees
+		if (!_registry.all_of<Parent>(entity)) {
+			// Update this root entity with identity parent matrix
+			UpdateEntityHierarchyRecursive(entity, glm::mat4(1.0f));
+		}
+	}
+}
+
+void Scene::UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4& parentWorldMatrix)
+{
+	// Get this entity's transform components
+	auto& transform = _registry.get<Transform>(entity);
+	auto& localToWorld = _registry.get<LocalToWorld>(entity);
+	
+	// Build local transform matrix from Transform component
+	glm::mat4 rotation = glm::toMat4(glm::quat(glm::radians(transform.Rotation)));
+	glm::mat4 localMatrix = glm::translate(glm::mat4(1.0f), transform.Position)
+		* rotation
+		* glm::scale(glm::mat4(1.0f), transform.Scale);
+	
+	// Compute world matrix by combining parent's world matrix with local matrix
+	localToWorld.Value = parentWorldMatrix * localMatrix;
+	
+	// Recursively update all children with this entity's world matrix
+	if (_registry.all_of<Children>(entity)) {
+		const auto& children = _registry.get<Children>(entity);
+		for (entt::entity childEntity : children.children) {
+			// Only recurse if the child has transform components
+			if (_registry.all_of<Transform, LocalToWorld>(childEntity)) {
+				UpdateEntityHierarchyRecursive(childEntity, localToWorld.Value);
+			}
+		}
 	}
 }
 

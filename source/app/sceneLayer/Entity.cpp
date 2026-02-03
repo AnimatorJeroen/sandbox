@@ -23,15 +23,24 @@ TransformBundle Entity::GetTransformBundle()
     if (!transform || !localToWorld)
         return TransformBundle::Null();
     
-    Parent* parent = nullptr;
+    entt::entity parentEntity = entt::null;
     if (_registry->all_of<Parent>(_entityHandle))
-        parent = &_registry->get<Parent>(_entityHandle);
+    {
+        auto parent = _registry->get<Parent>(_entityHandle);
+        _registry->view<Core::UUID>().each([&](auto entity, const Core::UUID& uuid) {
+            if (uuid.value == parent.parentUUID.value) {
+                parentEntity = entity;
+            }
+        });
+    }
 
-    Children* children = nullptr;
+    std::vector<entt::entity> children;
     if (_registry->all_of<Children>(_entityHandle))
-        children = &_registry->get<Children>(_entityHandle);
+    {
+        auto childrenComp = _registry->get<Children>(_entityHandle);
+		children = childrenComp.children;
+    }
 
-
-    return TransformBundle(transform->Position, transform->Rotation, transform->Scale, 
-        localToWorld->Value, parent ? parent->parentUUID : Core::UUID::Null, children ? children->children : std::vector<entt::entity>());
+    return TransformBundle(transform->Position, transform->Rotation, transform->Scale,
+        localToWorld->Value, parentEntity, children);
 }

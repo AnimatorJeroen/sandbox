@@ -61,9 +61,9 @@ void EditorApplicationLayer::RenderImGuizmo()
 	glm::vec3 averageRotation(0.0f);
 	for (auto& [entity, transform] : currentTransforms)
 	{
-		centroid += transform.Position;
-		averageScale += transform.Scale;
-		averageRotation += transform.Rotation;
+		centroid += transform.worldPosition;
+		averageScale += transform.worldScale;
+		averageRotation += transform.worldRotation;
 	}
 	centroid /= static_cast<float>(currentTransforms.size());
 	averageScale /= static_cast<float>(currentTransforms.size());

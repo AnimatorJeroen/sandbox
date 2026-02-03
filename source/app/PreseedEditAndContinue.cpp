@@ -124,27 +124,44 @@ namespace PreseedEditAndContinue {
         reg.emplace<NameComponent>(e);
         reg.emplace<CameraComponent>(e);
         reg.emplace<SceneData>(e);
+        reg.emplace<Parent>(e);
+        reg.emplace<Children>(e);
+        reg.emplace<LocalToWorld>(e);
 
         Sink(reg.get<Core::UUID>(e));
         Sink(reg.get<Transform>(e));
         Sink(reg.get<NameComponent>(e));
         Sink(reg.get<CameraComponent>(e));
         Sink(reg.get<SceneData>(e));
+        Sink(reg.get<Parent>(e));
+        Sink(reg.get<Children>(e));
+        Sink(reg.get<LocalToWorld>(e));
 
         Sink(reg.try_get<Core::UUID>(e));
         Sink(reg.try_get<Transform>(e));
         Sink(reg.try_get<NameComponent>(e));
         Sink(reg.try_get<CameraComponent>(e));
         Sink(reg.try_get<SceneData>(e));
+        Sink(reg.try_get<Parent>(e));
+        Sink(reg.try_get<Children>(e));
+        Sink(reg.try_get<LocalToWorld>(e));
 
         Sink(reg.all_of<Core::UUID>(e));
         Sink(reg.all_of<Transform>(e));
+        Sink(reg.all_of<Parent>(e));
+        Sink(reg.all_of<Children>(e));
 
         // Views
         auto v1 = reg.view<Transform>();
         auto v2 = reg.view<Transform, NameComponent>();
+        auto v3 = reg.view<Transform, LocalToWorld>();
+        auto v4 = reg.view<Parent>();
+        auto v5 = reg.view<Children>();
         Sink(&v1);
         Sink(&v2);
+        Sink(&v3);
+        Sink(&v4);
+        Sink(&v5);
 
         reg.destroy(e);
     }
