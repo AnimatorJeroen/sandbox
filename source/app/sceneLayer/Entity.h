@@ -7,20 +7,25 @@ struct TransformBundle {
     vec3& Position;
     vec3& Rotation;
     vec3& Scale;
-    mat4& localToWorld;
+    mat4& LocalToWorld;
+    Core::UUID ParentUUID = Core::UUID::Null;
+    std::vector<entt::entity> ChildrenEntities;
 
     TransformBundle() : Position(vec3()),
         Rotation(vec3()),
         Scale(vec3()),
-        localToWorld(mat4()) {
+        LocalToWorld(mat4()) {
     }
     TransformBundle(const TransformBundle& other) = default;
 
-    TransformBundle(vec3& position, vec3& rotation, vec3& scale, mat4& localToWorld) :
+    TransformBundle(vec3& position, vec3& rotation, vec3& scale,
+        mat4& localToWorld, Core::UUID parentUUID = Core::UUID::Null, const std::vector<entt::entity>& childrenEntities = {}) :
         Position(position),
         Rotation(rotation),
         Scale(scale),
-        localToWorld(localToWorld) {}
+        LocalToWorld(localToWorld),
+        ParentUUID(parentUUID),
+        ChildrenEntities(childrenEntities) {}
 
     static TransformBundle Null() { return TransformBundle(); }
 };

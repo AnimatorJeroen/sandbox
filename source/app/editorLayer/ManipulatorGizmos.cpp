@@ -133,7 +133,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 			if (mode == ImGuizmo::WORLD || multiSelect &&
 				(operation == ImGuizmo::TRANSLATE || operation == ImGuizmo::ROTATE || operation == ImGuizmo::SCALE))
 			{
-				mat4 m = transform.localToWorld;
+				mat4 m = transform.LocalToWorld;
 				if (operation == ImGuizmo::SCALE)
 				{
 					//bring to parent space

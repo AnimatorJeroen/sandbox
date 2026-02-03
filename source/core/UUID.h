@@ -66,6 +66,9 @@ namespace Core {
         void serialize(Archive& ar) {
             ar(value);
         }
+
+        const static UUID Null;
+
     };
 
 } // namespace Core
