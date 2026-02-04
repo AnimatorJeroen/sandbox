@@ -69,7 +69,7 @@ struct CameraComponent {
 
 // Mesh component for storing mesh data
 struct MeshComponent {
-	std::string filepath;
+	String64 filepath;
 	std::vector<vec3> vertices;
 	std::vector<vec3> normals;
 	std::vector<vec2> texCoords;
@@ -83,7 +83,7 @@ struct MeshComponent {
 
 // Bone data structure
 struct FBXBone {
-	std::string name;
+	String64 name;
 	int parentIndex = -1;  // Index in bones array, -1 for root
 	mat4 offsetMatrix;     // Transforms from mesh space to bone space
 	mat4 localTransform;   // Local transform relative to parent
@@ -103,7 +103,7 @@ struct FBXVertexWeight {
 // Skeleton structure containing bone hierarchy
 struct FBXSkeletonComponent {
 	std::vector<FBXBone> bones;
-	std::string skeletonName;
+	String64 skeletonName;
 	
 	FBXSkeletonComponent() = default;
 };
@@ -144,7 +144,7 @@ struct FBXScaleKey {
 
 // Animation channel for a single bone
 struct FBXAnimationChannel {
-	std::string boneName;
+	String64 boneName;
 	std::vector<FBXPositionKey> positionKeys;
 	std::vector<FBXRotationKey> rotationKeys;
 	std::vector<FBXScaleKey> scaleKeys;
@@ -154,7 +154,7 @@ struct FBXAnimationChannel {
 
 // Complete animation clip
 struct FBXAnimationClip {
-	std::string name;
+	String64 name;
 	double duration;           // Duration in ticks
 	double ticksPerSecond;     // Animation speed
 	std::vector<FBXAnimationChannel> channels;
@@ -187,10 +187,16 @@ using AppComponentTypes = std::tuple<
     LocalToWorld,
     NameComponent,
     CameraComponent,
-    MeshComponent,
+    //MeshComponent,
     FBXSkeletonComponent,
     FBXSkinComponent,
     FBXAnimationComponent,
+	FBXAnimationChannel,
+	FBXBone,
+	FBXVertexWeight,
+	FBXPositionKey,
+	FBXRotationKey,
+	FBXScaleKey,
     SceneData,  // Scene root entity marker + metadata
     Parent      // Hierarchy: parent reference (source of truth)
 >;

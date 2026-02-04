@@ -149,12 +149,74 @@ void Scene::UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4&
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
-
+	// Draw existing cubes for entities with LocalToWorld
 	int i = 0;
 	for (auto entity : _registry.view<LocalToWorld>()) {
 		auto& localToWorld = _registry.get<LocalToWorld>(entity);
 		recorder.Cube(localToWorld.Value, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 		i++;
+	}
+
+	// Draw skeleton bones as lines
+	auto skeletonView = _registry.view<FBXSkeletonComponent>();
+	for (auto skeletonEntity : skeletonView) {
+		const auto& skeleton = _registry.get<FBXSkeletonComponent>(skeletonEntity);
+		
+		// Get the skeleton entity's world transform (if it has one)
+		glm::mat4 skeletonWorldTransform = glm::mat4(1.0f);
+		
+		if (_registry.all_of<LocalToWorld>(skeletonEntity)) {
+			skeletonWorldTransform = _registry.get<LocalToWorld>(skeletonEntity).Value;
+		}
+		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.01, .01, .01));
+		// Compute bind pose world transforms for all bones
+		// offsetMatrix is the inverse bind pose, so we invert it to get bind pose
+		std::vector<glm::mat4> boneBindPoseTransforms(skeleton.bones.size());
+		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+			const FBXBone& bone = skeleton.bones[boneIndex];
+			
+			 // The offsetMatrix transforms from mesh space to bone space (inverse bind pose)
+			 // So inverse of offsetMatrix gives us the bone's bind pose in mesh/model space
+			boneBindPoseTransforms[boneIndex] = glm::inverse(bone.offsetMatrix);
+		}
+		
+		// Draw lines from each bone to its parent
+		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+			const FBXBone& bone = skeleton.bones[boneIndex];
+			
+			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
+				// Extract positions from bind pose matrices and apply skeleton world transform
+				glm::vec4 bonePosLocal = boneBindPoseTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 parentPosLocal = boneBindPoseTransforms[bone.parentIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				
+				glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
+				glm::vec3 parentPos = glm::vec3(skeletonWorldTransform * parentPosLocal);
+				
+				// Draw line from parent to child bone
+				recorder.Line(
+					Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
+					Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
+					2.0f, 
+					{ 1.0f, 0.8f, 0.0f, 1.0f }
+				);
+			}
+		}
+		
+		// Draw small spheres at bone positions for visibility
+		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+			glm::vec4 bonePosLocal = boneBindPoseTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
+			
+			// Draw a small circle at each bone position
+			recorder.Circle(
+				Core::Vec2{ bonePos.x, bonePos.y }, 
+				0.05f, 
+				true, 
+				{ 1.0f, 0.5f, 0.0f, 1.0f }, 
+				8, 
+				1.0f
+			);
+		}
 	}
 }
 
