@@ -6,6 +6,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <filesystem>
 #include <core/Logger.h>
+#include "components/ComponentSerialization.h"
 
 // C++17 compatible helper structs for Scene serialization
 // Must be defined outside function scope for member templates to work
@@ -44,7 +45,8 @@ namespace {
 
 			for (const auto& [entity, component] : storage) {
 				file.write(reinterpret_cast<const char*>(&entity), sizeof(entity));
-				file.write(reinterpret_cast<const char*>(&component), sizeof(component));
+				// Use proper serialization that handles vectors
+				ComponentSerialization::Serialize(file, component);
 			}
 		}
 	};
@@ -91,7 +93,8 @@ namespace {
 				entt::entity entity;
 				ComponentType component;
 				file.read(reinterpret_cast<char*>(&entity), sizeof(entity));
-				file.read(reinterpret_cast<char*>(&component), sizeof(component));
+				// Use proper deserialization that handles vectors
+				ComponentSerialization::Deserialize(file, component);
 				storage[i] = {entity, component};
 			}
 		}
@@ -442,9 +445,9 @@ void Scene::SetParent(Entity child, Entity parent)
 		// Find the old parent entity by UUID to rebuild its children
 		if (parentComp.HasParent()) {
 			auto view = _registry.view<Core::UUID>();
-			for (auto entity : view) {
-				if (_registry.get<Core::UUID>(entity).value == parentComp.parentUUID.value) {
-					oldParent = Entity(entity, &_registry);
+			for (auto childEntity : view) {
+				if (_registry.get<Core::UUID>(childEntity).value == parentComp.parentUUID.value) {
+					oldParent = Entity(childEntity, &_registry);
 					break;
 				}
 			}
