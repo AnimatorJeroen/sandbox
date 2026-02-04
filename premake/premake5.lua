@@ -4,6 +4,13 @@ workspace "Sandbox"
     startproject "Sandbox"
     location "../"
 
+-- Check for vcpkg integration
+local vcpkgInstalled = os.getenv("VCPKG_ROOT") ~= nil or os.isfile(path.join(os.getenv("USERPROFILE") or "", "vcpkg", "vcpkg.exe"))
+
+if vcpkgInstalled then
+    print("vcpkg detected - Assimp will be linked automatically via vcpkg integration")
+end
+
 project "Sandbox"
     kind "ConsoleApp"
     language "C++"
@@ -53,19 +60,12 @@ project "Sandbox"
         "GLEW_STATIC"
     }
 
-    -- Enable multiprocessor compilation for Visual Studio
-    filter "action:vs*"
-        buildoptions { "/MP" }
-    filter {}
-
-    filter "configurations:Debug"
-        symbols "on"
-        -- Enable Edit and Continue for hot reload (/ZI)
-        editandcontinue "On"
-        optimize "Off"
-        flags { "NoIncrementalLink" }
-        removeflags { "NoIncrementalLink" }
-
-    filter "configurations:Release"
-        optimize "on"
-        editandcontinue "Off"
+    -- vcpkg configuration
+    if vcpkgInstalled then
+        print("Configuring Assimp via vcpkg...")
+        -- When using vcpkg integrate install, libraries are automatically linked
+        -- Just need to ensure the vcpkg toolchain is being used
+    else
+        print("WARNING: vcpkg not detected!")
+    end
+       

@@ -9,6 +9,7 @@
 #include "core/UUID.h"
 #include <glm/glm.hpp>
 
+using vec2 = glm::vec2;
 using vec3 = glm::vec3;
 using mat4 = glm::mat4;
 
@@ -34,7 +35,31 @@ inline std::ostream& operator<<(std::ostream& os, const String64& str) {
 }
 
 // ----- Editor Value type (extend as needed)
-using AppFieldTypes = std::variant<bool, int, float, double, String64, vec3, mat4>;
+using AppFieldTypes = std::variant<bool, int, float, double, String64, vec2, vec3, mat4>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -51,6 +51,14 @@ void MainMenu::Render()
             
             ImGui::Separator();
             
+            // Import Model menu item
+            if(ImGui::MenuItem("Import Model...", nullptr, false, activeSceneIndex != -1))
+            {
+                _editorContext.ImportModel();
+            }
+            
+            ImGui::Separator();
+            
             if (ImGui::MenuItem("Exit"))
             {
                 _eventBus.PushEvent<Core::RequestApplicationCloseEvent>(Core::RequestApplicationCloseEvent());

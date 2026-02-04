@@ -67,6 +67,112 @@ struct CameraComponent {
 	CameraComponent() = default;
 };
 
+// Mesh component for storing mesh data
+struct MeshComponent {
+	std::string filepath;
+	std::vector<vec3> vertices;
+	std::vector<vec3> normals;
+	std::vector<vec2> texCoords;
+	std::vector<uint32_t> indices;
+	
+	MeshComponent() = default;
+};
+
+// === FBX-SPECIFIC COMPONENTS ===
+// These components store raw FBX data and are kept isolated from general scene logic
+
+// Bone data structure
+struct FBXBone {
+	std::string name;
+	int parentIndex = -1;  // Index in bones array, -1 for root
+	mat4 offsetMatrix;     // Transforms from mesh space to bone space
+	mat4 localTransform;   // Local transform relative to parent
+	
+	FBXBone() = default;
+};
+
+// Vertex skinning data
+struct FBXVertexWeight {
+	int boneIndex = -1;    // Index into FBXSkeletonComponent::bones
+	float weight = 0.0f;
+	
+	FBXVertexWeight() = default;
+	FBXVertexWeight(int idx, float w) : boneIndex(idx), weight(w) {}
+};
+
+// Skeleton structure containing bone hierarchy
+struct FBXSkeletonComponent {
+	std::vector<FBXBone> bones;
+	std::string skeletonName;
+	
+	FBXSkeletonComponent() = default;
+};
+
+// Skin component - stores bone weights for mesh deformation
+struct FBXSkinComponent {
+	// For each vertex, store up to 4 bone influences (standard for real-time rendering)
+	std::vector<std::array<FBXVertexWeight, 4>> vertexWeights;
+	int skeletonEntityIndex = -1;  // Reference to entity with FBXSkeletonComponent
+	
+	FBXSkinComponent() = default;
+};
+
+// Animation keyframe for a single bone
+struct FBXPositionKey {
+	double time;
+	vec3 value;
+	
+	FBXPositionKey() = default;
+	FBXPositionKey(double t, const vec3& v) : time(t), value(v) {}
+};
+
+struct FBXRotationKey {
+	double time;
+	glm::quat value;
+	
+	FBXRotationKey() = default;
+	FBXRotationKey(double t, const glm::quat& v) : time(t), value(v) {}
+};
+
+struct FBXScaleKey {
+	double time;
+	vec3 value;
+	
+	FBXScaleKey() = default;
+	FBXScaleKey(double t, const vec3& v) : time(t), value(v) {}
+};
+
+// Animation channel for a single bone
+struct FBXAnimationChannel {
+	std::string boneName;
+	std::vector<FBXPositionKey> positionKeys;
+	std::vector<FBXRotationKey> rotationKeys;
+	std::vector<FBXScaleKey> scaleKeys;
+	
+	FBXAnimationChannel() = default;
+};
+
+// Complete animation clip
+struct FBXAnimationClip {
+	std::string name;
+	double duration;           // Duration in ticks
+	double ticksPerSecond;     // Animation speed
+	std::vector<FBXAnimationChannel> channels;
+	
+	FBXAnimationClip() = default;
+};
+
+// Animation component - stores all animation clips for a model
+struct FBXAnimationComponent {
+	std::vector<FBXAnimationClip> clips;
+	int activeClipIndex = 0;
+	double currentTime = 0.0;
+	bool isPlaying = false;
+	bool loop = true;
+	
+	FBXAnimationComponent() = default;
+};
+
 // SceneData component - uniquely identifies the scene root entity
 struct SceneData {
 	float sceneColor = 0.f;
@@ -81,6 +187,10 @@ using AppComponentTypes = std::tuple<
     LocalToWorld,
     NameComponent,
     CameraComponent,
+    MeshComponent,
+    FBXSkeletonComponent,
+    FBXSkinComponent,
+    FBXAnimationComponent,
     SceneData,  // Scene root entity marker + metadata
     Parent      // Hierarchy: parent reference (source of truth)
 >;

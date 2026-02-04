@@ -216,6 +216,12 @@ bool EditorApplicationLayer::OnKeyDownEvent(const Core::KeyDownEvent& e)
 			_editorContext.Paste();
 		}
 	}
+	else if (e.key == 'I' && !e.repeated) {
+		if (e.mods & Core::KMOD_CONTROL)
+		{
+			_editorContext.ImportModel();
+		}
+	}
 	else if (e.key == 'W' && !e.repeated) {
 		_editorContext.SetImGuizmoOperation(ImGuizmo::TRANSLATE);
 	}
