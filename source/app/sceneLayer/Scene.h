@@ -14,6 +14,7 @@
 #include <core/applicator/SelectionArchive.h>
 #include "components/Components.h"
 #include "Entity.h"
+#include "FbxPlayer.h"
 
 class Scene
 {
@@ -43,6 +44,10 @@ class Scene
 		// Active camera management
 		CameraComponent& GetActiveCamera();
 		void SetActiveCamera(Entity camera) { _activeCamera = camera.GetHandle(); }
+
+		 // FBX Animation playback
+		void UpdateFbxPlayer(float deltaTime) { _fbxPlayer.Update(_registry, deltaTime); }
+		FbxPlayer& GetFbxPlayer() { return _fbxPlayer; }
 
 		// Scene serialization using SelectionArchive
 		bool SaveToFile(const std::string& filepath) const;
@@ -95,6 +100,9 @@ class Scene
 		entt::registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
 		std::string _fileName;
+		
+		 // FBX Animation player
+		FbxPlayer _fbxPlayer;
 		
 		// 3D Camera matrices (computed from CameraComponent)
 		glm::mat4 m_ViewMatrix;
