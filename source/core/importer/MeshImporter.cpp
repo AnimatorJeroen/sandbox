@@ -13,7 +13,7 @@
 
 namespace Core {
 
-bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity parent, 
+bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity* parent, 
                                const ImportOptions& options)
 {
     if (!scene)
@@ -59,7 +59,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
 
     Entity rootEntity = scene->CreateEntity(filename);
     if (parent)
-        scene->SetParent(rootEntity, parent);
+        scene->SetParent(rootEntity, *parent);
 
     Entity skeletonEntity;
     std::map<std::string, int> boneNameToIndex;
@@ -81,7 +81,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
             skeletonEntity = scene->CreateEntity(filename + "_Skeleton");
             scene->SetParent(skeletonEntity, rootEntity);
             
-            if (ProcessSkeleton(aiScene, skeletonEntity))
+            if (ProcessSkeleton(aiScene, &skeletonEntity))
             {
                 auto& skeletonComp = skeletonEntity.GetComponent<FBXSkeletonComponent>();
                 for (size_t i = 0; i < skeletonComp.bones.size(); i++)
@@ -96,7 +96,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
         Entity animEntity = scene->CreateEntity(filename + "_Animations");
         scene->SetParent(animEntity, rootEntity);
         
-        if (ProcessAnimations(aiScene, animEntity))
+        if (ProcessAnimations(aiScene, &animEntity))
             _stats.animationCount = aiScene->mNumAnimations;
     }
 
@@ -145,7 +145,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
             _stats.triangleCount += mesh->mNumFaces;
 
             if (options.importSkinning && mesh->HasBones() && skeletonEntity)
-                ProcessBoneWeights(mesh, meshEntity, boneNameToIndex);
+                ProcessBoneWeights(mesh, &meshEntity, boneNameToIndex);
 
             LOG_DEBUG() << "  Mesh " << i << " (" << meshName << "): " << meshComponent.vertices.size() << " verts, " 
                         << meshComponent.indices.size() / 3 << " tris, " << mesh->mNumBones << " bones";
@@ -157,13 +157,13 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
     return true;
 }
 
-bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity skeletonEntity)
+bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntity)
 {
     if (!aiScene || !skeletonEntity)
         return false;
 
-    auto& skeletonComp = skeletonEntity.AddComponent<FBXSkeletonComponent>();
-    skeletonComp.skeletonName = skeletonEntity.GetComponent<NameComponent>().name.to_string();
+    auto& skeletonComp = skeletonEntity->AddComponent<FBXSkeletonComponent>();
+    skeletonComp.skeletonName = skeletonEntity->GetComponent<NameComponent>().name.to_string();
 
     std::map<std::string, FBXBone> uniqueBones;
 
@@ -232,12 +232,12 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity skeletonEntity
     return true;
 }
 
-bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity animationEntity)
+bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity)
 {
     if (!aiScene || !animationEntity || aiScene->mNumAnimations == 0)
         return false;
 
-    auto& animComp = animationEntity.AddComponent<FBXAnimationComponent>();
+    auto& animComp = animationEntity->AddComponent<FBXAnimationComponent>();
 
     for (unsigned int a = 0; a < aiScene->mNumAnimations; a++)
     {
@@ -287,13 +287,13 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity animationE
     return true;
 }
 
-void MeshImporter::ProcessBoneWeights(const ::aiMesh* mesh, Entity meshEntity, 
+void MeshImporter::ProcessBoneWeights(const ::aiMesh* mesh, Entity* meshEntity, 
                                       const std::map<std::string, int>& boneNameToIndex)
 {
     if (!mesh || !meshEntity || !mesh->HasBones())
         return;
 
-    auto& skinComp = meshEntity.AddComponent<FBXSkinComponent>();
+    auto& skinComp = meshEntity->AddComponent<FBXSkinComponent>();
     skinComp.vertexWeights.resize(mesh->mNumVertices);
 
     for (auto& vw : skinComp.vertexWeights)

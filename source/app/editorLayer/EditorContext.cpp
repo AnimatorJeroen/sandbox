@@ -306,7 +306,7 @@ void EditorContext::ImportModel()
     }
 
     _applicator.BeginUndo();
-    bool success = importer.ImportModel(result.value(), scene.get(), parent);
+    bool success = importer.ImportModel(result.value(), scene.get(), parent ? &parent : nullptr);
     _applicator.EndUndo();
 
     if (success)
