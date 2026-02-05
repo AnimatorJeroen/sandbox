@@ -17,6 +17,25 @@ namespace ComponentSerialization {
     // Specialize for types that are effectively trivial but have non-trivial constructors
     template<> struct is_trivially_serializable<Core::UUID> : std::true_type {};
 
+    // === Trait to detect if a type likely contains vectors ===
+    // This checks if the type is NOT trivially copyable (vectors aren't)
+    // but also not a known container type itself
+    template<typename T, typename = void>
+    struct potentially_has_vectors : std::false_type {};
+    
+    template<typename T>
+    struct potentially_has_vectors<T, typename std::enable_if<
+        !std::is_trivially_copyable<T>::value && 
+        !is_trivially_serializable<T>::value
+    >::type> : std::true_type {};
+    
+    // Don't flag vectors/arrays themselves as needing specialization
+    template<typename T>
+    struct potentially_has_vectors<std::vector<T>> : std::false_type {};
+    
+    template<typename T, std::size_t N>
+    struct potentially_has_vectors<std::array<T, N>> : std::false_type {};
+
     // === Forward declarations (needed for recursion) ===
     template<typename T>
     void Serialize(std::ofstream& file, const T& value);
@@ -87,16 +106,34 @@ namespace ComponentSerialization {
     }
 
     // === Default serialization for all other types ===
-    // Handles POD types and structs that only contain POD or serializable members
+    // Handles POD types and catches types that need specialization
     template<typename T>
     void Serialize(std::ofstream& file, const T& value) {
         // For trivial types, write bytes directly
         if constexpr (is_trivially_serializable<T>::value) {
             file.write(reinterpret_cast<const char*>(&value), sizeof(T));
         } else {
-            // For complex types with vectors/arrays, you need to add a specialization below
-            static_assert(is_trivially_serializable<T>::value, 
-                "Type contains vectors or non-trivial members. Add a template specialization below.");
+            // This will trigger an error showing the type name in the template context
+            static_assert(sizeof(T) == 0,
+                "\n\n"
+                "========================================\n"
+                "SERIALIZATION ERROR: Missing template specialization!\n"
+                "========================================\n"
+                "Look for the type 'T=' in the error message above.\n"
+                "That type contains std::vector or other complex members\n"
+                "and needs a specialization in ComponentSerialization.h\n\n"
+                "Add this code:\n\n"
+                "  template<>\n"
+                "  inline void Serialize<YourType>(std::ofstream& file, const YourType& c) {\n"
+                "      Serialize(file, c.member1);  // List ALL members in order\n"
+                "      Serialize(file, c.member2);\n"
+                "  }\n\n"
+                "  template<>\n"
+                "  inline void Deserialize<YourType>(std::ofstream& file, YourType& c) {\n"
+                "      Deserialize(file, c.member1);\n"
+                "      Deserialize(file, c.member2);\n"
+                "  }\n"
+                "========================================\n");
         }
     }
 
@@ -104,24 +141,33 @@ namespace ComponentSerialization {
     void Deserialize(std::ifstream& file, T& value) {
         if constexpr (is_trivially_serializable<T>::value) {
             file.read(reinterpret_cast<char*>(&value), sizeof(T));
+        } else {
+            static_assert(sizeof(T) == 0,
+                "\n\n"
+                "========================================\n"
+                "DESERIALIZATION ERROR: Missing template specialization!\n"
+                "========================================\n"
+                "Look for 'T=' in the error above to see which type needs a specialization.\n"
+                "Add both Serialize<T> and Deserialize<T> specializations.\n"
+                "========================================\n");
         }
-        // For non-trivial types, specialization below will be called instead
     }
 
 } // namespace ComponentSerialization
 
 // ==================================================================================
-// === Component Specializations (for custom serialization) ===
+// === Component Specializations (REQUIRED for types with std::vector or complex members) ===
 // ==================================================================================
-// Add specializations here for components that contain std::vector or other complex types.
-// The vector serialization above will handle the actual vector data automatically.
+// If you get a compile error here, it means you're trying to serialize a type that
+// contains vectors or other non-trivial members without providing a specialization.
 //
-// Example template to copy:
+// The error message will tell you which type needs a specialization.
+// Add it below using this template:
 //
 //    template<>
 //    inline void Serialize<YourComponent>(std::ofstream& file, const YourComponent& c) {
-//        Serialize(file, c.member1);  // These calls will automatically use
-//        Serialize(file, c.member2);  // the appropriate std::vector<T> serializer
+//        Serialize(file, c.member1);  // Vectors are handled automatically
+//        Serialize(file, c.member2);  // Just list all members in order
 //        Serialize(file, c.member3);
 //    }
 //
@@ -136,21 +182,10 @@ namespace ComponentSerialization {
 
 namespace ComponentSerialization {
 
-    // Children: contains std::vector<entt::entity>
-    template<>
-    inline void Serialize<Children>(std::ofstream& file, const Children& component) {
-        Serialize(file, component.children);  // Automatically uses vector<entt::entity> serializer
-    }
-
-    template<>
-    inline void Deserialize<Children>(std::ifstream& file, Children& component) {
-        Deserialize(file, component.children);
-    }
-
-    // Parent: contains Core::UUID (marked as trivially serializable)
+    // Parent: contains Core::UUID (marked as trivially serializable, but needs explicit handling)
     template<>
     inline void Serialize<Parent>(std::ofstream& file, const Parent& component) {
-        Serialize(file, component.parentUUID);  // UUID is trivially serializable
+        Serialize(file, component.parentUUID);
     }
 
     template<>
@@ -161,7 +196,7 @@ namespace ComponentSerialization {
     // FBXSkeletonComponent: contains std::vector<FBXBone> + String64
     template<>
     inline void Serialize<FBXSkeletonComponent>(std::ofstream& file, const FBXSkeletonComponent& component) {
-        Serialize(file, component.bones);          // vector<FBXBone> handled automatically
+        Serialize(file, component.bones);
         Serialize(file, component.skeletonName);
     }
 
@@ -174,7 +209,7 @@ namespace ComponentSerialization {
     // FBXSkinComponent: contains std::vector<std::array<FBXVertexWeight, 4>> + int
     template<>
     inline void Serialize<FBXSkinComponent>(std::ofstream& file, const FBXSkinComponent& component) {
-        Serialize(file, component.vertexWeights);  // vector<array<T,4>> handled automatically
+        Serialize(file, component.vertexWeights);
         Serialize(file, component.skeletonEntityIndex);
     }
 
@@ -188,7 +223,7 @@ namespace ComponentSerialization {
     template<>
     inline void Serialize<FBXAnimationChannel>(std::ofstream& file, const FBXAnimationChannel& component) {
         Serialize(file, component.boneName);
-        Serialize(file, component.positionKeys);   // All vectors handled automatically
+        Serialize(file, component.positionKeys);
         Serialize(file, component.rotationKeys);
         Serialize(file, component.scaleKeys);
     }
@@ -207,7 +242,7 @@ namespace ComponentSerialization {
         Serialize(file, component.name);
         Serialize(file, component.duration);
         Serialize(file, component.ticksPerSecond);
-        Serialize(file, component.channels);       // vector<FBXAnimationChannel> - recursively serialized
+        Serialize(file, component.channels);
     }
 
     template<>
@@ -221,7 +256,7 @@ namespace ComponentSerialization {
     // FBXAnimationComponent: contains vector of clips
     template<>
     inline void Serialize<FBXAnimationComponent>(std::ofstream& file, const FBXAnimationComponent& component) {
-        Serialize(file, component.clips);          // vector<FBXAnimationClip> - recursively serialized
+        Serialize(file, component.clips);
         Serialize(file, component.activeClipIndex);
         Serialize(file, component.currentTime);
         Serialize(file, component.isPlaying);
