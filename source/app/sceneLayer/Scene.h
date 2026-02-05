@@ -53,15 +53,18 @@ class Scene
 		inline const entt::registry& GetRegistry() const { return _registry; }
 
         // Create a new entity with DummyComponent and unique name
-        Entity CreateEntity();
+        Entity CreateEntity(const bool addTransform = true);
         
         // Create a named entity
-        Entity CreateEntity(const std::string& name);
-        
+        Entity CreateEntity(const String64& name, const bool addTransform = true);
+
         // Create a camera entity with CameraComponent
         Entity CreateCameraEntity();
 
 		std::set<Entity> GetAllEntities() const;
+		
+		// Get an entity by its UUID
+		Entity GetEntity(uint64_t uuid) const;
 
 		Entity GetSceneEntity() const { return Entity(_sceneEntity, const_cast<entt::registry*>(&_registry)); }
 

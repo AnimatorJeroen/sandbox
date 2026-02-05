@@ -152,9 +152,9 @@ void Scene::UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4&
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
-	// Draw existing cubes for entities with LocalToWorld
+	// Draw cubes for entities with MeshComponent
 	int i = 0;
-	for (auto entity : _registry.view<LocalToWorld>()) {
+	for (auto entity : _registry.view<MeshComponent>()) {
 		auto& localToWorld = _registry.get<LocalToWorld>(entity);
 		recorder.Cube(localToWorld.Value, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 		i++;
@@ -171,7 +171,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		if (_registry.all_of<LocalToWorld>(skeletonEntity)) {
 			skeletonWorldTransform = _registry.get<LocalToWorld>(skeletonEntity).Value;
 		}
-		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.01, .01, .01));
+		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.05f, .05f, .05f));
 		// Compute bind pose world transforms for all bones
 		// offsetMatrix is the inverse bind pose, so we invert it to get bind pose
 		std::vector<glm::mat4> boneBindPoseTransforms(skeleton.bones.size());
@@ -238,15 +238,15 @@ const std::string& Scene::GetFileName()
 	return _fileName;
 }
 
-Entity Scene::CreateEntity()
+Entity Scene::CreateEntity(const bool addTransform)
 {
 	static int _entityCounter = 0;
 	// Generate unique name
 	std::string entityName = "Entity_" + std::to_string(_entityCounter++);
-	return CreateEntity(entityName);
+	return CreateEntity(entityName, addTransform);
 }
 
-Entity Scene::CreateEntity(const std::string& name)
+Entity Scene::CreateEntity(const String64& name, const bool addTransform)
 {
 	entt::entity e = _registry.create();
 
@@ -255,16 +255,11 @@ Entity Scene::CreateEntity(const std::string& name)
 	// Add name component
 	_registry.emplace<NameComponent>(e, name);
 
-	// Generate random position between 0 and 400
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> dis(0.0f, 4.5f);
-	
-	float x = dis(gen);
-	float y = dis(gen);
-
-	_registry.emplace<Transform>(e, Transform{ vec3{x, y, 0.0f} });
-	_registry.emplace<LocalToWorld>(e, LocalToWorld());
+	if (addTransform)
+	{
+		_registry.emplace<Transform>(e, Transform());
+		_registry.emplace<LocalToWorld>(e, LocalToWorld());
+	}
 
 	return Entity(e, &_registry);
 }
@@ -291,6 +286,20 @@ std::set<Entity> Scene::GetAllEntities() const
 			entities.insert(Entity(e, const_cast<entt::registry*>(&_registry)));
 	}
 	return entities;
+}
+
+Entity Scene::GetEntity(uint64_t uuid) const
+{
+	// Search for an entity with the matching UUID
+	auto view = _registry.view<Core::UUID>();
+	for (auto e : view) {
+		if (_registry.get<Core::UUID>(e).value == uuid) {
+			return Entity(e, const_cast<entt::registry*>(&_registry));
+		}
+	}
+	
+	// Return null entity if not found
+	return Entity::Null();
 }
 
 inline CameraComponent& Scene::GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }

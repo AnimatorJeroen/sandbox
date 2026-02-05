@@ -272,4 +272,22 @@ namespace ComponentSerialization {
         Deserialize(file, component.loop);
     }
 
+	// MeshComponent: contains std::vector<uint32_t>
+    template<>
+    inline void Serialize<MeshComponent>(std::ofstream& file, const MeshComponent& component) {
+        Serialize(file, component.filepath);
+        Serialize(file, component.indices);
+        Serialize(file, component.normals);
+        Serialize(file, component.vertices);
+        Serialize(file, component.texCoords);
+    }
+    template<>
+    inline void Deserialize<MeshComponent>(std::ifstream& file, MeshComponent& component) {
+        Deserialize(file, component.filepath);
+        Deserialize(file, component.indices);
+        Deserialize(file, component.normals);
+        Deserialize(file, component.vertices);
+        Deserialize(file, component.texCoords);
+	}
+
 } // namespace ComponentSerialization

@@ -187,7 +187,7 @@ using AppComponentTypes = std::tuple<
     LocalToWorld,
     NameComponent,
     CameraComponent,
-    //MeshComponent,
+    MeshComponent,
     FBXSkeletonComponent,
     FBXSkinComponent,
     FBXAnimationComponent,
