@@ -190,6 +190,9 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
                     offset.a3, offset.b3, offset.c3, offset.d3,
                     offset.a4, offset.b4, offset.c4, offset.d4
                 );
+                
+                // Initialize animatedTransform to identity (will be updated by FbxPlayer)
+                fbxBone.animatedTransform = mat4(1.0f);
 
                 uniqueBones[boneName] = fbxBone;
             }
@@ -212,6 +215,9 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
                 transform.a3, transform.b3, transform.c3, transform.d3,
                 transform.a4, transform.b4, transform.c4, transform.d4
             );
+            
+            // Initialize animatedTransform to the bind pose local transform
+            bone.animatedTransform = bone.localTransform;
 
             int currentIdx = static_cast<int>(skeletonComp.bones.size());
             skeletonComp.bones.push_back(bone);
@@ -256,8 +262,15 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
             aiNodeAnim* nodeAnim = anim->mChannels[c];
             
             FBXAnimationChannel channel;
-            channel.boneName = nodeAnim->mNodeName.C_Str();
-
+            std::string boneName = nodeAnim->mNodeName.C_Str();
+            
+            // Remove $ suffix and everything after it (e.g., "mixamorig:Hips$AssimpFbx$" -> "mixamorig:Hips")
+            size_t dollarPos = boneName.find('$');
+            if (dollarPos != std::string::npos)
+                boneName = boneName.substr(0, dollarPos);
+            
+            channel.boneName = boneName;
+        
             for (unsigned int k = 0; k < nodeAnim->mNumPositionKeys; k++)
             {
                 const aiVectorKey& key = nodeAnim->mPositionKeys[k];

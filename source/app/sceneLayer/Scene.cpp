@@ -172,15 +172,43 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 			skeletonWorldTransform = _registry.get<LocalToWorld>(skeletonEntity).Value;
 		}
 		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.05f, .05f, .05f));
-		// Compute bind pose world transforms for all bones
-		// offsetMatrix is the inverse bind pose, so we invert it to get bind pose
-		std::vector<glm::mat4> boneBindPoseTransforms(skeleton.bones.size());
+		
+		// Build children lists for each bone to enable proper hierarchical traversal
+		std::vector<std::vector<int>> boneChildren(skeleton.bones.size());
+		std::vector<int> rootBones;
+		
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
 			const FBXBone& bone = skeleton.bones[boneIndex];
+			if (bone.parentIndex < 0) {
+				// This is a root bone
+				rootBones.push_back(static_cast<int>(boneIndex));
+			} else if (bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
+				// Add this bone as a child of its parent
+				boneChildren[bone.parentIndex].push_back(static_cast<int>(boneIndex));
+			}
+		}
+		
+		// Compute world transforms for all bones hierarchically using depth-first traversal
+		// Each bone's world transform = parent's world transform * bone's animated local transform
+		std::vector<glm::mat4> boneWorldTransforms(skeleton.bones.size());
+		
+		// Recursive function to update bone transforms in hierarchy order
+		std::function<void(int, const glm::mat4&)> updateBoneHierarchy = 
+			[&](int boneIndex, const glm::mat4& parentWorldTransform) {
+			const FBXBone& bone = skeleton.bones[boneIndex];
 			
-			 // The offsetMatrix transforms from mesh space to bone space (inverse bind pose)
-			 // So inverse of offsetMatrix gives us the bone's bind pose in mesh/model space
-			boneBindPoseTransforms[boneIndex] = glm::inverse(bone.offsetMatrix);
+			// Compute this bone's world transform
+			boneWorldTransforms[boneIndex] = parentWorldTransform * bone.animatedTransform;
+			
+			// Recursively update all children
+			for (int childIndex : boneChildren[boneIndex]) {
+				updateBoneHierarchy(childIndex, boneWorldTransforms[boneIndex]);
+			}
+		};
+		
+		// Start traversal from all root bones
+		for (int rootIndex : rootBones) {
+			updateBoneHierarchy(rootIndex, glm::mat4(1.0f));
 		}
 		
 		// Draw lines from each bone to its parent
@@ -188,9 +216,9 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 			const FBXBone& bone = skeleton.bones[boneIndex];
 			
 			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
-				// Extract positions from bind pose matrices and apply skeleton world transform
-				glm::vec4 bonePosLocal = boneBindPoseTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				glm::vec4 parentPosLocal = boneBindPoseTransforms[bone.parentIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				// Extract positions from world transforms and apply skeleton world transform
+				glm::vec4 bonePosLocal = boneWorldTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 parentPosLocal = boneWorldTransforms[bone.parentIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 				
 				glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
 				glm::vec3 parentPos = glm::vec3(skeletonWorldTransform * parentPosLocal);
@@ -207,7 +235,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		
 		// Draw small spheres at bone positions for visibility
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			glm::vec4 bonePosLocal = boneBindPoseTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			glm::vec4 bonePosLocal = boneWorldTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 			glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
 			
 			// Draw a small circle at each bone position

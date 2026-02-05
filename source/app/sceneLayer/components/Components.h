@@ -85,10 +85,11 @@ struct MeshComponent {
 struct FBXBone {
 	String64 name;
 	int parentIndex = -1;  // Index in bones array, -1 for root
-	mat4 offsetMatrix;     // Transforms from mesh space to bone space
-	mat4 localTransform;   // Local transform relative to parent
+	mat4 offsetMatrix;     // Transforms from mesh space to bone space (inverse bind pose - constant)
+	mat4 localTransform;   // Local transform relative to parent in bind pose (constant)
+	mat4 animatedTransform; // Current animated local transform (updated by FbxPlayer)
 	
-	FBXBone() = default;
+	FBXBone() : animatedTransform(1.0f) {}
 };
 
 // Vertex skinning data
