@@ -94,11 +94,14 @@ private:
 				vec3 scale = InterpolateScale(channel, currentTime);
 				
 				// Build animated local transform matrix
-				mat4 translationMat = glm::translate(mat4(1.0f), position);
+				//mat4 translationMat = bone.localTransform;
+				mat4 translationMat = glm::translate(mat4(1.0f), vec3(0, -10, 0.0));
 				mat4 rotationMat = glm::toMat4(rotation);
 				mat4 scaleMat = glm::scale(mat4(1.0f), scale);
+				//mat4 scaleMat = mat4(1.0f);
 				
 				bone.animatedTransform = translationMat * rotationMat * scaleMat;
+				//bone.animatedTransform = glm::inverse(bone.offsetMatrix);
 			}
 			
 			// Only update the first skeleton found (assumes one skeleton per animation)

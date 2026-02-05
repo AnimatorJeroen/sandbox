@@ -267,7 +267,7 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
             // Remove $ suffix and everything after it (e.g., "mixamorig:Hips$AssimpFbx$" -> "mixamorig:Hips")
             size_t dollarPos = boneName.find('$');
             if (dollarPos != std::string::npos)
-                boneName = boneName.substr(0, dollarPos);
+                boneName = boneName.substr(0, dollarPos-1);
             
             channel.boneName = boneName;
         
