@@ -217,12 +217,12 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 			
 			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
 				// Extract positions from world transforms and apply skeleton world transform
-				glm::vec4 bonePosLocal = boneWorldTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				glm::vec4 parentPosLocal = boneWorldTransforms[bone.parentIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				
+				glm::vec4 bonePosLocal = (boneWorldTransforms[boneIndex] * glm::inverse(bone.offsetMatrix)) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 parentPosLocal = (boneWorldTransforms[bone.parentIndex] * glm::inverse(skeleton.bones[bone.parentIndex].offsetMatrix)) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 				glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
 				glm::vec3 parentPos = glm::vec3(skeletonWorldTransform * parentPosLocal);
-				
+
 				// Draw line from parent to child bone
 				recorder.Line(
 					Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
