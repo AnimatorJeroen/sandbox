@@ -76,7 +76,7 @@ private:
     bool ProcessSkeleton(const ::aiScene* aiScene, Entity* skeletonEntity);
     
     // Helper to extract animations from Assimp scene
-    bool ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity);
+    bool ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity, Entity* skeletonEntity);
 
     // Helper to extract bone weights from Assimp mesh
     void ProcessBoneWeights(const ::aiMesh* mesh, Entity* meshEntity, 

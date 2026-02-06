@@ -147,11 +147,10 @@ struct FBXScaleKey {
 
 // Animation channel for a single bone
 struct FBXAnimationChannel {
-	String64 boneName;
+	int boneIndex;
 	std::vector<FBXPositionKey> positionKeys;
 	std::vector<FBXRotationKey> rotationKeys;
 	std::vector<FBXScaleKey> scaleKeys;
-	int boneIndex;
 	
 	FBXAnimationChannel() = default;
 };

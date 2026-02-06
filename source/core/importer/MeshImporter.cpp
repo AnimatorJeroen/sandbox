@@ -38,6 +38,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
     LOG_INFO() << "Importing model: " << filepath;
 
     Assimp::Importer importer;
+    importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
     unsigned int postProcessFlags = 
         aiProcess_Triangulate |
         aiProcess_FlipUVs |
@@ -54,7 +55,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
     // set up bone hierarchy and transforms from the armature/skeleton data
     if (options.importSkeleton || options.importAnimations)
     {
-        postProcessFlags |= aiProcess_PopulateArmatureData;
+        //postProcessFlags |= aiProcess_PopulateArmatureData;
         LOG_DEBUG() << "Using aiProcess_PopulateArmatureData for skeleton/animation import";
     }
 
@@ -116,7 +117,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
         Entity animEntity = scene->CreateEntity(filename + "_Animations");
         scene->SetParent(animEntity, rootEntity);
         
-        if (ProcessAnimations(aiScene, &animEntity))
+        if (ProcessAnimations(aiScene, &animEntity, &skeletonEntity))
             _stats.animationCount = aiScene->mNumAnimations;
     }
 
@@ -185,7 +186,8 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
     auto& skeletonComp = skeletonEntity->AddComponent<FBXSkeletonComponent>();
     skeletonComp.skeletonName = skeletonEntity->GetComponent<NameComponent>().name.to_string();
 
-    std::map<std::string, FBXBone> uniqueBones;
+    // Map aiBone name to bone data (offsetMatrix, etc.)
+    std::map<std::string, FBXBone> boneDataByAiBoneName;
 
     for (unsigned int m = 0; m < aiScene->mNumMeshes; m++)
     {
@@ -196,20 +198,21 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
         for (unsigned int b = 0; b < mesh->mNumBones; b++)
         {
             aiBone* bone = mesh->mBones[b];
-            std::string boneName = bone->mName.C_Str();
+            std::string aiBoneName = bone->mName.C_Str();
 
-            if (uniqueBones.find(boneName) == uniqueBones.end())
+            if (boneDataByAiBoneName.find(aiBoneName) == boneDataByAiBoneName.end())
             {
                 FBXBone fbxBone;
-                fbxBone.name = boneName;
 
+                fbxBone.name = aiBoneName;
+                
                 const aiMatrix4x4& offset = bone->mOffsetMatrix;
                 fbxBone.offsetMatrix = ConvertMatrixToGLMFormat(offset);
                 
                 // Initialize animatedTransform to identity (will be updated by FbxPlayer)
                 fbxBone.animatedTransform = mat4(1.0f);
 
-                uniqueBones[boneName] = fbxBone;
+                boneDataByAiBoneName[aiBoneName] = fbxBone;
             }
         }
     }
@@ -217,10 +220,11 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
     std::function<void(aiNode*, int)> buildHierarchy = [&](aiNode* node, int parentIdx) {
         std::string nodeName = node->mName.C_Str();
         
-        auto it = uniqueBones.find(nodeName);
-        if (it != uniqueBones.end())
+        auto it = boneDataByAiBoneName.find(nodeName);
+        if (it != boneDataByAiBoneName.end())
         {
             FBXBone& bone = it->second;
+
             bone.parentIndex = parentIdx;
 
             const aiMatrix4x4& transform = node->mTransformation;
@@ -270,10 +274,12 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
     return true;
 }
 
-bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity)
+bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity, Entity* skeletonEntity)
 {
     if (!aiScene || !animationEntity || aiScene->mNumAnimations == 0)
         return false;
+
+    auto& skeletonComp = skeletonEntity->GetComponent<FBXSkeletonComponent>();
 
     auto& animComp = animationEntity->AddComponent<FBXAnimationComponent>();
 
@@ -295,15 +301,15 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
             
             FBXAnimationChannel channel;
             std::string boneName = nodeAnim->mNodeName.C_Str();
-            
-            // Remove $ suffix and everything after it (e.g., "mixamorig:Hips$AssimpFbx$" -> "mixamorig:Hips")
-            size_t dollarPos = boneName.find('$');
-            if (dollarPos != std::string::npos)
-                boneName = boneName.substr(0, dollarPos - 1);
 
-            
-            channel.boneName = boneName;
-			channel.boneIndex = -1; // Will be set later when applying animation to skeleton
+            for (size_t i = 0; i < skeletonComp.bones.size(); i++)
+            {
+                if (std::strcmp(skeletonComp.bones[i].name.data, boneName.data()) == 0)
+                {
+                    channel.boneIndex = static_cast<int>(i);
+                    break;
+                }
+            }
         
             for (unsigned int k = 0; k < nodeAnim->mNumPositionKeys; k++)
             {

@@ -78,47 +78,37 @@ private:
 		{
 			auto& skeleton = registry.get<FBXSkeletonComponent>(skeletonEntity);
 			
+			for (auto& bone : skeleton.bones)
+				bone.animatedTransform = bone.localRestTransform;
+
 			// Apply animation channels to bones
 			for (const auto& channel : clip.channels)
 			{
 				// Find the bone index by name
-				int boneIndex = FindBoneIndex(skeleton, channel.boneName);
+				int boneIndex = channel.boneIndex;//FindBoneIndex(skeleton, channel.boneName);
 				if (boneIndex < 0)
 					continue;
 				
 				FBXBone& bone = skeleton.bones[boneIndex];
 				
 
-				vec3 position;
-				glm::quat rotation;
-				vec3 scale;
-				glm::vec3 skew;
-				glm::vec4 perspective;
-				glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
+				//vec3 position;
+				//glm::quat rotation;
+				//vec3 scale;
+				//glm::vec3 skew;
+				//glm::vec4 perspective;
+				//glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
 
 
 				vec3 positionAdditive = InterpolatePosition(channel, currentTime);
 				glm::quat rotationAdditive = InterpolateRotation(channel, currentTime);
 				vec3 scaleAdditive = InterpolateScale(channel, currentTime);
 
-				//mat4 translationMat = glm::translate(mat4(1.0f), positionAdditive);
-				//mat4 rotationMat = glm::toMat4(rotationAdditive);
-				//mat4 scaleMat = glm::scale(mat4(1.0f), scaleAdditive);
-
-				//// Interpolate position, rotation, and scale at current time
-				//vec3 positionAdditive = InterpolatePosition(channel, currentTime);
-				//glm::quat rotationAdditive = InterpolateRotation(channel, currentTime);
-				//vec3 scaleAdditive = InterpolateScale(channel, currentTime);
-
-				if(positionAdditive != vec3(0,0,0))
-					position = positionAdditive;
-				mat4 translationMat = glm::translate(mat4(1.0f), position /*positionAdditive*/);
-				mat4 rotationMat = glm::toMat4(rotation) * glm::toMat4(rotationAdditive);
-				mat4 scaleMat = glm::scale(mat4(1.0f), scale /** scaleAdditive*/);
+				mat4 translationMat = glm::translate(mat4(1.0f), positionAdditive);
+				mat4 rotationMat = glm::toMat4(rotationAdditive);
+				mat4 scaleMat = glm::scale(mat4(1.0f), scaleAdditive);
 
 				bone.animatedTransform = translationMat * rotationMat * scaleMat;
-				//bone.animatedTransform = bone.localRestTransform;
-
 			}
 			
 			// Only update the first skeleton found (assumes one skeleton per animation)
@@ -131,10 +121,30 @@ private:
 	{
 		for (size_t i = 0; i < skeleton.bones.size(); i++)
 		{
+			// First try exact match
 			if (std::strcmp(skeleton.bones[i].name.data, boneName.data) == 0)
 				return static_cast<int>(i);
 		}
-		
+		for (size_t i = 0; i < skeleton.bones.size(); i++)
+		{
+			// Second try: strip last character from skeleton bone name
+
+			if (skeleton.bones[i].name.length() > boneName.length())
+			{
+				std::string skeletonBoneName = skeleton.bones[i].name.data;
+				std::string strippedName = skeletonBoneName.substr(0, boneName.length());
+				if (std::strcmp(strippedName.data(), boneName.data) == 0)
+					return static_cast<int>(i);
+			}
+			else
+			{
+				std::string skeletonBoneName = boneName.data;
+				std::string strippedName = skeletonBoneName.substr(0, skeleton.bones[i].name.length());
+				if (std::strcmp(strippedName.data(), skeleton.bones[i].name.data) == 0)
+					return static_cast<int>(i);
+			}
+		}
+
 		// Log when a bone isn't found to help debug name mismatches
 		LOG_WARN() << "Animation channel bone '" << boneName.data << "' not found in skeleton";
 		return -1;
