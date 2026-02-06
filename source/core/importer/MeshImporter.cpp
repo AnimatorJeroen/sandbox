@@ -13,6 +13,17 @@
 
 namespace Core {
 
+    static glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
+    {
+        glm::mat4 to;
+        //the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
+        to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+        to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+        to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+        to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+        return to;
+    }
+
 bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity* parent, 
                                const ImportOptions& options)
 {
@@ -33,10 +44,19 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
         aiProcess_JoinIdenticalVertices |
         aiProcess_SortByPType |
         aiProcess_OptimizeMeshes |
-        aiProcess_ValidateDataStructure;
+        aiProcess_ValidateDataStructure |
+        aiProcess_LimitBoneWeights; // Limit to 4 bones per vertex
 
     if (options.generateMissingNormals)
         postProcessFlags |= aiProcess_GenNormals;
+    
+    // CRITICAL for FBX skeletal animations: PopulateArmatureData tells Assimp to properly 
+    // set up bone hierarchy and transforms from the armature/skeleton data
+    if (options.importSkeleton || options.importAnimations)
+    {
+        postProcessFlags |= aiProcess_PopulateArmatureData;
+        LOG_DEBUG() << "Using aiProcess_PopulateArmatureData for skeleton/animation import";
+    }
 
     const ::aiScene* aiScene = importer.ReadFile(filepath, postProcessFlags);
 
@@ -184,12 +204,7 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
                 fbxBone.name = boneName;
 
                 const aiMatrix4x4& offset = bone->mOffsetMatrix;
-                fbxBone.offsetMatrix = mat4(
-                    offset.a1, offset.b1, offset.c1, offset.d1,
-                    offset.a2, offset.b2, offset.c2, offset.d2,
-                    offset.a3, offset.b3, offset.c3, offset.d3,
-                    offset.a4, offset.b4, offset.c4, offset.d4
-                );
+                fbxBone.offsetMatrix = ConvertMatrixToGLMFormat(offset);
                 
                 // Initialize animatedTransform to identity (will be updated by FbxPlayer)
                 fbxBone.animatedTransform = mat4(1.0f);
@@ -209,13 +224,8 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
             bone.parentIndex = parentIdx;
 
             const aiMatrix4x4& transform = node->mTransformation;
-            bone.localTransform = mat4(
-                transform.a1, transform.b1, transform.c1, transform.d1,
-                transform.a2, transform.b2, transform.c2, transform.d2,
-                transform.a3, transform.b3, transform.c3, transform.d3,
-                transform.a4, transform.b4, transform.c4, transform.d4
-            );
-            
+            //bone.localTransform = ConvertMatrixToGLMFormat(transform);
+
             // Initialize animatedTransform to the bind pose local transform
             bone.animatedTransform = bone.localTransform;
 
@@ -233,6 +243,28 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
     };
 
     buildHierarchy(aiScene->mRootNode, -1);
+
+    // Build child indices for all bones
+    for (size_t i = 0; i < skeletonComp.bones.size(); i++)
+    {
+        FBXBone& bone = skeletonComp.bones[i];
+        // Find all children of this bone
+        for (size_t j = 0; j < skeletonComp.bones.size(); j++)
+        {
+            if (skeletonComp.bones[j].parentIndex == static_cast<int>(i))
+            {
+                bone.childIndices.push_back(static_cast<int>(j));
+            }
+        }
+    }
+
+    for (auto& bone : skeletonComp.bones)
+    {
+        mat4 parWorldM = glm::mat4(1.0f);
+        if (bone.parentIndex != -1)
+            parWorldM = skeletonComp.bones[bone.parentIndex].offsetMatrix;
+        bone.localRestTransform = parWorldM * glm::inverse(bone.offsetMatrix);
+    }
 
     LOG_INFO() << "Skeleton processed: " << skeletonComp.bones.size() << " bones";
     return true;
@@ -270,6 +302,7 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
                 boneName = boneName.substr(0, dollarPos-1);
             
             channel.boneName = boneName;
+			channel.boneIndex = -1; // Will be set later when applying animation to skeleton
         
             for (unsigned int k = 0; k < nodeAnim->mNumPositionKeys; k++)
             {
@@ -280,7 +313,13 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
             for (unsigned int k = 0; k < nodeAnim->mNumRotationKeys; k++)
             {
                 const aiQuatKey& key = nodeAnim->mRotationKeys[k];
-                channel.rotationKeys.emplace_back(key.mTime, glm::quat(key.mValue.w, key.mValue.x, key.mValue.y, key.mValue.z));
+                // Assimp quaternion is (w, x, y, z), assign directly
+                glm::quat rotation;
+                rotation.w = key.mValue.w;
+                rotation.x = key.mValue.x;
+                rotation.y = key.mValue.y;
+                rotation.z = key.mValue.z;
+                channel.rotationKeys.emplace_back(key.mTime, rotation);
             }
 
             for (unsigned int k = 0; k < nodeAnim->mNumScalingKeys; k++)

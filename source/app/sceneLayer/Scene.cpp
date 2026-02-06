@@ -173,18 +173,12 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		}
 		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.05f, .05f, .05f));
 		
-		// Build children lists for each bone to enable proper hierarchical traversal
-		std::vector<std::vector<int>> boneChildren(skeleton.bones.size());
+		 // Find root bones (bones with no parent)
 		std::vector<int> rootBones;
-		
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
 			const FBXBone& bone = skeleton.bones[boneIndex];
 			if (bone.parentIndex < 0) {
-				// This is a root bone
 				rootBones.push_back(static_cast<int>(boneIndex));
-			} else if (bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
-				// Add this bone as a child of its parent
-				boneChildren[bone.parentIndex].push_back(static_cast<int>(boneIndex));
 			}
 		}
 		
@@ -200,8 +194,8 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 			// Compute this bone's world transform
 			boneWorldTransforms[boneIndex] = parentWorldTransform * bone.animatedTransform;
 			
-			// Recursively update all children
-			for (int childIndex : boneChildren[boneIndex]) {
+			// Recursively update all children using stored childIndices
+			for (int childIndex : bone.childIndices) {
 				updateBoneHierarchy(childIndex, boneWorldTransforms[boneIndex]);
 			}
 		};
@@ -217,8 +211,8 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 			
 			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
 				// Extract positions from world transforms and apply skeleton world transform
-				glm::vec4 bonePosLocal = (boneWorldTransforms[boneIndex] * glm::inverse(bone.offsetMatrix)) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				glm::vec4 parentPosLocal = (boneWorldTransforms[bone.parentIndex] * glm::inverse(skeleton.bones[bone.parentIndex].offsetMatrix)) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 bonePosLocal =  (boneWorldTransforms[boneIndex]) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 parentPosLocal =  (boneWorldTransforms[bone.parentIndex]) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 				glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
 				glm::vec3 parentPos = glm::vec3(skeletonWorldTransform * parentPosLocal);

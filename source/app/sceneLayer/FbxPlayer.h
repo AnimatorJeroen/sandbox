@@ -88,22 +88,37 @@ private:
 				
 				FBXBone& bone = skeleton.bones[boneIndex];
 				
-				// Interpolate position, rotation, and scale at current time
-				vec3 position = InterpolatePosition(channel, currentTime);
-				glm::quat rotation = InterpolateRotation(channel, currentTime);
-				vec3 scale = InterpolateScale(channel, currentTime);
-				
-				// Build animated local transform matrix
-				//mat4 translationMat = bone.localTransform;
-				//mat4 translationMat = glm::translate(mat4(1.0f), vec3(0, -10, 0.0));
-				mat4 translationMat = glm::translate(mat4(1.0f), position);
-				mat4 rotationMat = glm::toMat4(rotation);
-				mat4 scaleMat = glm::scale(mat4(1.0f), scale);
-				//mat4 scaleMat = mat4(1.0f);
-				
-				bone.animatedTransform = translationMat/* * rotationMat*/;
-				//bone.animatedTransform = glm::inverse(bone.offsetMatrix);
-				//bone.animatedTransform = bone.localTransform;
+
+				vec3 position;
+				glm::quat rotation;
+				vec3 scale;
+				glm::vec3 skew;
+				glm::vec4 perspective;
+				glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
+
+
+				vec3 positionAdditive = InterpolatePosition(channel, currentTime);
+				glm::quat rotationAdditive = InterpolateRotation(channel, currentTime);
+				vec3 scaleAdditive = InterpolateScale(channel, currentTime);
+
+				//mat4 translationMat = glm::translate(mat4(1.0f), positionAdditive);
+				//mat4 rotationMat = glm::toMat4(rotationAdditive);
+				//mat4 scaleMat = glm::scale(mat4(1.0f), scaleAdditive);
+
+				//// Interpolate position, rotation, and scale at current time
+				//vec3 positionAdditive = InterpolatePosition(channel, currentTime);
+				//glm::quat rotationAdditive = InterpolateRotation(channel, currentTime);
+				//vec3 scaleAdditive = InterpolateScale(channel, currentTime);
+
+				if(positionAdditive != vec3(0,0,0))
+					position = positionAdditive;
+				mat4 translationMat = glm::translate(mat4(1.0f), position /*positionAdditive*/);
+				mat4 rotationMat = glm::toMat4(rotation) * glm::toMat4(rotationAdditive);
+				mat4 scaleMat = glm::scale(mat4(1.0f), scale /** scaleAdditive*/);
+
+				bone.animatedTransform = translationMat * rotationMat * scaleMat;
+				//bone.animatedTransform = bone.localRestTransform;
+
 			}
 			
 			// Only update the first skeleton found (assumes one skeleton per animation)
@@ -154,8 +169,10 @@ private:
 	// Interpolate rotation between keyframes
 	glm::quat InterpolateRotation(const FBXAnimationChannel& channel, double time) const
 	{
+
 		if (channel.rotationKeys.empty())
 			return glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+			
 		
 		if (channel.rotationKeys.size() == 1 || time <= channel.rotationKeys[0].time)
 			return channel.rotationKeys[0].value;
