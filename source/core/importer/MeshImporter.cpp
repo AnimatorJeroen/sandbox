@@ -114,10 +114,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
 
     if (options.importAnimations && aiScene->mNumAnimations > 0 && skeletonEntity)
     {
-        Entity animEntity = scene->CreateEntity(filename + "_Animations");
-        scene->SetParent(animEntity, rootEntity);
-        
-        if (ProcessAnimations(aiScene, &animEntity, &skeletonEntity))
+        if (ProcessAnimations(aiScene, &skeletonEntity, &skeletonEntity))
             _stats.animationCount = aiScene->mNumAnimations;
     }
 

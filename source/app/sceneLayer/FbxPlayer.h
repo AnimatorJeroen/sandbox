@@ -70,50 +70,44 @@ private:
 	void ApplyAnimationToSkeleton(entt::registry& registry, entt::entity animEntity, 
 	                              const FBXAnimationClip& clip, double currentTime)
 	{
-		// Find the skeleton entity (should be a sibling of the animation entity)
-		// Both should be children of the same root entity
-		auto skeletonView = registry.view<FBXSkeletonComponent>();
-		
-		for (auto skeletonEntity : skeletonView)
+		if(!registry.all_of<FBXSkeletonComponent>(animEntity))
+			return;
+
+		auto& skeleton = registry.get<FBXSkeletonComponent>(animEntity);
+
+		for (auto& bone : skeleton.bones)
+			bone.animatedTransform = bone.localRestTransform;
+
+		// Apply animation channels to bones
+		for (const auto& channel : clip.channels)
 		{
-			auto& skeleton = registry.get<FBXSkeletonComponent>(skeletonEntity);
-			
-			for (auto& bone : skeleton.bones)
-				bone.animatedTransform = bone.localRestTransform;
-
-			// Apply animation channels to bones
-			for (const auto& channel : clip.channels)
-			{
-				// Find the bone index by name
-				int boneIndex = channel.boneIndex;//FindBoneIndex(skeleton, channel.boneName);
-				if (boneIndex < 0)
-					continue;
+			// Find the bone index by name
+			int boneIndex = channel.boneIndex;//FindBoneIndex(skeleton, channel.boneName);
+			if (boneIndex < 0)
+				continue;
 				
-				FBXBone& bone = skeleton.bones[boneIndex];
+			FBXBone& bone = skeleton.bones[boneIndex];
 				
 
-				//vec3 position;
-				//glm::quat rotation;
-				//vec3 scale;
-				//glm::vec3 skew;
-				//glm::vec4 perspective;
-				//glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
+			//vec3 position;
+			//glm::quat rotation;
+			//vec3 scale;
+			//glm::vec3 skew;
+			//glm::vec4 perspective;
+			//glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
 
 
-				vec3 positionAdditive = InterpolatePosition(channel, currentTime);
-				glm::quat rotationAdditive = InterpolateRotation(channel, currentTime);
-				vec3 scaleAdditive = InterpolateScale(channel, currentTime);
+			vec3 positionAdditive = InterpolatePosition(channel, currentTime);
+			glm::quat rotationAdditive = InterpolateRotation(channel, currentTime);
+			vec3 scaleAdditive = InterpolateScale(channel, currentTime);
 
-				mat4 translationMat = glm::translate(mat4(1.0f), positionAdditive);
-				mat4 rotationMat = glm::toMat4(rotationAdditive);
-				mat4 scaleMat = glm::scale(mat4(1.0f), scaleAdditive);
+			mat4 translationMat = glm::translate(mat4(1.0f), positionAdditive);
+			mat4 rotationMat = glm::toMat4(rotationAdditive);
+			mat4 scaleMat = glm::scale(mat4(1.0f), scaleAdditive);
 
-				bone.animatedTransform = translationMat * rotationMat * scaleMat;
-			}
-			
-			// Only update the first skeleton found (assumes one skeleton per animation)
-			break;
+			bone.animatedTransform = translationMat * rotationMat * scaleMat;
 		}
+
 	}
 	
 	// Find bone index by name
