@@ -36,6 +36,13 @@ TransformBundle Entity::GetTransformBundle()
         localToWorld->Value, parentEntity, children);
 }
 
+std::unordered_set<entt::entity> Entity::GetAllSiblingsIncludingSelf() const
+{
+    std::unordered_set<entt::entity> siblings{ this->GetHandle() };
+    GetAllSiblingsRecursive(*this, siblings);
+    return siblings;
+}
+
 Entity Entity::GetParent() const
 {
     Entity parentEntity = Entity::Null();
@@ -51,4 +58,19 @@ Entity Entity::GetParent() const
         }
     }
     return parentEntity;
+}
+
+void Entity::GetAllSiblingsRecursive(Entity parent, std::unordered_set<entt::entity>& siblings) const
+{
+    
+    if (parent.HasComponent<Children>())
+    {
+        auto childrenComp = parent.GetComponent<Children>();
+        for (entt::entity childHandle : childrenComp.children)
+        {
+            Entity childEntity(childHandle, _registry);
+            siblings.insert(childHandle);
+            GetAllSiblingsRecursive(childEntity, siblings);
+        }
+	}
 }

@@ -61,8 +61,8 @@ struct CameraComponent {
 	vec3 target{0.0f, 0.0f, 0.0f};
 	vec3 up{0.0f, 1.0f, 0.0f};
 	float fov = 45.0f;
-	float nearPlane = 0.1f;
-	float farPlane = 100.0f;
+	float nearPlane = 0.01f;
+	float farPlane = 10000.0f;
 
 	CameraComponent() = default;
 };

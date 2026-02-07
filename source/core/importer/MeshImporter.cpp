@@ -24,14 +24,14 @@ namespace Core {
         return to;
     }
 
-bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity* parent, 
+Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity* parent, 
                                const ImportOptions& options)
 {
     if (!scene)
     {
         _lastError = "Invalid scene pointer";
         LOG_ERROR() << "MeshImporter: " << _lastError;
-        return false;
+        return Entity::Null();
     }
 
     _stats = ImportStats();
@@ -65,7 +65,7 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
     {
         _lastError = importer.GetErrorString();
         LOG_ERROR() << "Assimp import error: " << _lastError;
-        return false;
+        return Entity::Null();
     }
 
     LOG_INFO() << "Model loaded: " << aiScene->mNumMeshes << " meshes, " << aiScene->mNumAnimations << " animations";
@@ -172,7 +172,8 @@ bool MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Entity
 
     LOG_INFO() << "Import complete: " << filename << " (" << _stats.meshCount << " meshes, " 
                << _stats.boneCount << " bones, " << _stats.animationCount << " animations)";
-    return true;
+
+    return rootEntity;
 }
 
 bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntity)

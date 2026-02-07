@@ -305,20 +305,25 @@ void EditorContext::ImportModel()
         parent = *_selectedEntities.begin();
     }
 
-    _applicator.BeginUndo();
-    bool success = importer.ImportModel(result.value(), scene.get(), parent ? &parent : nullptr);
-    _applicator.EndUndo();
+    Entity sceneRoot = importer.ImportModel(result.value(), scene.get(), parent ? &parent : nullptr);
 
-    if (success)
+    if (sceneRoot)
     {
+
+        scene->RebuildChildrenForAllEntities();
+        _applicator.CaptureCreate({ sceneRoot.GetAllSiblingsIncludingSelf()});
+        scene->RebuildChildrenForAllEntities();
+
+        _applicator.BeginUndo();
+        _applicator.EndUndo();
+
         LOG_INFO() << "Model imported successfully";
         if (_popupManager)
         {
             _popupManager->ShowInfo("Import Successful", "3D model imported successfully!");
         }
         
-        // Rebuild hierarchy after import
-        scene->RebuildChildrenForAllEntities();
+
     }
     else
     {

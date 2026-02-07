@@ -43,7 +43,7 @@ public:
     /// <param name="parent">Optional parent entity for imported meshes</param>
     /// <param name="options">Import options for controlling what data to import</param>
     /// <returns>True if import succeeded, false otherwise</returns>
-    bool ImportModel(const std::string& filepath, Scene* scene, Entity* parent = nullptr, 
+    Entity ImportModel(const std::string& filepath, Scene* scene, Entity* parent = nullptr, 
                      const ImportOptions& options = ImportOptions());
 
     /// <summary>
