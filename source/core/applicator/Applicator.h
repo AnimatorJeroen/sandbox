@@ -189,7 +189,7 @@ namespace Core {
         // Collect all UUIDs from newly created entities and generate new UUIDs for them
         void CollectUUIDsFromEntities(
             const std::unordered_set<entt::entity>& entities,
-            entt::registry& registry,
+            Core::Registry& registry,
             std::unordered_map<uint64_t, uint64_t>& uuidRemap)
         {
             for (auto entity : entities) {
@@ -198,13 +198,13 @@ namespace Core {
                     uint64_t oldUUID = registry.get<UUID>(entity).value;
                     
                     // Generate a new UUID
-                    uint64_t newUUID = UUID::generate();
+                    UUID newUUID;
                     
                     // Store the mapping
-                    uuidRemap[oldUUID] = newUUID;
+                    uuidRemap[oldUUID] = newUUID.value;
                     
                     // Update the UUID component on the entity
-                    registry.get<UUID>(entity).value = newUUID;
+                    registry.ModifyUUID(entity, newUUID);
                 }
             }
         }
@@ -214,7 +214,7 @@ namespace Core {
         template<typename... Cs>
         void RemapUUIDsInEntities(
             const std::unordered_set<entt::entity>& entities,
-            entt::registry& registry,
+            Core::Registry& registry,
             const std::unordered_map<uint64_t, uint64_t>& uuidRemap)
         {
             // Process each component type
@@ -225,7 +225,7 @@ namespace Core {
         template<typename C>
         void RemapUUIDsInComponentsOnEntities(
             const std::unordered_set<entt::entity>& entities,
-            entt::registry& registry,
+            Core::Registry& registry,
             const std::unordered_map<uint64_t, uint64_t>& uuidRemap)
         {
             // Skip UUID component itself (already handled in CollectUUIDsFromEntities)

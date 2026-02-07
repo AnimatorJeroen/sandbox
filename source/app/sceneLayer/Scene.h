@@ -21,8 +21,7 @@ class Scene
 {
 	public:
 		Scene() {
-			_sceneEntity = _registry.create(); 
-			_registry.emplace<Core::UUID>(_sceneEntity);
+			_sceneEntity = _registry.Create(); 
 			_registry.emplace<SceneData>(_sceneEntity);
 			
 			 // Create default camera entity

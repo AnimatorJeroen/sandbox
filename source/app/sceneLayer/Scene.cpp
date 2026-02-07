@@ -270,10 +270,7 @@ Entity Scene::CreateEntity(const bool addTransform)
 
 Entity Scene::CreateEntity(const String64& name, const bool addTransform)
 {
-	entt::entity e = _registry.create();
-
-	_registry.emplace<Core::UUID>(e);
-	
+	entt::entity e = _registry.Create();
 	// Add name component
 	_registry.emplace<NameComponent>(e, name);
 
@@ -288,9 +285,7 @@ Entity Scene::CreateEntity(const String64& name, const bool addTransform)
 
 Entity Scene::CreateCameraEntity()
 {
-	entt::entity e = _registry.create();
-
-	_registry.emplace<Core::UUID>(e);
+	entt::entity e = _registry.Create();
 	_registry.emplace<NameComponent>(e, "Camera");
 	_registry.emplace<CameraComponent>(e);
 

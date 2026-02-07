@@ -10,17 +10,19 @@ namespace Core
 	{
 	public:
 		// Entity creation and destruction
-		entt::entity create() { return _registry.create(); }
-		void destroy(entt::entity entity) { _registry.destroy(entity); }
-		void clear() { return _registry.clear(); }
-		bool valid(entt::entity entity) const { return _registry.valid(entity); }
+		entt::entity createWithoutUUID() { return _registry.create(); }
+		entt::entity Create() { auto e = _registry.create(); auto uuid = _registry.emplace<UUID>(e); _entityToUUID[e] = uuid; return e; }
 		
+		void destroy(entt::entity entity) { _registry.destroy(entity);  _entityToUUID.erase(entity); }
+		void clear() { _entityToUUID.clear(); return _registry.clear(); }
+		bool valid(entt::entity entity) const { return _registry.valid(entity); }
+
 		// Entity version and identifiers
 		auto current(entt::entity entity) const { return _registry.current(entity); }
 		
-		 // Implicit conversion to entt::registry& for compatibility
-		operator entt::registry&() { return _registry; }
-		operator const entt::registry&() const { return _registry; }
+		// // Implicit conversion to entt::registry& for compatibility
+		//operator entt::registry&() { return _registry; }
+		//operator const entt::registry&() const { return _registry; }
 
 		// Component emplacement
 		template<typename Component, typename... Args>
@@ -240,6 +242,14 @@ namespace Core
 			}
 			return entt::null;
 		}
+
+		// Only to be called after a Paste operation, to update the duplicate UUID.
+		void ModifyUUID(entt::entity entity, UUID newUUID)
+		{
+			_entityToUUID[entity] = newUUID;
+			_registry.get<UUID>(entity) = newUUID;
+		}
+
 
 	private:
 		entt::registry _registry;

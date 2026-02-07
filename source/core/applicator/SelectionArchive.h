@@ -212,7 +212,7 @@ namespace Core {
             remap.reserve(archive.entities.size());
 
             for (auto old_e : archive.entities) {
-                entt::entity new_e = reg.create();
+                entt::entity new_e = reg.createWithoutUUID();
                 remap[old_e] = new_e;
             }
 
