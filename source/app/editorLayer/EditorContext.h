@@ -60,6 +60,12 @@ public:
 	void CloseScene(const int sceneIndex);
 	bool IsSceneDirty(const int sceneIndex) const;
 
+    // === Import Operations ===
+    /// <summary>
+    /// Import a 3D model (FBX, OBJ, etc.) into the active scene
+    /// </summary>
+    void ImportModel();
+
     // === Context Update ===
     /// <summary>
     /// Called when the active scene changes to update internal state

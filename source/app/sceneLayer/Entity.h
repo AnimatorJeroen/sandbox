@@ -67,6 +67,8 @@ public:
     /// </summary>
     TransformBundle GetTransformBundle();
 
+	std::unordered_set<entt::entity> GetAllSiblingsIncludingSelf() const;
+
 	Entity GetParent() const;
 
     /// <summary>
@@ -109,6 +111,8 @@ public:
     static Entity Null() { return Entity(); }
 
 private:
+
+	void GetAllSiblingsRecursive(Entity parent, std::unordered_set<entt::entity>& siblings) const;
     entt::entity _entityHandle{ entt::null };
     entt::registry* _registry = nullptr;
 };

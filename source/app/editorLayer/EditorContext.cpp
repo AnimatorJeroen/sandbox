@@ -9,6 +9,8 @@
 #include <core/BrowserWindow.h>
 #include <core/Logger.h>
 #include "app/event/SceneEvent.h"
+#include "core/importer/MeshImporter.h"
+#include "PopupManager.h"
 
 EditorContext::EditorContext(
     SceneManager& sceneManager,
@@ -255,6 +257,83 @@ bool EditorContext::IsSceneDirty(const int sceneIndex) const
     auto scene = _sceneManager.GetScene(sceneIndex);
     return scene ? _undoManager.IsContextDirty(
         scene->GetRegistry()) : false;
+}
+
+// === Import Operations ===
+
+void EditorContext::ImportModel()
+{
+    auto scene = _sceneManager.GetActiveScene();
+    if (!scene)
+    {
+        LOG_WARN() << "Cannot import model: No active scene";
+        if (_popupManager)
+        {
+            _popupManager->ShowWarning("Import Failed", "No active scene. Please create or open a scene first.");
+        }
+        return;
+    }
+
+    // Show file browser for model selection
+    Core::BrowserWindow browserWindow(_windowHandle);
+    auto result = browserWindow.OpenFile(
+        "Import 3D Model",
+        {
+            Core::FileFilter("FBX Files", "*.fbx"),
+            Core::FileFilter("OBJ Files", "*.obj"),
+            Core::FileFilter("GLTF Files", "*.gltf;*.glb"),
+            Core::FileFilter("Collada Files", "*.dae"),
+            Core::FileFilter("All Supported", "*.fbx;*.obj;*.gltf;*.glb;*.dae;*.blend;*.3ds"),
+            Core::FileFilter("All Files", "*.*")
+        });
+
+    if (!result.has_value())
+    {
+        LOG_DEBUG() << "Model import cancelled by user";
+        return;
+    }
+
+    LOG_INFO() << "Importing model from: " << result.value();
+
+    // Import the model using MeshImporter
+    Core::MeshImporter importer;
+    
+    // Get selected entity as parent (if any)
+    Entity parent;
+    if (!_selectedEntities.empty())
+    {
+        parent = *_selectedEntities.begin();
+    }
+
+    Entity sceneRoot = importer.ImportModel(result.value(), scene.get(), parent ? &parent : nullptr);
+
+    if (sceneRoot)
+    {
+
+        scene->RebuildChildrenForAllEntities();
+        _applicator.CaptureCreate({ sceneRoot.GetAllSiblingsIncludingSelf()});
+        scene->RebuildChildrenForAllEntities();
+
+        _applicator.BeginUndo();
+        _applicator.EndUndo();
+
+        LOG_INFO() << "Model imported successfully";
+        if (_popupManager)
+        {
+            _popupManager->ShowInfo("Import Successful", "3D model imported successfully!");
+        }
+        
+
+    }
+    else
+    {
+        LOG_ERROR() << "Model import failed: " << importer.GetLastError();
+        if (_popupManager)
+        {
+            _popupManager->ShowWarning("Import Failed",
+                "Failed to import model:\n" + importer.GetLastError());
+        }
+    }
 }
 
 // === Context Update ===

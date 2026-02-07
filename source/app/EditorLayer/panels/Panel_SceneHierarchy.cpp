@@ -6,6 +6,7 @@
 #include <imgui/imgui.h>
 #include <core/UUID.h>
 #include <algorithm>
+#include <core/Logger.h>
 
 Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, EditorContext& editorContext) 
     : _scene(&scene), _editorContext(editorContext)
@@ -49,6 +50,20 @@ void Panel_SceneHierarchy::Render()
     {
         _editorContext.BeginUndo();
         auto e = _scene->CreateEntity();
+		e.AddComponent<MeshComponent>("", std::vector<vec3>(),
+                                            std::vector<vec3>(),
+                                            std::vector<vec2>(),
+                                            std::vector<uint32_t>());
+        // Generate random position between 0 and 400
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        static std::uniform_real_distribution<float> dis(0.0f, 4.5f);
+
+        float x = dis(gen);
+        float y = dis(gen);
+        float z = dis(gen);
+		e.GetComponent<Transform>().Position = vec3{ x, y, z };
+        PrintEntityComponents(e);
         _editorContext.applicator().CaptureCreate({e.GetHandle()});
         _editorContext.EndUndo();
     }
@@ -237,6 +252,12 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
         if (selectedEntities.size() > 1) {
             ImGui::Text("(%zu entities selected)", selectedEntities.size());
         }
+        
+        // Add button to print components
+        if (ImGui::Button("Print Components")) {
+            PrintEntityComponents(entity);
+        }
+        
         ImGui::EndTooltip();
     }
 
@@ -586,4 +607,58 @@ void Panel_SceneHierarchy::HandleEmptySpaceDrop(const std::vector<Entity>& rootE
     _editorContext.applicator().CaptureComponentChange<Core::UUID, Parent>(
         { draggedEntity.GetHandle() }, std::move(before), std::move(after));
     _editorContext.EndUndo();
+}
+
+void Panel_SceneHierarchy::PrintEntityComponents(Entity entity)
+{
+    if (!entity) {
+        LOG_INFO() << "PrintEntityComponents: Invalid entity";
+        return;
+    }
+    
+    const NameComponent* nameComp = entity.HasComponent<NameComponent>() 
+        ? &entity.GetComponent<NameComponent>() 
+        : nullptr;
+    
+    LOG_INFO() << "=== Components for Entity: " << (nameComp ? nameComp->name.data : "Unnamed") 
+               << " (UUID: " << entity.UUID().value << ", Handle: " << static_cast<uint32_t>(entt::to_integral(entity.GetHandle())) << ") ===";
+    
+    // Helper lambda to check and print a component type
+    auto printComponent = [&entity](const char* name) {
+        LOG_INFO() << "  - " << name;
+    };
+    
+    // Check each component type from AppComponentTypes
+    if (entity.HasComponent<Core::UUID>()) printComponent("Core::UUID");
+    if (entity.HasComponent<Transform>()) printComponent("Transform");
+    if (entity.HasComponent<LocalToWorld>()) printComponent("LocalToWorld");
+    if (entity.HasComponent<NameComponent>()) printComponent("NameComponent");
+    if (entity.HasComponent<CameraComponent>()) printComponent("CameraComponent");
+    if (entity.HasComponent<FBXSkeletonComponent>()) printComponent("FBXSkeletonComponent");
+    if (entity.HasComponent<FBXSkinComponent>()) printComponent("FBXSkinComponent");
+    if (entity.HasComponent<FBXAnimationComponent>()) printComponent("FBXAnimationComponent");
+    if (entity.HasComponent<SceneData>()) printComponent("SceneData");
+    if (entity.HasComponent<Parent>()) {
+        printComponent("Parent");
+        const auto& parent = entity.GetComponent<Parent>();
+        if (parent.HasParent()) {
+            LOG_INFO() << "    Parent UUID: " << parent.parentUUID.value;
+        }
+    }
+    if (entity.HasComponent<Children>()) {
+        const auto& children = entity.GetComponent<Children>();
+        printComponent("Children");
+        LOG_INFO() << "    Child count: " << children.Count();
+    }
+    if (entity.HasComponent<MeshComponent>()) {
+        const auto& mesh = entity.GetComponent<MeshComponent>();
+        printComponent("MeshComponent");
+        LOG_INFO() << "    Filepath: " << mesh.filepath.data;
+        LOG_INFO() << "    Vertices: " << mesh.vertices.size();
+        LOG_INFO() << "    Normals: " << mesh.normals.size();
+        LOG_INFO() << "    TexCoords: " << mesh.texCoords.size();
+        LOG_INFO() << "    Indices: " << mesh.indices.size();
+    }
+    
+    LOG_INFO() << "=== End of components ===";
 }

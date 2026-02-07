@@ -14,6 +14,7 @@
 #include <core/applicator/SelectionArchive.h>
 #include "components/Components.h"
 #include "Entity.h"
+#include "FbxPlayer.h"
 
 class Scene
 {
@@ -44,6 +45,10 @@ class Scene
 		CameraComponent& GetActiveCamera();
 		void SetActiveCamera(Entity camera) { _activeCamera = camera.GetHandle(); }
 
+		 // FBX Animation playback
+		void UpdateFbxPlayer(float deltaTime) { _fbxPlayer.Update(_registry, deltaTime); }
+		FbxPlayer& GetFbxPlayer() { return _fbxPlayer; }
+
 		// Scene serialization using SelectionArchive
 		bool SaveToFile(const std::string& filepath) const;
 		bool LoadFromFile(const std::string& filepath);
@@ -53,15 +58,18 @@ class Scene
 		inline const entt::registry& GetRegistry() const { return _registry; }
 
         // Create a new entity with DummyComponent and unique name
-        Entity CreateEntity();
+        Entity CreateEntity(const bool addTransform = true);
         
         // Create a named entity
-        Entity CreateEntity(const std::string& name);
-        
+        Entity CreateEntity(const String64& name, const bool addTransform = true);
+
         // Create a camera entity with CameraComponent
         Entity CreateCameraEntity();
 
 		std::set<Entity> GetAllEntities() const;
+		
+		// Get an entity by its UUID
+		Entity GetEntity(uint64_t uuid) const;
 
 		Entity GetSceneEntity() const { return Entity(_sceneEntity, const_cast<entt::registry*>(&_registry)); }
 
@@ -92,6 +100,9 @@ class Scene
 		entt::registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
 		std::string _fileName;
+		
+		 // FBX Animation player
+		FbxPlayer _fbxPlayer;
 		
 		// 3D Camera matrices (computed from CameraComponent)
 		glm::mat4 m_ViewMatrix;

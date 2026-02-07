@@ -6,6 +6,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <filesystem>
 #include <core/Logger.h>
+#include "components/ComponentSerialization.h"
 
 // C++17 compatible helper structs for Scene serialization
 // Must be defined outside function scope for member templates to work
@@ -44,7 +45,8 @@ namespace {
 
 			for (const auto& [entity, component] : storage) {
 				file.write(reinterpret_cast<const char*>(&entity), sizeof(entity));
-				file.write(reinterpret_cast<const char*>(&component), sizeof(component));
+				// Use proper serialization that handles vectors
+				ComponentSerialization::Serialize(file, component);
 			}
 		}
 	};
@@ -91,7 +93,8 @@ namespace {
 				entt::entity entity;
 				ComponentType component;
 				file.read(reinterpret_cast<char*>(&entity), sizeof(entity));
-				file.read(reinterpret_cast<char*>(&component), sizeof(component));
+				// Use proper deserialization that handles vectors
+				ComponentSerialization::Deserialize(file, component);
 				storage[i] = {entity, component};
 			}
 		}
@@ -149,12 +152,96 @@ void Scene::UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4&
 
 void Scene::Draw(Core::DrawCommandRecorder& recorder)
 {
-
+	// Draw cubes for entities with MeshComponent
 	int i = 0;
-	for (auto entity : _registry.view<LocalToWorld>()) {
+	for (auto entity : _registry.view<MeshComponent>()) {
 		auto& localToWorld = _registry.get<LocalToWorld>(entity);
 		recorder.Cube(localToWorld.Value, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 		i++;
+	}
+
+	// Draw skeleton bones as lines
+	auto skeletonView = _registry.view<FBXSkeletonComponent>();
+	for (auto skeletonEntity : skeletonView) {
+		const auto& skeleton = _registry.get<FBXSkeletonComponent>(skeletonEntity);
+		
+		// Get the skeleton entity's world transform (if it has one)
+		glm::mat4 skeletonWorldTransform = glm::mat4(1.0f);
+		
+		if (_registry.all_of<LocalToWorld>(skeletonEntity)) {
+			skeletonWorldTransform = _registry.get<LocalToWorld>(skeletonEntity).Value;
+		}
+		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.05f, .05f, .05f));
+		
+		 // Find root bones (bones with no parent)
+		std::vector<int> rootBones;
+		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+			const FBXBone& bone = skeleton.bones[boneIndex];
+			if (bone.parentIndex < 0) {
+				rootBones.push_back(static_cast<int>(boneIndex));
+			}
+		}
+		
+		// Compute world transforms for all bones hierarchically using depth-first traversal
+		// Each bone's world transform = parent's world transform * bone's animated local transform
+		std::vector<glm::mat4> boneWorldTransforms(skeleton.bones.size());
+		
+		// Recursive function to update bone transforms in hierarchy order
+		std::function<void(int, const glm::mat4&)> updateBoneHierarchy = 
+			[&](int boneIndex, const glm::mat4& parentWorldTransform) {
+			const FBXBone& bone = skeleton.bones[boneIndex];
+			
+			// Compute this bone's world transform
+			boneWorldTransforms[boneIndex] = parentWorldTransform * bone.animatedTransform;
+			
+			// Recursively update all children using stored childIndices
+			for (int childIndex : bone.childIndices) {
+				updateBoneHierarchy(childIndex, boneWorldTransforms[boneIndex]);
+			}
+		};
+		
+		// Start traversal from all root bones
+		for (int rootIndex : rootBones) {
+			updateBoneHierarchy(rootIndex, glm::mat4(1.0f));
+		}
+		
+		// Draw lines from each bone to its parent
+		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+			const FBXBone& bone = skeleton.bones[boneIndex];
+			
+			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
+				// Extract positions from world transforms and apply skeleton world transform
+				glm::vec4 bonePosLocal =  (boneWorldTransforms[boneIndex]) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 parentPosLocal =  (boneWorldTransforms[bone.parentIndex]) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+				glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
+				glm::vec3 parentPos = glm::vec3(skeletonWorldTransform * parentPosLocal);
+
+				// Draw line from parent to child bone
+				recorder.Line(
+					Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
+					Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
+					2.0f, 
+					{ 1.0f, 0.8f, 0.0f, 1.0f }
+				);
+			}
+		}
+		
+		// Draw small spheres at bone positions for visibility
+		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+			glm::vec4 bonePosLocal = boneWorldTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
+			
+			// Draw a small circle at each bone position
+			recorder.Circle(
+				Core::Vec2{ bonePos.x, bonePos.y }, 
+				0.05f, 
+				true, 
+				{ 1.0f, 0.5f, 0.0f, 1.0f }, 
+				8, 
+				1.0f
+			);
+		}
 	}
 }
 
@@ -173,15 +260,15 @@ const std::string& Scene::GetFileName()
 	return _fileName;
 }
 
-Entity Scene::CreateEntity()
+Entity Scene::CreateEntity(const bool addTransform)
 {
 	static int _entityCounter = 0;
 	// Generate unique name
 	std::string entityName = "Entity_" + std::to_string(_entityCounter++);
-	return CreateEntity(entityName);
+	return CreateEntity(entityName, addTransform);
 }
 
-Entity Scene::CreateEntity(const std::string& name)
+Entity Scene::CreateEntity(const String64& name, const bool addTransform)
 {
 	entt::entity e = _registry.create();
 
@@ -190,16 +277,11 @@ Entity Scene::CreateEntity(const std::string& name)
 	// Add name component
 	_registry.emplace<NameComponent>(e, name);
 
-	// Generate random position between 0 and 400
-	static std::random_device rd;
-	static std::mt19937 gen(rd());
-	static std::uniform_real_distribution<float> dis(0.0f, 4.5f);
-	
-	float x = dis(gen);
-	float y = dis(gen);
-
-	_registry.emplace<Transform>(e, Transform{ vec3{x, y, 0.0f} });
-	_registry.emplace<LocalToWorld>(e, LocalToWorld());
+	if (addTransform)
+	{
+		_registry.emplace<Transform>(e, Transform());
+		_registry.emplace<LocalToWorld>(e, LocalToWorld());
+	}
 
 	return Entity(e, &_registry);
 }
@@ -226,6 +308,20 @@ std::set<Entity> Scene::GetAllEntities() const
 			entities.insert(Entity(e, const_cast<entt::registry*>(&_registry)));
 	}
 	return entities;
+}
+
+Entity Scene::GetEntity(uint64_t uuid) const
+{
+	// Search for an entity with the matching UUID
+	auto view = _registry.view<Core::UUID>();
+	for (auto e : view) {
+		if (_registry.get<Core::UUID>(e).value == uuid) {
+			return Entity(e, const_cast<entt::registry*>(&_registry));
+		}
+	}
+	
+	// Return null entity if not found
+	return Entity::Null();
 }
 
 inline CameraComponent& Scene::GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }
@@ -380,9 +476,9 @@ void Scene::SetParent(Entity child, Entity parent)
 		// Find the old parent entity by UUID to rebuild its children
 		if (parentComp.HasParent()) {
 			auto view = _registry.view<Core::UUID>();
-			for (auto entity : view) {
-				if (_registry.get<Core::UUID>(entity).value == parentComp.parentUUID.value) {
-					oldParent = Entity(entity, &_registry);
+			for (auto childEntity : view) {
+				if (_registry.get<Core::UUID>(childEntity).value == parentComp.parentUUID.value) {
+					oldParent = Entity(childEntity, &_registry);
 					break;
 				}
 			}

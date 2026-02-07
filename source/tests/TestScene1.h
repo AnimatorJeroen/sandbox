@@ -73,6 +73,9 @@ public:
 
 		scene->UpdateCameraMatrices(_renderSpecs.width, _renderSpecs.height);
 		scene->UpdateMatrices();
+		
+		// Update FBX animations based on deltaTime
+		scene->UpdateFbxPlayer(deltaTime);
 
 		if (pingpong >= 1.0f || pingpong <= 0.0f) incr = -incr;
 		pingpong = std::min(1.0f, std::max(0.0f, pingpong + incr * deltaTime));

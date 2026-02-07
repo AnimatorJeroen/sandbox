@@ -18,6 +18,10 @@ public:
 	~Panel_SceneHierarchy() = default;
 	void Render();
 	void SetContext(Scene& scene);
+	
+	// Prints all components present on an entity to the console
+	void PrintEntityComponents(Entity entity);
+	
 private:
 	void RenderEntityNode(Entity entity, const std::set<Entity>& selectedEntities, bool& deleteEntitiesPressed);
 	void HandleDragDropSource(Entity entity);
