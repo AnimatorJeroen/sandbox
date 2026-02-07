@@ -9,7 +9,7 @@
 #include <core/BrowserWindow.h>
 #include <core/Logger.h>
 #include "app/event/SceneEvent.h"
-#include "core/importer/MeshImporter.h"
+#include "app/importer/MeshImporter.h"
 #include "PopupManager.h"
 
 EditorContext::EditorContext(
@@ -296,7 +296,7 @@ void EditorContext::ImportModel()
     LOG_INFO() << "Importing model from: " << result.value();
 
     // Import the model using MeshImporter
-    Core::MeshImporter importer;
+    Utils::MeshImporter importer;
     
     // Get selected entity as parent (if any)
     Entity parent;

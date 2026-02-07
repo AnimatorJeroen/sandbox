@@ -11,7 +11,7 @@
 #include <map>
 #include <functional>
 
-namespace Core {
+namespace Utils {
 
     static glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
     {

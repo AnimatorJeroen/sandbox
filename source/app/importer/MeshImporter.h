@@ -12,7 +12,7 @@ class Scene;
 struct aiScene;
 struct aiMesh;
 
-namespace Core {
+namespace Utils {
 
 /// <summary>
 /// MeshImporter handles importing 3D models from various file formats
