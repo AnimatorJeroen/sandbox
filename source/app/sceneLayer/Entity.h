@@ -1,5 +1,6 @@
 #pragma once
 #include <entt/entt.hpp>
+#include "core/Registry.h"
 #include <core/UUID.h>
 
 #include "TransformBundle.h"
@@ -12,7 +13,7 @@ class Entity
 {
 public:
     Entity() : _registry(nullptr), _entityHandle(entt::null) {}
-    Entity(entt::entity handle, entt::registry* registry);
+    Entity(entt::entity handle, Core::Registry* registry);
     Entity(const Entity& other) = default;
 
     /// <summary>
@@ -114,5 +115,5 @@ private:
 
 	void GetAllSiblingsRecursive(Entity parent, std::unordered_set<entt::entity>& siblings) const;
     entt::entity _entityHandle{ entt::null };
-    entt::registry* _registry = nullptr;
+    Core::Registry* _registry = nullptr;
 };

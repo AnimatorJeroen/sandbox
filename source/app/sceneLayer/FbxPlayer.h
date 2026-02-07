@@ -14,7 +14,7 @@ public:
 	~FbxPlayer() = default;
 
 	// Update all FBX animations in the scene
-	void Update(entt::registry& registry, float deltaTime)
+	void Update(Core::Registry& registry, float deltaTime)
 	{
 		// Find all entities with FBXAnimationComponent
 		auto animView = registry.view<FBXAnimationComponent>();
@@ -67,7 +67,7 @@ public:
 	
 private:
 	// Apply animation to skeleton bones
-	void ApplyAnimationToSkeleton(entt::registry& registry, entt::entity animEntity, 
+	void ApplyAnimationToSkeleton(Core::Registry& registry, entt::entity animEntity, 
 	                              const FBXAnimationClip& clip, double currentTime)
 	{
 		if(!registry.all_of<FBXSkeletonComponent>(animEntity))
@@ -226,7 +226,7 @@ private:
 
 public:
 	// Play a specific animation clip on an entity
-	void Play(entt::registry& registry, entt::entity entity, int clipIndex = 0, bool loop = true)
+	void Play(Core::Registry& registry, entt::entity entity, int clipIndex = 0, bool loop = true)
 	{
 		if (!registry.all_of<FBXAnimationComponent>(entity))
 			return;
@@ -246,7 +246,7 @@ public:
 	}
 	
 	// Stop animation on an entity
-	void Stop(entt::registry& registry, entt::entity entity)
+	void Stop(Core::Registry& registry, entt::entity entity)
 	{
 		if (!registry.all_of<FBXAnimationComponent>(entity))
 			return;
@@ -256,7 +256,7 @@ public:
 	}
 	
 	// Pause animation on an entity
-	void Pause(entt::registry& registry, entt::entity entity)
+	void Pause(Core::Registry& registry, entt::entity entity)
 	{
 		if (!registry.all_of<FBXAnimationComponent>(entity))
 			return;
@@ -266,7 +266,7 @@ public:
 	}
 	
 	// Resume animation on an entity
-	void Resume(entt::registry& registry, entt::entity entity)
+	void Resume(Core::Registry& registry, entt::entity entity)
 	{
 		if (!registry.all_of<FBXAnimationComponent>(entity))
 			return;

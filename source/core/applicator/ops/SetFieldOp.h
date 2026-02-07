@@ -14,7 +14,7 @@ namespace Core {
     template<typename FieldTypes>
     class SetFieldOp : public IOp {
     public:
-        SetFieldOp(entt::registry& reg,
+        SetFieldOp(Core::Registry& reg,
             entt::entity e,
             entt::id_type compId,
             const reflection::Path& pathIds,
@@ -28,7 +28,7 @@ namespace Core {
         entt::meta_any resolve() const;
         bool setField(const FieldTypes& value) const;
 
-        entt::registry& _reg;
+        Core::Registry& _reg;
         UUID _entityId;
         entt::id_type _componentType;
         reflection::Path _pathIds;
@@ -44,7 +44,7 @@ namespace Core {
 
     template<typename FieldTypes>
     SetFieldOp<FieldTypes>::SetFieldOp(
-        entt::registry& reg,
+        Core::Registry& reg,
         entt::entity e,
         entt::id_type compId,
         const reflection::Path& pathIds,

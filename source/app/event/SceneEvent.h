@@ -41,6 +41,6 @@ class OnDestroySceneEvent : public Core::IEvent
 {
 public:
 	SET_EVENT_TYPE_FUNCTIONS(OnDestroySceneEvent)
-		OnDestroySceneEvent(entt::registry* reg) : registry(reg) {}
-	entt::registry* registry;
+		OnDestroySceneEvent(Core::Registry* reg) : registry(reg) {}
+	Core::Registry* registry;
 };

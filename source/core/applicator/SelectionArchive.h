@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "../vendor/include/entt/entt.hpp"
+#include "core/Registry.h"
 #include <unordered_set>
 #include <vector>
 #include <tuple>
@@ -164,7 +165,7 @@ namespace Core {
         // Helper to create a snapshot of selected entities with specified components
         template<class... Cs>
         SelectionArchive<Cs...> MakeSnapshot(
-            entt::registry& reg,
+            Core::Registry& reg,
             const std::unordered_set<entt::entity>& sel)
         {
             SelectionArchive<Cs...> archive{ sel };
@@ -185,7 +186,7 @@ namespace Core {
         // Helper: Restore a single component type using the remap table
         template<typename C>
         void restore_component_set(
-            entt::registry& reg,
+            Core::Registry& reg,
             const std::vector<std::pair<entt::entity, C>>& components,
             const std::unordered_map<entt::entity, entt::entity>& remap)
         {
@@ -203,7 +204,7 @@ namespace Core {
 		// Returns the new entities created
         template<class... Cs>
         std::unordered_set<entt::entity> RestoreEntitiesAndComponents(
-            entt::registry& reg,
+            Core::Registry& reg,
             const SelectionArchive<Cs...>& archive)
         {
             // Create new entities and build remap table
@@ -231,7 +232,7 @@ namespace Core {
         // Helper function for C++17 compatibility
         template<class... Cs, std::size_t... Is>
         void restore_all_components(
-            entt::registry& reg,
+            Core::Registry& reg,
             const SelectionArchive<Cs...>& archive,
             const std::unordered_map<entt::entity, entt::entity>& remap,
             std::index_sequence<Is...>)
@@ -241,7 +242,7 @@ namespace Core {
 
         // Create a snapshot of ALL entities in registry (for full scene save)
         template<class... Cs>
-        SelectionArchive<Cs...> MakeFullSnapshot(entt::registry& reg)
+        SelectionArchive<Cs...> MakeFullSnapshot(Core::Registry& reg)
         {
             SelectionArchive<Cs...> archive;
 

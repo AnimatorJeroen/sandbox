@@ -7,6 +7,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "core/Registry.h"
 
 #include <entt/entt.hpp>
 #include <core/renderer/DrawCommandRecorder.h>
@@ -54,8 +55,8 @@ class Scene
 		bool LoadFromFile(const std::string& filepath);
 
 		// Access entt registry
-		inline entt::registry& GetRegistry() { return _registry; }
-		inline const entt::registry& GetRegistry() const { return _registry; }
+		inline Core::Registry& GetRegistry() { return _registry; }
+		inline const Core::Registry& GetRegistry() const { return _registry; }
 
         // Create a new entity with DummyComponent and unique name
         Entity CreateEntity(const bool addTransform = true);
@@ -71,7 +72,7 @@ class Scene
 		// Get an entity by its UUID
 		Entity GetEntity(uint64_t uuid) const;
 
-		Entity GetSceneEntity() const { return Entity(_sceneEntity, const_cast<entt::registry*>(&_registry)); }
+		Entity GetSceneEntity() const { return Entity(_sceneEntity, const_cast<Core::Registry*>(&_registry)); }
 
 		void SetName(const std::string& name);
 		const String64& GetName();
@@ -97,7 +98,7 @@ class Scene
 		entt::entity _sceneEntity;
 		entt::entity _activeCamera = entt::null;
 		int a = 0;
-		entt::registry _registry{};
+		Core::Registry _registry{};
 		std::string _filepath; // File path for this scene (empty for unsaved scenes)
 		std::string _fileName;
 		

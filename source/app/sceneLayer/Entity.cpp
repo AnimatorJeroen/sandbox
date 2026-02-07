@@ -2,7 +2,7 @@
 #include "Entity.h"
 #include "components/Components.h"
 
-Entity::Entity(entt::entity handle, entt::registry* registry)
+Entity::Entity(entt::entity handle, Core::Registry* registry)
     : _entityHandle(handle), _registry(registry)
 {
 }

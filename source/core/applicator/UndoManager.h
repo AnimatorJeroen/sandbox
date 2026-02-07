@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../vendor/include/entt/entt.hpp"
+#include "core/Registry.h"
 #include "UndoableCommand.h"
 #include "core/reflection/Reflection.h"
 #include <stack>
@@ -20,7 +21,7 @@ namespace Core {
 
     // Context struct that holds undo/redo state for a specific registry
     struct UndoContext {
-        entt::registry* registry = nullptr;
+        Core::Registry* registry = nullptr;
         std::stack<UndoableCommand> undoStack;
         std::stack<UndoableCommand> redoStack;
         bool recording = false;
@@ -33,7 +34,7 @@ namespace Core {
     public:
         explicit UndoManager();
         
-        void SetContext(entt::registry* registry) {
+        void SetContext(Core::Registry* registry) {
             auto it = _contexts.find(registry);
             if (it == _contexts.end()) {
                 // Create new context for this registry
@@ -45,7 +46,7 @@ namespace Core {
             _ctx = &_contexts[registry];
         }
 
-        void EraseContext(entt::registry* registry)
+        void EraseContext(Core::Registry* registry)
         {
             auto it = _contexts.find(registry);
             if (it != _contexts.end()) {
@@ -53,7 +54,7 @@ namespace Core {
             }
         }
 
-        bool IsContextDirty(entt::registry& registry) const
+        bool IsContextDirty(Core::Registry& registry) const
         {
             auto it = _contexts.find(&registry);
             if (it != _contexts.end()) {
@@ -62,7 +63,7 @@ namespace Core {
             return false;
         }
 
-        void MarkContextDirty(entt::registry& registry, bool dirty)
+        void MarkContextDirty(Core::Registry& registry, bool dirty)
         {
             auto it = _contexts.find(&registry);
             if (it != _contexts.end()) {
@@ -129,7 +130,7 @@ namespace Core {
         [[nodiscard]] bool IsRecording() const noexcept;
 
         // Get the registry pointer
-        [[nodiscard]] entt::registry* GetRegistry() const noexcept {
+        [[nodiscard]] Core::Registry* GetRegistry() const noexcept {
             return _ctx->registry;
         }
 
@@ -144,7 +145,7 @@ namespace Core {
         }
 
         // Map of registry pointers to their undo contexts
-        std::unordered_map<entt::registry*, UndoContext> _contexts;
+        std::unordered_map<Core::Registry*, UndoContext> _contexts;
         
         // Pointer to the currently active context (always valid, points to _dummyContext or a context in _contexts)
         UndoContext* _ctx;

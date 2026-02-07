@@ -33,7 +33,7 @@ Core::Applicator<AppFieldTypes, AppComponentTypes>& EditorContext::applicator()
 }
 
 // Helper function to recursively collect all descendants of an entity
-static void CollectDescendantsRecursive(Entity entity, entt::registry* registry, std::set<entt::entity>& descendants)
+static void CollectDescendantsRecursive(Entity entity, Core::Registry* registry, std::set<entt::entity>& descendants)
 {
     if (!entity || !entity.HasComponent<Children>())
         return;
@@ -50,7 +50,7 @@ static void CollectDescendantsRecursive(Entity entity, entt::registry* registry,
 }
 
 // Helper function to collect entities and all their descendants
-static std::set<entt::entity> CollectEntitiesWithDescendants(const std::set<Entity>& entities, entt::registry* registry)
+static std::set<entt::entity> CollectEntitiesWithDescendants(const std::set<Entity>& entities, Core::Registry* registry)
 {
     std::set<entt::entity> result;
     

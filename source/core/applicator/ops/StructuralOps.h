@@ -61,12 +61,12 @@ namespace Core {
     public:
         SelectionArchive<Cs...> archive;    // OWNED snapshot (e.g., prefab data)
         std::vector<UUID> createdIds;  // filled on Apply
-        entt::registry& _reg;
+        Core::Registry& _reg;
 
-        explicit CaptureCreateOp(entt::registry& reg) : _reg(reg) {}
+        explicit CaptureCreateOp(Core::Registry& reg) : _reg(reg) {}
 
         // Constructor that takes an archive (for creating from snapshot)
-        CaptureCreateOp(entt::registry& reg, const std::unordered_set<entt::entity>& entities_to_create)
+        CaptureCreateOp(Core::Registry& reg, const std::unordered_set<entt::entity>& entities_to_create)
             : _reg(reg) {
         
             // create snapshot of current selection
@@ -105,12 +105,12 @@ namespace Core {
     public:
         SelectionArchive<Cs...> archive;    // Snapshot taken before destruction
         std::vector<UUID> destroyedIds; // Entities to destroy
-        entt::registry& _reg;
+        Core::Registry& _reg;
 
-        explicit CaptureDeleteOp(entt::registry& reg) : _reg(reg) {}
+        explicit CaptureDeleteOp(Core::Registry& reg) : _reg(reg) {}
 
         // Constructor with entities to destroy (takes snapshot on construction)
-        CaptureDeleteOp(entt::registry& reg, const std::unordered_set<entt::entity>& entities_to_destroy)
+        CaptureDeleteOp(Core::Registry& reg, const std::unordered_set<entt::entity>& entities_to_destroy)
             : _reg(reg) 
         {
             // Take snapshot before destruction
@@ -247,9 +247,9 @@ namespace Core {
         SelectionArchive<Cs...> beforeState;    // State before component change
         SelectionArchive<Cs...> afterState;     // State after component change
         std::vector<UUID> affectedEntityIds;    // UUIDs of affected entities
-        entt::registry& _reg;
+        Core::Registry& _reg;
 
-        explicit CaptureComponentChangeOp(entt::registry& reg) : _reg(reg) {}
+        explicit CaptureComponentChangeOp(Core::Registry& reg) : _reg(reg) {}
 
         /// <summary>
         /// Constructor for component change operation
@@ -259,7 +259,7 @@ namespace Core {
         /// <param name="before">Snapshot of entity state BEFORE the component change</param>
         /// <param name="after">Snapshot of entity state AFTER the component change</param>
         CaptureComponentChangeOp(
-            entt::registry& reg,
+            Core::Registry& reg,
             const std::unordered_set<entt::entity>& entities,
             SelectionArchive<Cs...>&& before,
             SelectionArchive<Cs...>&& after)

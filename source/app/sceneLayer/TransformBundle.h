@@ -22,7 +22,7 @@ public:
     vec3 worldScale;
 
 private:
-	entt::registry* _registry;
+	Core::Registry* _registry;
 
 public:
     TransformBundle() : Position(vec3()),
@@ -32,7 +32,7 @@ public:
     }
     TransformBundle(const TransformBundle& other) = default;
 
-    TransformBundle(entt::registry* registry, vec3& position, vec3& rotation, vec3& scale,
+    TransformBundle(Core::Registry* registry, vec3& position, vec3& rotation, vec3& scale,
         mat4& localToWorld, entt::entity parent = entt::null, const std::vector<entt::entity>& childrenEntities = {}) :
 		_registry(registry),
         Position(position),

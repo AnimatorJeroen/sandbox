@@ -13,7 +13,7 @@
 namespace {
 	struct SceneSaveHelper {
 		template<typename... Cs>
-		static void save(std::ofstream& file, entt::registry& registry, std::tuple<Cs...>*) {
+		static void save(std::ofstream& file, Core::Registry& registry, std::tuple<Cs...>*) {
 			auto archive = Core::ArchiveHelpers::MakeFullSnapshot<Cs...>(registry);
 			
 			// Write entity count
@@ -53,7 +53,7 @@ namespace {
 
 	struct SceneLoadHelper {
 		template<typename... Cs>
-		static void load(std::ifstream& file, entt::registry& registry, std::tuple<Cs...>*) {
+		static void load(std::ifstream& file, Core::Registry& registry, std::tuple<Cs...>*) {
 			Core::SelectionArchive<Cs...> archive;
 
 			// Read entity count
@@ -305,7 +305,7 @@ std::set<Entity> Scene::GetAllEntities() const
 	{
 		// Exclude the scene entity itself
 		if (_sceneEntity != e)
-			entities.insert(Entity(e, const_cast<entt::registry*>(&_registry)));
+			entities.insert(Entity(e, const_cast<Core::Registry*>(&_registry)));
 	}
 	return entities;
 }
@@ -316,7 +316,7 @@ Entity Scene::GetEntity(uint64_t uuid) const
 	auto view = _registry.view<Core::UUID>();
 	for (auto e : view) {
 		if (_registry.get<Core::UUID>(e).value == uuid) {
-			return Entity(e, const_cast<entt::registry*>(&_registry));
+			return Entity(e, const_cast<Core::Registry*>(&_registry));
 		}
 	}
 	
@@ -345,7 +345,7 @@ bool Scene::SaveToFile(const std::string& filepath) const
 
 		// Create archive with all component types (including SceneData on _sceneEntity)
 		// No need to sync camera - SceneData is already the source of truth
-		SceneSaveHelper::save(file, const_cast<entt::registry&>(_registry), static_cast<AppComponentTypes*>(nullptr));
+		SceneSaveHelper::save(file, const_cast<Core::Registry&>(_registry), static_cast<AppComponentTypes*>(nullptr));
 
 		bool success = file.good();
 		file.close();
