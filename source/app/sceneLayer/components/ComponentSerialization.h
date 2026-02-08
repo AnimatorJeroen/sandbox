@@ -202,6 +202,7 @@ namespace ComponentSerialization {
 
     template<>
     inline void Deserialize<FBXSkeletonComponent>(std::ifstream& file, FBXSkeletonComponent& component) {
+        Deserialize(file, component.bones);
         Deserialize(file, component.skeletonName);
     }
 
