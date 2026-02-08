@@ -99,9 +99,7 @@ void EditorContext::Cut()
     _applicator.CopyToClipboard(entityHandles);
 
     // Then delete
-    _applicator.BeginUndo();
-    _applicator.CaptureDelete(entityHandles);
-    _applicator.EndUndo();
+    DeleteSelection();
 
     LOG_DEBUG() << "Cut " << entityHandles.size() << " entities (including descendants)";
 

@@ -194,7 +194,13 @@ namespace Core {
                 auto it = remap.find(old_e);
                 if (it != remap.end()) {
                     entt::entity new_e = it->second;
-                    reg.emplace<C>(new_e, component);
+
+                    if constexpr (std::is_same_v<C, Core::UUID>) {
+                        reg.emplace_or_replace<C>(new_e, component);
+                    }
+                    else {
+                        reg.emplace<C>(new_e, component);
+                    }
                 }
             }
         }
@@ -212,7 +218,7 @@ namespace Core {
             remap.reserve(archive.entities.size());
 
             for (auto old_e : archive.entities) {
-                entt::entity new_e = reg.createWithoutUUID();
+                entt::entity new_e = reg.Create();
                 remap[old_e] = new_e;
             }
 

@@ -10,7 +10,7 @@ namespace Core
 	{
 	public:
 		// Entity creation and destruction
-		entt::entity createWithoutUUID() { return _registry.create(); }
+		//entt::entity createWithoutUUID() { return _registry.create(); }
 		entt::entity Create() { auto e = _registry.create(); auto uuid = _registry.emplace<UUID>(e); _entityToUUID[e] = uuid; return e; }
 		
 		void destroy(entt::entity entity) { _registry.destroy(entity);  _entityToUUID.erase(entity); }
