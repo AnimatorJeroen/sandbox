@@ -41,19 +41,9 @@ void ReflectTypes() {
         .data<&Transform::Rotation, entt::as_ref_t>("Rotation"_hs)
         .data<&Transform::Scale, entt::as_ref_t>("Scale"_hs);
 
-    // Reflect LocalToWorld component
-    entt::meta_factory<LocalToWorld>()
-        .type("LocalToWorld"_hs)
-        .data<&LocalToWorld::Value, entt::as_ref_t>("Value"_hs);
-
     entt::meta_factory<Parent>()
         .type("Parent"_hs)  // Register type name
         .data<&Parent::parentUUID, entt::as_ref_t>("parentUUID"_hs);
-
-    // Reflect Children component
-    entt::meta_factory<Children>()
-        .type("Children"_hs);
-        // Note: std::vector<entt::entity> is not reflected as individual data members
 
     entt::meta_factory<SceneData>()
         .type("Scene"_hs)  // Register type name - THIS IS CRITICAL!
@@ -87,7 +77,6 @@ void ReflectTypes() {
     entt::meta_factory<FBXBone>()
         .type("FBXBone"_hs)
         .data<&FBXBone::name, entt::as_ref_t>("name"_hs)
-        .data<&FBXBone::parentIndex, entt::as_ref_t>("parentIndex"_hs)
         .data<&FBXBone::offsetMatrix, entt::as_ref_t>("offsetMatrix"_hs);
 
     // Reflect FBXVertexWeight

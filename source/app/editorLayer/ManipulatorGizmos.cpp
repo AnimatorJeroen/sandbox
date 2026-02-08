@@ -50,7 +50,7 @@ void EditorApplicationLayer::RenderImGuizmo()
 			currentTransforms.emplace_back(entity, const_cast<Entity&>(entity).GetTransformBundle());
 		}
 	}
-	//remove any entities that are children of other selected entities
+	//remove any entities that are rt_children of other selected entities
 	{
 		std::vector<std::pair<Entity, TransformBundle>> filteredTransforms;
 		for (auto& [entity, transform] : currentTransforms)

@@ -138,7 +138,7 @@ void Scene::UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4&
 	// Compute world matrix by combining parent's world matrix with local matrix
 	localToWorld.Value = parentWorldMatrix * localMatrix;
 	
-	// Recursively update all children with this entity's world matrix
+	// Recursively update all rt_children with this entity's world matrix
 	if (_registry.all_of<Children>(entity)) {
 		const auto& children = _registry.get<Children>(entity);
 		for (entt::entity childEntity : children.children) {
@@ -194,7 +194,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 			// Compute this bone's world transform
 			boneWorldTransforms[boneIndex] = parentWorldTransform * bone.localTransform;
 			
-			// Recursively update all children using stored childIndices
+			// Recursively update all rt_children using stored rt_childIndices
 			for (int childIndex : bone.childIndices) {
 				updateBoneHierarchy(childIndex, boneWorldTransforms[boneIndex]);
 			}
@@ -439,7 +439,7 @@ void Scene::SetParent(Entity child, Entity parent)
 		if (child.HasComponent<Parent>()) {
 			Parent& parentComp = child.GetComponent<Parent>();
 
-			// Find the old parent entity by UUID to rebuild its children
+			// Find the old parent entity by UUID to rebuild its rt_children
 			if (parentComp.HasParent()) {
 				auto view = _registry.view<Core::UUID>();
 				for (auto entity : view) {
@@ -471,7 +471,7 @@ void Scene::SetParent(Entity child, Entity parent)
 			return;
 		}
 
-		// Find the old parent entity by UUID to rebuild its children
+		// Find the old parent entity by UUID to rebuild its rt_children
 		if (parentComp.HasParent()) {
 			auto view = _registry.view<Core::UUID>();
 			for (auto childEntity : view) {
@@ -490,12 +490,12 @@ void Scene::SetParent(Entity child, Entity parent)
 		child.AddComponent<Parent>(parentUUID);
 	}
 
-	// Rebuild children for the old parent (if any)
+	// Rebuild rt_children for the old parent (if any)
 	if (oldParent) {
 		RebuildChildrenForEntity(oldParent);
 	}
 
-	// Rebuild children for the new parent
+	// Rebuild rt_children for the new parent
 	RebuildChildrenForEntity(parent);
 
 	LOG_DEBUG() << "Set parent: child UUID=" << childUUID.value << ", parent UUID=" << parentUUID.value;
@@ -559,7 +559,7 @@ void Scene::RebuildSKeletonForEntity(Entity skeletonEntity)
 	{
 		FBXBone& bone = *skeleton.bones[i];
 		bone.childIndices.clear();
-		// Find all children of this bone
+		// Find all rt_children of this bone
 		for (size_t j = 0; j < skeleton.bones.size(); j++)
 		{
 			if (skeleton.bones[j]->parentIndex == static_cast<int>(i))

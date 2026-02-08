@@ -208,8 +208,6 @@ namespace ComponentSerialization {
     template<>
     inline void Serialize<FBXBone>(std::ofstream& file, const FBXBone& component) {
         Serialize(file, component.name);
-        Serialize(file, component.parentIndex);
-        Serialize(file, component.childIndices);
         Serialize(file, component.offsetMatrix);
         Serialize(file, component.localRestTransform);
     }
@@ -217,8 +215,6 @@ namespace ComponentSerialization {
     template<>
     inline void Deserialize<FBXBone>(std::ifstream& file, FBXBone& component) {
         Deserialize(file, component.name);
-        Deserialize(file, component.parentIndex);
-        Deserialize(file, component.childIndices);
         Deserialize(file, component.offsetMatrix);
         Deserialize(file, component.localRestTransform);
     }
@@ -259,7 +255,6 @@ namespace ComponentSerialization {
         Serialize(file, component.name);
         Serialize(file, component.duration);
         Serialize(file, component.ticksPerSecond);
-        Serialize(file, component.channels);
     }
 
     template<>
@@ -267,7 +262,6 @@ namespace ComponentSerialization {
         Deserialize(file, component.name);
         Deserialize(file, component.duration);
         Deserialize(file, component.ticksPerSecond);
-        Deserialize(file, component.channels);
     }
 
     // FBXAnimationComponent: contains vector of clips
@@ -307,4 +301,7 @@ namespace ComponentSerialization {
         Deserialize(file, component.texCoords);
 	}
 
+    //runtime components, don't need to serialize
+    template<>
+    inline void Serialize<Children>(std::ofstream& file, const Children& component) {}
 } // namespace ComponentSerialization

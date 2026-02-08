@@ -213,7 +213,7 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
                 const aiMatrix4x4& offset = bone->mOffsetMatrix;
                 fbxBone.offsetMatrix = ConvertMatrixToGLMFormat(offset);
                 
-                // Initialize localTransform to identity (will be updated by FbxPlayer)
+                // Initialize rt_localTransform to identity (will be updated by FbxPlayer)
                 fbxBone.localTransform = mat4(1.0f);
 
                 boneDataByAiBoneName[aiBoneName] = boneEntity;

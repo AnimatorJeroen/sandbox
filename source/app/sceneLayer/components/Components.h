@@ -21,15 +21,6 @@ struct Transform {
     vec3 Scale{ 1.f, 1.f, 1.f };
 };
 
-// LocalToWorld component - stores the computed world transformation matrix
-// Similar to Unity DOTS LocalToWorld component
-struct LocalToWorld {
-	mat4 Value{ 1.0f };
-
-	LocalToWorld() = default;
-	LocalToWorld(const mat4& matrix) : Value(matrix) {}
-};
-
 // Parent component - stores the UUID of the parent entity
 // This is the SOURCE OF TRUTH for the entity hierarchy
 // Uses UUID instead of entt::entity for lifetime safety
@@ -42,18 +33,6 @@ struct Parent {
 	bool HasParent() const { return parentUUID.value != 0; }
 };
 
-// Children component - stores entity handles of child entities
-// This is COMPUTED/CACHED data that gets recalculated when hierarchy changes
-// Uses entt::entity for efficient direct access (will be rebuilt when hierarchy changes)
-struct Children {
-	std::vector<entt::entity> children;
-
-	Children() = default;
-	Children(const std::vector<entt::entity>& childList) : children(childList) {}
-	
-	size_t Count() const { return children.size(); }
-	bool HasChildren() const { return !children.empty(); }
-};
 
 // Camera component for camera entities
 struct CameraComponent {
@@ -84,10 +63,12 @@ struct MeshComponent {
 // Bone data structure
 struct FBXBone {
 	String64 name;
-	int parentIndex = -1;  // Index in bones array, -1 for root
-	std::vector<int> childIndices; // Indices of child bones in the bones array
 	mat4 offsetMatrix;     // Transforms from mesh space to bone space (inverse bind pose - constant)
 	mat4 localRestTransform;
+	
+	//runtime data (not serialized, not reflected)
+	int parentIndex = -1;  // Index in bones array, -1 for root
+	std::vector<int> childIndices; // Indices of child bones in the bones array
 	mat4 localTransform; // Current animated local transform (updated by FbxPlayer)
 	
 	FBXBone() : localTransform(1.0f) {}
@@ -104,9 +85,10 @@ struct FBXVertexWeight {
 
 // Skeleton structure containing bone hierarchy
 struct FBXSkeletonComponent {
-	std::vector<FBXBone*> bones;
 	String64 skeletonName;
 	
+	// Runtime data (not serialized, not reflected)
+	std::vector<FBXBone*> bones;
 	FBXSkeletonComponent() = default;
 };
 
@@ -146,12 +128,14 @@ struct FBXScaleKey {
 
 // Animation channel for a single bone
 struct FBXAnimationChannel {
-	int clipIndex = -1;  // Which animation clip this channel belongs to (persistent, stored on bone entity)
-	int boneIndex = -1;  // Runtime-only: bone index in skeleton (set during RebuildChildrenForAllEntities)
+	int clipIndex = -1;
 	std::vector<FBXPositionKey> positionKeys;
 	std::vector<FBXRotationKey> rotationKeys;
 	std::vector<FBXScaleKey> scaleKeys;
 	
+	// Runtime data (not serialized, not reflected)
+	int boneIndex = -1;
+
 	FBXAnimationChannel() = default;
 };
 
@@ -160,6 +144,8 @@ struct FBXAnimationClip {
 	String64 name;
 	double duration;           // Duration in ticks
 	double ticksPerSecond;     // Animation speed
+
+	// Runtime data (not serialized, not reflected)
 	std::vector<FBXAnimationChannel*> channels;
 
 	FBXAnimationClip() = default;
@@ -182,13 +168,42 @@ struct SceneData {
 	String64 _name;
 };
 
+// LocalToWorld component - stores the computed world transformation matrix
+struct LocalToWorld {
+	mat4 Value{ 1.0f };
+
+	LocalToWorld() = default;
+	LocalToWorld(const mat4& matrix) : Value(matrix) {}
+};
+
+
+///////////Runtime components (not serialized and not reflected, used for runtime logic and editor functionality)
+
+// Children component - stores entity handles of child entities
+// This is COMPUTED/CACHED data that gets recalculated when hierarchy changes
+// Uses entt::entity for efficient direct access (will be rebuilt when hierarchy changes)
+struct Children {
+
+	// Runtime data (not serialized, not reflected)
+	std::vector<entt::entity> children;
+
+	Children() = default;
+	Children(const std::vector<entt::entity>& childList) : children(childList) {}
+
+	size_t Count() const { return children.size(); }
+	bool HasChildren() const { return !children.empty(); }
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 // Define all component types here as a tuple
 // Add ALL your component types to this list, to be registered with the Applicator
 using AppComponentTypes = std::tuple<
     Core::UUID,
     Transform,
-    LocalToWorld,
     NameComponent,
+	LocalToWorld,
     CameraComponent,
     MeshComponent,
     FBXSkeletonComponent,
@@ -203,3 +218,4 @@ using AppComponentTypes = std::tuple<
     SceneData,  // Scene root entity marker + metadata
     Parent      // Hierarchy: parent reference (source of truth)
 >;
+
