@@ -38,6 +38,7 @@ class Scene
 		// Camera/View management
 		void UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight);
 		void UpdateMatrices();
+		void UpdateSkeletonMatrices();
 		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		
@@ -107,7 +108,7 @@ class Scene
 
 	private:
 		// Recursive helper for hierarchical transform updates
-		void UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4& parentWorldMatrix);
+		void UpdateMatricesRecursive(entt::entity entity, const glm::mat4& parentWorldMatrix);
 		void RebuildSkeletonForEntity(Entity skeletonEntity);
 		void RebuildAnimChannelsForEntity(Entity animEntity);
 
