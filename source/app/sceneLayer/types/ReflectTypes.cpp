@@ -88,9 +88,7 @@ void ReflectTypes() {
         .type("FBXBone"_hs)
         .data<&FBXBone::name, entt::as_ref_t>("name"_hs)
         .data<&FBXBone::parentIndex, entt::as_ref_t>("parentIndex"_hs)
-        .data<&FBXBone::offsetMatrix, entt::as_ref_t>("offsetMatrix"_hs)
-        .data<&FBXBone::localTransform, entt::as_ref_t>("localTransform"_hs)
-        .data<&FBXBone::animatedTransform, entt::as_ref_t>("animatedTransform"_hs);
+        .data<&FBXBone::offsetMatrix, entt::as_ref_t>("offsetMatrix"_hs);
 
     // Reflect FBXVertexWeight
     entt::meta_factory<FBXVertexWeight>()

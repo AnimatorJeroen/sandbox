@@ -64,11 +64,6 @@ namespace Core {
         auto op = std::make_unique<Core::CaptureCreateOp<Cs...>>(
             *_ctx->registry, selection);
 
-        _ctx->registry->remove<Cs...>(selection.begin(), selection.end());
-
-        // Apply the change
-        op->Apply();
-
         // If we're recording, add to current command
         if (_ctx->recording && _ctx->currentCommand.has_value()) {
             _ctx->currentCommand->AddOp(std::move(op));

@@ -213,7 +213,6 @@ namespace ComponentSerialization {
         Serialize(file, component.parentIndex);
         Serialize(file, component.childIndices);
         Serialize(file, component.offsetMatrix);
-        Serialize(file, component.localTransform);
         Serialize(file, component.localRestTransform);
         Serialize(file, component.animatedTransform);
     }
@@ -224,7 +223,6 @@ namespace ComponentSerialization {
         Deserialize(file, component.parentIndex);
         Deserialize(file, component.childIndices);
         Deserialize(file, component.offsetMatrix);
-        Deserialize(file, component.localTransform);
         Deserialize(file, component.localRestTransform);
         Deserialize(file, component.animatedTransform);
     }

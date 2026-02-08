@@ -87,7 +87,6 @@ struct FBXBone {
 	int parentIndex = -1;  // Index in bones array, -1 for root
 	std::vector<int> childIndices; // Indices of child bones in the bones array
 	mat4 offsetMatrix;     // Transforms from mesh space to bone space (inverse bind pose - constant)
-	mat4 localTransform;   // Local transform relative to parent in bind pose (constant)
 	mat4 localRestTransform;
 	mat4 animatedTransform; // Current animated local transform (updated by FbxPlayer)
 	

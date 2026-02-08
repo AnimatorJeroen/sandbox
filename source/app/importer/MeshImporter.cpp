@@ -226,10 +226,6 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
             bone.parentIndex = parentIdx;
 
             const aiMatrix4x4& transform = node->mTransformation;
-            //bone.localTransform = ConvertMatrixToGLMFormat(transform);
-
-            // Initialize animatedTransform to the bind pose local transform
-            bone.animatedTransform = bone.localTransform;
 
             int currentIdx = static_cast<int>(skeletonComp.bones.size());
             skeletonComp.bones.push_back(bone);
