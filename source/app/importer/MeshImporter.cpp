@@ -254,6 +254,9 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
     };
     buildHierarchy(aiScene->mRootNode, -1);
 
+    //now update the hierarchy based on parent components
+    //order my differ from assimp bone order
+    scene->RebuildChildrenForAllEntities();
 
     //set transforms
     for (auto& boneEntity : bonesByIndex)

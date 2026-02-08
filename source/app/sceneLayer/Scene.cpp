@@ -558,6 +558,7 @@ void Scene::RebuildSKeletonForEntity(Entity& skeletonEntity)
 	for (size_t i = 0; i < skeleton.bones.size(); i++)
 	{
 		FBXBone& bone = *skeleton.bones[i];
+		bone.childIndices.clear();
 		// Find all children of this bone
 		for (size_t j = 0; j < skeleton.bones.size(); j++)
 		{
