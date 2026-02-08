@@ -77,7 +77,7 @@
 		for (const auto& channel : clip.channels)
 		{
 			// Find the bone index by name
-			int boneIndex = channel.boneIndex;//FindBoneIndex(skeleton, channel.boneName);
+			int boneIndex = channel->boneIndex;//FindBoneIndex(skeleton, channel.boneName);
 			if (boneIndex < 0)
 				continue;
 
@@ -92,9 +92,9 @@
 			//glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
 
 
-			vec3 positionAdditive = InterpolatePosition(channel, currentTime);
-			glm::quat rotationAdditive = InterpolateRotation(channel, currentTime);
-			vec3 scaleAdditive = InterpolateScale(channel, currentTime);
+			vec3 positionAdditive = InterpolatePosition(*channel, currentTime);
+			glm::quat rotationAdditive = InterpolateRotation(*channel, currentTime);
+			vec3 scaleAdditive = InterpolateScale(*channel, currentTime);
 
 			mat4 translationMat = glm::translate(mat4(1.0f), positionAdditive);
 			mat4 rotationMat = glm::toMat4(rotationAdditive);

@@ -528,7 +528,7 @@ void Scene::RebuildChildrenForEntity(Entity entity)
 	}
 }
 
-void Scene::RebuildSKeletonForEntity(Entity& skeletonEntity)
+void Scene::RebuildSKeletonForEntity(Entity skeletonEntity)
 {
 	auto& skeleton = skeletonEntity.GetComponent<FBXSkeletonComponent>();
 
@@ -582,5 +582,49 @@ void Scene::RebuildChildrenForAllEntities()
 		RebuildSKeletonForEntity(Entity(entity, &_registry));
 	}
 
+	// Rebuild animation clip channels from bone entity animation channels
+	auto animView = _registry.view<FBXAnimationComponent>();
+	for (auto entity : animView) {
+		RebuildAnimChannelsForEntity(Entity(entity, &_registry));
+	}
+
+}
+
+void Scene::RebuildAnimChannelsForEntity(Entity animEntity)
+{
+	auto& animComp = animEntity.GetComponent<FBXAnimationComponent>();
+
+	// For each clip, rebuild its channels vector from bone entities
+	for (size_t clipIndex = 0; clipIndex < animComp.clips.size(); clipIndex++) {
+		FBXAnimationClip& clip = animComp.clips[clipIndex];
+		clip.channels.clear();
+
+		if (_registry.all_of<FBXSkeletonComponent>(animEntity)) {
+			auto& skeleton = _registry.get<FBXSkeletonComponent>(animEntity);
+
+			for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+				FBXBone* bone = skeleton.bones[boneIndex];
+
+				auto boneView = _registry.view<FBXBone>();
+				for (auto boneEntity : boneView) {
+					FBXBone& boneComp = _registry.get<FBXBone>(boneEntity);
+
+					if (&boneComp == bone) {
+						// Check if this bone entity has an animation channel for this clip
+						if (_registry.all_of<FBXAnimationChannel>(boneEntity)) {
+							FBXAnimationChannel& channel = _registry.get<FBXAnimationChannel>(boneEntity);
+
+							// If this channel belongs to the current clip, add it to the clip's channels
+							if (channel.clipIndex == static_cast<int>(clipIndex)) {
+								channel.boneIndex = static_cast<int>(boneIndex);
+								clip.channels.push_back(&channel);
+							}
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 

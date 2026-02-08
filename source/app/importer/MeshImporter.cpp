@@ -114,7 +114,7 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
 
     if (options.importAnimations && aiScene->mNumAnimations > 0 && skeletonEntity)
     {
-        if (ProcessAnimations(aiScene, &skeletonEntity, &skeletonEntity))
+        if (ProcessAnimations(aiScene, &skeletonEntity, &skeletonEntity, scene))
             _stats.animationCount = aiScene->mNumAnimations;
     }
 
@@ -273,9 +273,9 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
     return true;
 }
 
-bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity, Entity* skeletonEntity)
+bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity, Entity* skeletonEntity, Scene* scene)
 {
-    if (!aiScene || !animationEntity || aiScene->mNumAnimations == 0)
+    if (!aiScene || !animationEntity || !scene || aiScene->mNumAnimations == 0)
         return false;
 
     auto& skeletonComp = skeletonEntity->GetComponent<FBXSkeletonComponent>();
@@ -294,22 +294,34 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
         clip.duration = anim->mDuration;
         clip.ticksPerSecond = anim->mTicksPerSecond != 0.0 ? anim->mTicksPerSecond : 25.0;
 
+        // Process each animation channel and store it on the bone entity
         for (unsigned int c = 0; c < anim->mNumChannels; c++)
         {
             aiNodeAnim* nodeAnim = anim->mChannels[c];
             
             FBXAnimationChannel channel;
+            channel.clipIndex = static_cast<int>(a);  // Set which clip this channel belongs to
+            
             std::string boneName = nodeAnim->mNodeName.C_Str();
 
+            // Find the bone index in the skeleton
+            int boneIndex = -1;
             for (size_t i = 0; i < skeletonComp.bones.size(); i++)
             {
                 if (std::strcmp(skeletonComp.bones[i]->name.data, boneName.data()) == 0)
                 {
-                    channel.boneIndex = static_cast<int>(i);
+                    boneIndex = static_cast<int>(i);
                     break;
                 }
             }
+            
+            if (boneIndex < 0)
+            {
+                LOG_WARN() << "Animation channel bone '" << boneName << "' not found in skeleton";
+                continue;
+            }
         
+            // Load keyframes into the channel
             for (unsigned int k = 0; k < nodeAnim->mNumPositionKeys; k++)
             {
                 const aiVectorKey& key = nodeAnim->mPositionKeys[k];
@@ -334,12 +346,37 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
                 channel.scaleKeys.emplace_back(key.mTime, vec3(key.mValue.x, key.mValue.y, key.mValue.z));
             }
 
-            clip.channels.push_back(channel);
+            // Find the bone entity and add the animation channel to it
+            FBXBone* targetBone = skeletonComp.bones[boneIndex];
+            
+            // Find the bone entity by searching all entities with FBXBone component
+            auto& registry = scene->GetRegistry();
+            auto boneView = registry.view<FBXBone>();
+            for (auto boneEntity : boneView)
+            {
+                FBXBone& boneComp = registry.get<FBXBone>(boneEntity);
+                if (&boneComp == targetBone)
+                {
+                    // Store the channel directly on the bone entity
+                    // Note: This will overwrite any existing channel (limitation: one channel per bone)
+                    // When multiple clips exist, only the last clip's animation will be stored
+                    if (!registry.all_of<FBXAnimationChannel>(boneEntity))
+                    {
+                        registry.emplace<FBXAnimationChannel>(boneEntity, channel);
+                    }
+                    else
+                    {
+                        // Replace with the latest animation clip's channel
+                        registry.replace<FBXAnimationChannel>(boneEntity, channel);
+                    }
+                    break;
+                }
+            }
         }
 
         animComp.clips.push_back(clip);
         
-        LOG_INFO() << "  Animation '" << clip.name << "': " << clip.channels.size() << " channels, duration: " << clip.duration << " ticks";
+        LOG_INFO() << "  Animation '" << clip.name << "': " << anim->mNumChannels << " channels, duration: " << clip.duration << " ticks";
     }
 
     return true;

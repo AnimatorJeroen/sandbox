@@ -146,7 +146,8 @@ struct FBXScaleKey {
 
 // Animation channel for a single bone
 struct FBXAnimationChannel {
-	int boneIndex = -1;
+	int clipIndex = -1;  // Which animation clip this channel belongs to (persistent, stored on bone entity)
+	int boneIndex = -1;  // Runtime-only: bone index in skeleton (set during RebuildChildrenForAllEntities)
 	std::vector<FBXPositionKey> positionKeys;
 	std::vector<FBXRotationKey> rotationKeys;
 	std::vector<FBXScaleKey> scaleKeys;
@@ -159,8 +160,8 @@ struct FBXAnimationClip {
 	String64 name;
 	double duration;           // Duration in ticks
 	double ticksPerSecond;     // Animation speed
-	std::vector<FBXAnimationChannel> channels;
-	
+	std::vector<FBXAnimationChannel*> channels;
+
 	FBXAnimationClip() = default;
 };
 

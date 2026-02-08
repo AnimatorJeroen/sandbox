@@ -104,10 +104,12 @@ class Scene
 		void RebuildChildrenForEntity(Entity entity);
 		void RebuildChildrenForAllEntities();
 
+
 	private:
 		// Recursive helper for hierarchical transform updates
 		void UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4& parentWorldMatrix);
-		void RebuildSKeletonForEntity(Entity& skeletonEntity);
+		void RebuildSKeletonForEntity(Entity skeletonEntity);
+		void RebuildAnimChannelsForEntity(Entity animEntity);
 
 		entt::entity _sceneEntity;
 		entt::entity _activeCamera = entt::null;
