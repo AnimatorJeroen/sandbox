@@ -69,6 +69,7 @@ public:
     TransformBundle GetTransformBundle();
 
 	std::unordered_set<entt::entity> GetAllSiblingsIncludingSelf() const;
+	std::unordered_set<entt::entity> GetAllSiblings() const;
 
 	Entity GetParent() const;
 

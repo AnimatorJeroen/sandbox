@@ -104,7 +104,7 @@ struct FBXVertexWeight {
 
 // Skeleton structure containing bone hierarchy
 struct FBXSkeletonComponent {
-	std::vector<FBXBone> bones;
+	std::vector<FBXBone*> bones;
 	String64 skeletonName;
 	
 	FBXSkeletonComponent() = default;
@@ -146,7 +146,7 @@ struct FBXScaleKey {
 
 // Animation channel for a single bone
 struct FBXAnimationChannel {
-	int boneIndex;
+	int boneIndex = -1;
 	std::vector<FBXPositionKey> positionKeys;
 	std::vector<FBXRotationKey> rotationKeys;
 	std::vector<FBXScaleKey> scaleKeys;

@@ -43,6 +43,13 @@ std::unordered_set<entt::entity> Entity::GetAllSiblingsIncludingSelf() const
     return siblings;
 }
 
+std::unordered_set<entt::entity> Entity::GetAllSiblings() const
+{
+    std::unordered_set<entt::entity> siblings;
+    GetAllSiblingsRecursive(*this, siblings);
+    return siblings;
+}
+
 Entity Entity::GetParent() const
 {
     Entity parentEntity = Entity::Null();
