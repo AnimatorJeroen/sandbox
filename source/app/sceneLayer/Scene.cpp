@@ -192,7 +192,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 			const FBXBone& bone = skeleton.bones[boneIndex];
 			
 			// Compute this bone's world transform
-			boneWorldTransforms[boneIndex] = parentWorldTransform * bone.animatedTransform;
+			boneWorldTransforms[boneIndex] = parentWorldTransform * bone.localTransform;
 			
 			// Recursively update all children using stored childIndices
 			for (int childIndex : bone.childIndices) {

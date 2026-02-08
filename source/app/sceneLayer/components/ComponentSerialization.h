@@ -202,7 +202,6 @@ namespace ComponentSerialization {
 
     template<>
     inline void Deserialize<FBXSkeletonComponent>(std::ifstream& file, FBXSkeletonComponent& component) {
-        Deserialize(file, component.bones);
         Deserialize(file, component.skeletonName);
     }
 
@@ -214,7 +213,6 @@ namespace ComponentSerialization {
         Serialize(file, component.childIndices);
         Serialize(file, component.offsetMatrix);
         Serialize(file, component.localRestTransform);
-        Serialize(file, component.animatedTransform);
     }
 
     template<>
@@ -224,7 +222,6 @@ namespace ComponentSerialization {
         Deserialize(file, component.childIndices);
         Deserialize(file, component.offsetMatrix);
         Deserialize(file, component.localRestTransform);
-        Deserialize(file, component.animatedTransform);
     }
 
     // FBXSkinComponent: contains std::vector<std::array<FBXVertexWeight, 4>> + int

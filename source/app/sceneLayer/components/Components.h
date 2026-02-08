@@ -88,9 +88,9 @@ struct FBXBone {
 	std::vector<int> childIndices; // Indices of child bones in the bones array
 	mat4 offsetMatrix;     // Transforms from mesh space to bone space (inverse bind pose - constant)
 	mat4 localRestTransform;
-	mat4 animatedTransform; // Current animated local transform (updated by FbxPlayer)
+	mat4 localTransform; // Current animated local transform (updated by FbxPlayer)
 	
-	FBXBone() : animatedTransform(1.0f) {}
+	FBXBone() : localTransform(1.0f) {}
 };
 
 // Vertex skinning data

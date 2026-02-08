@@ -76,7 +76,7 @@ private:
 		auto& skeleton = registry.get<FBXSkeletonComponent>(animEntity);
 
 		for (auto& bone : skeleton.bones)
-			bone.animatedTransform = bone.localRestTransform;
+			bone.localTransform = bone.localRestTransform;
 
 		// Apply animation channels to bones
 		for (const auto& channel : clip.channels)
@@ -105,7 +105,7 @@ private:
 			mat4 rotationMat = glm::toMat4(rotationAdditive);
 			mat4 scaleMat = glm::scale(mat4(1.0f), scaleAdditive);
 
-			bone.animatedTransform = translationMat * rotationMat * scaleMat;
+			bone.localTransform = translationMat * rotationMat * scaleMat;
 		}
 
 	}
