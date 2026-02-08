@@ -128,19 +128,20 @@ private:
     inline void GetAllSiblingsRecursiveUntilComponent(Entity parent, std::unordered_set<entt::entity>& siblings) const
     {
 
-        if (parent.HasComponent<Children>())
-        {
-            auto childrenComp = parent.GetComponent<Children>();
-            for (entt::entity childHandle : childrenComp.children)
-            {
-                Entity childEntity(childHandle, _registry);
-                if (childEntity.HasComponent<UntilComponentType>())
-                    continue;
+        if (!parent.HasComponent<Children>())
+            return;
 
-                siblings.insert(childHandle);
-                GetAllSiblingsRecursiveUntilComponent<UntilComponentType>(childEntity, siblings);
-            }
+        auto childrenComp = parent.GetComponent<Children>();
+        for (entt::entity childHandle : childrenComp.children)
+        {
+            Entity childEntity(childHandle, _registry);
+            if (childEntity.HasComponent<UntilComponentType>())
+                continue;
+
+            siblings.insert(childHandle);
+            GetAllSiblingsRecursiveUntilComponent<UntilComponentType>(childEntity, siblings);
         }
+
     }
 
     entt::entity _entityHandle{ entt::null };
