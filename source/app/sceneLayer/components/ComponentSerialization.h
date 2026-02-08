@@ -232,6 +232,17 @@ namespace ComponentSerialization {
         Deserialize(file, component.skeletonEntityIndex);
     }
 
+	// FBXAnimationChannels: contains std::vector<FBXAnimationChannel>
+    template<>
+    inline void Serialize<FBXAnimationChannels>(std::ofstream& file, const FBXAnimationChannels& component) {
+       Serialize(file, component.channels);
+    }
+
+	template<>
+    inline void Deserialize<FBXAnimationChannels>(std::ifstream& file, FBXAnimationChannels& component) {
+        Deserialize(file, component.channels);
+    }
+
     // FBXAnimationChannel: contains multiple vectors
     template<>
     inline void Serialize<FBXAnimationChannel>(std::ofstream& file, const FBXAnimationChannel& component) {

@@ -126,6 +126,10 @@ struct FBXScaleKey {
 	FBXScaleKey(double t, const vec3& v) : time(t), value(v) {}
 };
 
+struct FBXAnimationChannels {
+	std::vector<FBXAnimationChannel> channels;
+};
+
 // Animation channel for a single bone
 struct FBXAnimationChannel {
 	int clipIndex = -1;
@@ -209,6 +213,7 @@ using AppComponentTypes = std::tuple<
     FBXSkeletonComponent,
     FBXSkinComponent,
     FBXAnimationComponent,
+	FBXAnimationChannels,
 	FBXAnimationChannel,
 	FBXBone,
 	FBXVertexWeight,
