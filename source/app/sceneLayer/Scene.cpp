@@ -528,12 +528,12 @@ void Scene::RebuildChildrenForEntity(Entity entity)
 	}
 }
 
-void Scene::RebuildSKeletonForEntity(Entity skeletonEntity)
+void Scene::RebuildSkeletonForEntity(Entity skeletonEntity)
 {
 	auto& skeleton = skeletonEntity.GetComponent<FBXSkeletonComponent>();
 
 	skeleton.bones.clear();
-	auto children = skeletonEntity.GetAllSiblings();
+	auto children = skeletonEntity.GetAllSiblingsUntilComponent<FBXSkeletonComponent>();
 	std::vector<Entity> boneEntities;
 	for (const auto c : children)
 	{
@@ -579,7 +579,7 @@ void Scene::RebuildChildrenForAllEntities()
 
 	auto skeletonView = _registry.view<FBXSkeletonComponent>();
 	for (auto entity : skeletonView) {
-		RebuildSKeletonForEntity(Entity(entity, &_registry));
+		RebuildSkeletonForEntity(Entity(entity, &_registry));
 	}
 
 	// Rebuild animation clip channels from bone entity animation channels
@@ -602,25 +602,31 @@ void Scene::RebuildAnimChannelsForEntity(Entity animEntity)
 		if (_registry.all_of<FBXSkeletonComponent>(animEntity)) {
 			auto& skeleton = _registry.get<FBXSkeletonComponent>(animEntity);
 
+			// For each bone in the skeleton
 			for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
 				FBXBone* bone = skeleton.bones[boneIndex];
 
+				// Find the bone entity by searching through all entities with FBXBone component
 				auto boneView = _registry.view<FBXBone>();
 				for (auto boneEntity : boneView) {
 					FBXBone& boneComp = _registry.get<FBXBone>(boneEntity);
 
 					if (&boneComp == bone) {
-						// Check if this bone entity has an animation channel for this clip
-						if (_registry.all_of<FBXAnimationChannel>(boneEntity)) {
-							FBXAnimationChannel& channel = _registry.get<FBXAnimationChannel>(boneEntity);
+						// Check if this bone entity has animation channels
+						if (_registry.all_of<FBXAnimationChannels>(boneEntity)) {
+							FBXAnimationChannels& animChannels = _registry.get<FBXAnimationChannels>(boneEntity);
 
-							// If this channel belongs to the current clip, add it to the clip's channels
-							if (channel.clipIndex == static_cast<int>(clipIndex)) {
-								channel.boneIndex = static_cast<int>(boneIndex);
-								clip.channels.push_back(&channel);
+							// Find the channel that matches this clipIndex
+							for (auto& channel : animChannels.channels) {
+								if (channel.clipIndex == static_cast<int>(clipIndex)) {
+									// Set the runtime boneIndex and add pointer to clip's channels
+									channel.boneIndex = static_cast<int>(boneIndex);
+									clip.channels.push_back(&channel);
+									break;  // Found the channel for this clip, no need to continue
+								}
 							}
 						}
-						break;
+						break;  // Found the bone entity, no need to continue searching
 					}
 				}
 			}

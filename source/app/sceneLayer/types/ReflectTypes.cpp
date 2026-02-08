@@ -118,8 +118,14 @@ void ReflectTypes() {
     // Reflect FBXAnimationChannel
     entt::meta_factory<FBXAnimationChannel>()
         .type("FBXAnimationChannel"_hs)
-        .data<&FBXAnimationChannel::clipIndex, entt::as_ref_t>("clipIndex"_hs);
+        .data<&FBXAnimationChannel::clipIndex, entt::as_ref_t>("clipIndex"_hs)
+        .data<&FBXAnimationChannel::boneIndex, entt::as_ref_t>("boneIndex"_hs);
         // Note: keyframe vectors not individually reflected
+
+    // Reflect FBXAnimationChannels
+    entt::meta_factory<FBXAnimationChannels>()
+        .type("FBXAnimationChannels"_hs);
+        // Note: channels vector not individually reflected
 
     // Reflect FBXAnimationClip
     entt::meta_factory<FBXAnimationClip>()

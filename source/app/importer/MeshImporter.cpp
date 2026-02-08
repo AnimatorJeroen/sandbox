@@ -357,17 +357,18 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
                 FBXBone& boneComp = registry.get<FBXBone>(boneEntity);
                 if (&boneComp == targetBone)
                 {
-                    // Store the channel directly on the bone entity
-                    // Note: This will overwrite any existing channel (limitation: one channel per bone)
-                    // When multiple clips exist, only the last clip's animation will be stored
-                    if (!registry.all_of<FBXAnimationChannel>(boneEntity))
+                    // Add the channel to the FBXAnimationChannels component
+                    if (!registry.all_of<FBXAnimationChannels>(boneEntity))
                     {
-                        registry.emplace<FBXAnimationChannel>(boneEntity, channel);
+                        FBXAnimationChannels animChannels;
+                        animChannels.channels.push_back(channel);
+                        registry.emplace<FBXAnimationChannels>(boneEntity, animChannels);
                     }
                     else
                     {
-                        // Replace with the latest animation clip's channel
-                        registry.replace<FBXAnimationChannel>(boneEntity, channel);
+                        // Add to existing channels
+                        auto& animChannels = registry.get<FBXAnimationChannels>(boneEntity);
+                        animChannels.channels.push_back(channel);
                     }
                     break;
                 }

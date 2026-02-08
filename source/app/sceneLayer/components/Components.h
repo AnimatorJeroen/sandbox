@@ -126,10 +126,6 @@ struct FBXScaleKey {
 	FBXScaleKey(double t, const vec3& v) : time(t), value(v) {}
 };
 
-struct FBXAnimationChannels {
-	std::vector<FBXAnimationChannel> channels;
-};
-
 // Animation channel for a single bone
 struct FBXAnimationChannel {
 	int clipIndex = -1;
@@ -141,6 +137,13 @@ struct FBXAnimationChannel {
 	int boneIndex = -1;
 
 	FBXAnimationChannel() = default;
+};
+
+// Container for multiple animation channels (one per clip) on a single bone
+struct FBXAnimationChannels {
+	std::vector<FBXAnimationChannel> channels;
+	
+	FBXAnimationChannels() = default;
 };
 
 // Complete animation clip

@@ -108,7 +108,7 @@ class Scene
 	private:
 		// Recursive helper for hierarchical transform updates
 		void UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4& parentWorldMatrix);
-		void RebuildSKeletonForEntity(Entity skeletonEntity);
+		void RebuildSkeletonForEntity(Entity skeletonEntity);
 		void RebuildAnimChannelsForEntity(Entity animEntity);
 
 		entt::entity _sceneEntity;

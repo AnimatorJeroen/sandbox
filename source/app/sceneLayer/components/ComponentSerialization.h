@@ -232,13 +232,13 @@ namespace ComponentSerialization {
         Deserialize(file, component.skeletonEntityIndex);
     }
 
-	// FBXAnimationChannels: contains std::vector<FBXAnimationChannel>
+    // FBXAnimationChannels: contains vector of FBXAnimationChannel
     template<>
     inline void Serialize<FBXAnimationChannels>(std::ofstream& file, const FBXAnimationChannels& component) {
-       Serialize(file, component.channels);
+        Serialize(file, component.channels);
     }
 
-	template<>
+    template<>
     inline void Deserialize<FBXAnimationChannels>(std::ifstream& file, FBXAnimationChannels& component) {
         Deserialize(file, component.channels);
     }
@@ -246,7 +246,7 @@ namespace ComponentSerialization {
     // FBXAnimationChannel: contains multiple vectors
     template<>
     inline void Serialize<FBXAnimationChannel>(std::ofstream& file, const FBXAnimationChannel& component) {
-		Serialize(file, component.clipIndex);
+        Serialize(file, component.clipIndex);
         Serialize(file, component.positionKeys);
         Serialize(file, component.rotationKeys);
         Serialize(file, component.scaleKeys);
@@ -294,7 +294,7 @@ namespace ComponentSerialization {
         Deserialize(file, component.loop);
     }
 
-	// MeshComponent: contains std::vector<uint32_t>
+    // MeshComponent: contains std::vector<uint32_t>
     template<>
     inline void Serialize<MeshComponent>(std::ofstream& file, const MeshComponent& component) {
         Serialize(file, component.filepath);
@@ -310,7 +310,7 @@ namespace ComponentSerialization {
         Deserialize(file, component.normals);
         Deserialize(file, component.vertices);
         Deserialize(file, component.texCoords);
-	}
+    }
 
     //runtime components, don't need to serialize
     template<>
