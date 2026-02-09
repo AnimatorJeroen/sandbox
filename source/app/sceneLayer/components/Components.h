@@ -89,7 +89,7 @@ struct FBXSkeletonComponent {
 	String64 skeletonName;
 	
 	// Runtime data (not serialized, not reflected)
-	std::vector<FBXBone*> bones;
+	std::vector<entt::entity> bones;
 	FBXSkeletonComponent() = default;
 };
 

@@ -14,10 +14,11 @@
 	void FbxPlayer::Update(Scene& scene, float deltaTime)
 	{
 		// Find all entities with FBXAnimationComponent
-		auto animView = scene.GetRegistry().view<FBXAnimationComponent>();
+		auto& registry = scene.GetRegistry();
+		auto animView = registry.view<FBXAnimationComponent>();
 		for (auto animEntity : animView)
 		{
-			auto& animComp = scene.GetRegistry().get<FBXAnimationComponent>(animEntity);
+			auto& animComp = registry.get<FBXAnimationComponent>(animEntity);
 
 			animComp.isPlaying = true;
 			animComp.activeClipIndex = 1;
@@ -57,12 +58,12 @@
 			}
 
 			// Find the skeleton entity and apply animation
-			ApplyAnimationToSkeleton(Entity(animEntity, &scene.GetRegistry()), clip, animComp.currentTime);
+			ApplyAnimationToSkeleton(registry, Entity(animEntity, &registry), clip, animComp.currentTime);
 		}
 	}
 
 	// Apply animation to skeleton bones
-	void FbxPlayer::ApplyAnimationToSkeleton(Entity animEntity,
+	void FbxPlayer::ApplyAnimationToSkeleton(Core::Registry& registry, Entity animEntity,
 		const FBXAnimationClip& clip, double currentTime)
 	{
 		if (!animEntity.HasComponent<FBXSkeletonComponent>())
@@ -70,19 +71,22 @@
 
 		auto& skeleton = animEntity.GetComponent<FBXSkeletonComponent>();
 
-		for (auto& bone : skeleton.bones)
-			bone->localTransform = bone->localRestTransform;
+		// Reset all bones to rest transform
+		for (auto boneEntity : skeleton.bones)
+		{
+			FBXBone& bone = registry.get<FBXBone>(boneEntity);
+			bone.localTransform = bone.localRestTransform;
+		}
 
 		// Apply animation channels to bones
 		for (const auto& channel : clip.channels)
 		{
 			// Find the bone index by name
-			int boneIndex = channel->boneIndex;//FindBoneIndex(skeleton, channel.boneName);
-			if (boneIndex < 0)
+			int boneIndex = channel->boneIndex;//FindBoneIndex(registry, skeleton, channel.boneName);
+			if (boneIndex < 0 || boneIndex >= static_cast<int>(skeleton.bones.size()))
 				continue;
 
-			FBXBone& bone = *skeleton.bones[boneIndex];
-
+			FBXBone& bone = registry.get<FBXBone>(skeleton.bones[boneIndex]);
 
 			//vec3 position;
 			//glm::quat rotation;
@@ -90,7 +94,6 @@
 			//glm::vec3 skew;
 			//glm::vec4 perspective;
 			//glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
-
 
 			vec3 positionAdditive = InterpolatePosition(*channel, currentTime);
 			glm::quat rotationAdditive = InterpolateRotation(*channel, currentTime);
@@ -106,21 +109,23 @@
 	}
 
 	// Find bone index by name
-	int FbxPlayer::FindBoneIndex(const FBXSkeletonComponent& skeleton, const String64& boneName) const
+	int FbxPlayer::FindBoneIndex(Core::Registry& registry, const FBXSkeletonComponent& skeleton, const String64& boneName) const
 	{
 		for (size_t i = 0; i < skeleton.bones.size(); i++)
 		{
+			FBXBone& bone = registry.get<FBXBone>(skeleton.bones[i]);
 			// First try exact match
-			if (std::strcmp(skeleton.bones[i]->name.data, boneName.data) == 0)
+			if (std::strcmp(bone.name.data, boneName.data) == 0)
 				return static_cast<int>(i);
 		}
 		for (size_t i = 0; i < skeleton.bones.size(); i++)
 		{
+			FBXBone& bone = registry.get<FBXBone>(skeleton.bones[i]);
 			// Second try: strip last character from skeleton bone name
 
-			if (skeleton.bones[i]->name.length() > boneName.length())
+			if (bone.name.length() > boneName.length())
 			{
-				std::string skeletonBoneName = skeleton.bones[i]->name.data;
+				std::string skeletonBoneName = bone.name.data;
 				std::string strippedName = skeletonBoneName.substr(0, boneName.length());
 				if (std::strcmp(strippedName.data(), boneName.data) == 0)
 					return static_cast<int>(i);
@@ -128,8 +133,8 @@
 			else
 			{
 				std::string skeletonBoneName = boneName.data;
-				std::string strippedName = skeletonBoneName.substr(0, skeleton.bones[i]->name.length());
-				if (std::strcmp(strippedName.data(), skeleton.bones[i]->name.data) == 0)
+				std::string strippedName = skeletonBoneName.substr(0, bone.name.length());
+				if (std::strcmp(strippedName.data(), bone.name.data) == 0)
 					return static_cast<int>(i);
 			}
 		}

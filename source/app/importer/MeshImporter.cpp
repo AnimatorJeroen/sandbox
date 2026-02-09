@@ -105,8 +105,12 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
             if (ProcessSkeleton(aiScene, &skeletonEntity, scene))
             {
                 auto& skeletonComp = skeletonEntity.GetComponent<FBXSkeletonComponent>();
+                auto& registry = scene->GetRegistry();
                 for (size_t i = 0; i < skeletonComp.bones.size(); i++)
-                    boneNameToIndex[skeletonComp.bones[i]->name] = static_cast<int>(i);
+                {
+                    FBXBone& bone = registry.get<FBXBone>(skeletonComp.bones[i]);
+                    boneNameToIndex[bone.name.to_string()] = static_cast<int>(i);
+                }
                 _stats.boneCount = static_cast<int>(skeletonComp.bones.size());
             }
         }
@@ -308,7 +312,8 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
             int boneIndex = -1;
             for (size_t i = 0; i < skeletonComp.bones.size(); i++)
             {
-                if (std::strcmp(skeletonComp.bones[i]->name.data, boneName.data()) == 0)
+                FBXBone& bone = scene->GetRegistry().get<FBXBone>(skeletonComp.bones[i]);
+                if (std::strcmp(bone.name.data, boneName.data()) == 0)
                 {
                     boneIndex = static_cast<int>(i);
                     break;
@@ -346,32 +351,22 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
                 channel.scaleKeys.emplace_back(key.mTime, vec3(key.mValue.x, key.mValue.y, key.mValue.z));
             }
 
-            // Find the bone entity and add the animation channel to it
-            FBXBone* targetBone = skeletonComp.bones[boneIndex];
+            // Get the bone entity directly from skeleton bones array
+            entt::entity boneEntity = skeletonComp.bones[boneIndex];
             
-            // Find the bone entity by searching all entities with FBXBone component
+            // Add the channel to the FBXAnimationChannels component
             auto& registry = scene->GetRegistry();
-            auto boneView = registry.view<FBXBone>();
-            for (auto boneEntity : boneView)
+            if (!registry.all_of<FBXAnimationChannels>(boneEntity))
             {
-                FBXBone& boneComp = registry.get<FBXBone>(boneEntity);
-                if (&boneComp == targetBone)
-                {
-                    // Add the channel to the FBXAnimationChannels component
-                    if (!registry.all_of<FBXAnimationChannels>(boneEntity))
-                    {
-                        FBXAnimationChannels animChannels;
-                        animChannels.channels.push_back(channel);
-                        registry.emplace<FBXAnimationChannels>(boneEntity, animChannels);
-                    }
-                    else
-                    {
-                        // Add to existing channels
-                        auto& animChannels = registry.get<FBXAnimationChannels>(boneEntity);
-                        animChannels.channels.push_back(channel);
-                    }
-                    break;
-                }
+                FBXAnimationChannels animChannels;
+                animChannels.channels.push_back(channel);
+                registry.emplace<FBXAnimationChannels>(boneEntity, animChannels);
+            }
+            else
+            {
+                // Add to existing channels
+                auto& animChannels = registry.get<FBXAnimationChannels>(boneEntity);
+                animChannels.channels.push_back(channel);
             }
         }
 

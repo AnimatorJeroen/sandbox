@@ -158,7 +158,7 @@ void Scene::UpdateSkeletonMatrices()
 		// Find root bones (bones with no parent)
 		std::vector<int> rootBones;
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			const FBXBone& bone = *skeleton.bones[boneIndex];
+			const FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[boneIndex]);
 			if (bone.parentIndex < 0) {
 				rootBones.push_back(static_cast<int>(boneIndex));
 			}
@@ -167,7 +167,7 @@ void Scene::UpdateSkeletonMatrices()
 		// Recursive function to update bone transforms in hierarchy order
 		std::function<void(int, const glm::mat4&)> updateBoneHierarchy =
 			[&](int boneIndex, const glm::mat4& parentWorldTransform) {
-			FBXBone& bone = *skeleton.bones[boneIndex];
+			FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[boneIndex]);
 
 			// Compute this bone's world transform
 			bone.localToWorld = parentWorldTransform * bone.localTransform;
@@ -229,15 +229,15 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 
 		// Draw lines from each bone to its parent
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			const FBXBone& bone = *skeleton.bones[boneIndex];
+			const FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[boneIndex]);
 			
 			//find parentBone
-
 
 			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
 				// Extract positions from world transforms and apply skeleton world transform
 				glm::vec4 bonePos =  bone.localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				glm::vec4 parentPos =  skeleton.bones[bone.parentIndex]->localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				const FBXBone& parentBone = _registry.get<FBXBone>(skeleton.bones[bone.parentIndex]);
+				glm::vec4 parentPos =  parentBone.localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 				// Draw line from parent to child bone
 				recorder.Line(
@@ -250,8 +250,9 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		}
 		
 		// Draw small spheres at bone positions for visibility
-		for (const auto* bone : skeleton.bones) {
-			glm::vec4 bonePos = bone->localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		for (const auto boneEntity : skeleton.bones) {
+			const FBXBone& bone = _registry.get<FBXBone>(boneEntity);
+			glm::vec4 bonePos = bone.localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 			// Draw a small circle at each bone position
 			recorder.Circle(
@@ -557,14 +558,14 @@ void Scene::RebuildSkeletonForEntity(Entity skeletonEntity)
 	{
 		if (!_registry.any_of<FBXBone>(c))
 			continue;
-		skeleton.bones.emplace_back(&_registry.get<FBXBone>(c));
+		skeleton.bones.emplace_back(c);
 		boneEntities.emplace_back(Entity(c, &_registry));
 	}
 
 	//now update indices for easy lookup
 	for (size_t i = 0; i < skeleton.bones.size(); i++)
 	{
-		FBXBone& bone = *skeleton.bones[i];
+		FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[i]);
 		const Entity& boneEntity = boneEntities[i];
 		Entity parent = boneEntity.GetParent();
 		if (!parent)
@@ -575,12 +576,13 @@ void Scene::RebuildSkeletonForEntity(Entity skeletonEntity)
 	
 	for (size_t i = 0; i < skeleton.bones.size(); i++)
 	{
-		FBXBone& bone = *skeleton.bones[i];
+		FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[i]);
 		bone.childIndices.clear();
 		// Find all rt_children of this bone
 		for (size_t j = 0; j < skeleton.bones.size(); j++)
 		{
-			if (skeleton.bones[j]->parentIndex == static_cast<int>(i))
+			FBXBone& childBone = _registry.get<FBXBone>(skeleton.bones[j]);
+			if (childBone.parentIndex == static_cast<int>(i))
 			{
 				bone.childIndices.push_back(static_cast<int>(j));
 			}
@@ -622,29 +624,20 @@ void Scene::RebuildAnimChannelsForEntity(Entity animEntity)
 
 			// For each bone in the skeleton
 			for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-				FBXBone* bone = skeleton.bones[boneIndex];
+				entt::entity boneEntity = skeleton.bones[boneIndex];
 
-				// Find the bone entity by searching through all entities with FBXBone component
-				auto boneView = _registry.view<FBXBone>();
-				for (auto boneEntity : boneView) {
-					FBXBone& boneComp = _registry.get<FBXBone>(boneEntity);
+				// Check if this bone entity has animation channels
+				if (_registry.all_of<FBXAnimationChannels>(boneEntity)) {
+					FBXAnimationChannels& animChannels = _registry.get<FBXAnimationChannels>(boneEntity);
 
-					if (&boneComp == bone) {
-						// Check if this bone entity has animation channels
-						if (_registry.all_of<FBXAnimationChannels>(boneEntity)) {
-							FBXAnimationChannels& animChannels = _registry.get<FBXAnimationChannels>(boneEntity);
-
-							// Find the channel that matches this clipIndex
-							for (auto& channel : animChannels.channels) {
-								if (channel.clipIndex == static_cast<int>(clipIndex)) {
-									// Set the runtime boneIndex and add pointer to clip's channels
-									channel.boneIndex = static_cast<int>(boneIndex);
-									clip.channels.push_back(&channel);
-									break;  // Found the channel for this clip, no need to continue
-								}
-							}
+					// Find the channel that matches this clipIndex
+					for (auto& channel : animChannels.channels) {
+						if (channel.clipIndex == static_cast<int>(clipIndex)) {
+							// Set the runtime boneIndex and add pointer to clip's channels
+							channel.boneIndex = static_cast<int>(boneIndex);
+							clip.channels.push_back(&channel);
+							break;  // Found the channel for this clip, no need to continue
 						}
-						break;  // Found the bone entity, no need to continue searching
 					}
 				}
 			}

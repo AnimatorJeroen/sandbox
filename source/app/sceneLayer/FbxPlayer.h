@@ -14,11 +14,11 @@ public:
 	void Update(Scene& scene, float deltaTime);
 private:
 	// Apply animation to skeleton bones
-	void ApplyAnimationToSkeleton(Entity animEntity,
+	void ApplyAnimationToSkeleton(Core::Registry& registry, Entity animEntity,
 		const FBXAnimationClip& clip, double currentTime);
 	
 	// Find bone index by name
-	int FindBoneIndex(const FBXSkeletonComponent& skeleton, const String64& boneName) const;
+	int FindBoneIndex(Core::Registry& registry, const FBXSkeletonComponent& skeleton, const String64& boneName) const;
 	
 	// Interpolate position between keyframes
 	vec3 InterpolatePosition(const FBXAnimationChannel& channel, double time) const;
