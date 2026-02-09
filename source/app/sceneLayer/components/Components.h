@@ -72,7 +72,7 @@ struct FBXBone {
 	mat4 localTransform; // Current animated local transform (updated by FbxPlayer)
 	mat4 localToWorld; // Current animated world transform
 	
-	FBXBone() : localTransform(1.0f) {}
+	FBXBone() /*: localTransform(1.0f)*/ {}
 };
 
 // Vertex skinning data

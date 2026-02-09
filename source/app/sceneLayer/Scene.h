@@ -20,16 +20,8 @@
 class Scene
 {
 	public:
-		Scene() {
-			_sceneEntity = _registry.Create(); 
-			_registry.emplace<SceneData>(_sceneEntity);
-			
-			 // Create default camera entity
-			_activeCamera = CreateCameraEntity();
-		}
-		~Scene() {
-			_registry.clear();
-		}
+		Scene();
+		~Scene();
 
 		Scene(const Scene&) {}
 		

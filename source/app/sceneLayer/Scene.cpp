@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <core/Logger.h>
 #include "components/ComponentSerialization.h"
+#include "components/SetupComponentGroups.h"
 
 // C++17 compatible helper structs for Scene serialization
 // Must be defined outside function scope for member templates to work
@@ -99,6 +100,20 @@ namespace {
 			}
 		}
 	};
+}
+
+Scene::Scene() {
+	_sceneEntity = _registry.Create();
+	_registry.emplace<SceneData>(_sceneEntity);
+
+	// Setup component groups for performance optimization
+	SetupComponentGroups(_registry.GetRegistry());
+
+	// Create default camera entity
+	_activeCamera = CreateCameraEntity();
+}
+Scene::~Scene() {
+	_registry.clear();
 }
 
 void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight)
@@ -224,9 +239,6 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 				glm::vec4 bonePos =  bone.localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 				glm::vec4 parentPos =  skeleton.bones[bone.parentIndex]->localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-				//bonePos = glm::vec3(skeletonWorldTransform * bonePos);
-				//parentPos = glm::vec3(skeletonWorldTransform * parentPos);
-
 				// Draw line from parent to child bone
 				recorder.Line(
 					Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
@@ -240,8 +252,7 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		// Draw small spheres at bone positions for visibility
 		for (const auto* bone : skeleton.bones) {
 			glm::vec4 bonePos = bone->localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-			//glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
-			
+
 			// Draw a small circle at each bone position
 			recorder.Circle(
 				Core::Vec2{ bonePos.x, bonePos.y }, 
