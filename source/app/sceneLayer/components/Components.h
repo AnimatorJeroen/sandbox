@@ -69,8 +69,7 @@ struct FBXBone {
 	//runtime data (not serialized, not reflected)
 	int parentIndex = -1;  // Index in bones array, -1 for root
 	std::vector<int> childIndices; // Indices of child bones in the bones array
-	mat4 localTransform; // Current animated local transform (updated by FbxPlayer)
-	
+
 	FBXBone() /*: localTransform(1.0f)*/ {}
 };
 

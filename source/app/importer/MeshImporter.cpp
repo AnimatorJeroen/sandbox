@@ -81,6 +81,7 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
     Entity rootEntity = scene->CreateEntity(filename);
     if (parent)
         scene->SetParent(rootEntity, *parent);
+    rootEntity.GetComponent<Transform>().Scale = vec3(0.05, 0.05, 0.05);
 
     Entity skeletonEntity;
     std::map<std::string, int> boneNameToIndex;
@@ -217,8 +218,6 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
                 const aiMatrix4x4& offset = bone->mOffsetMatrix;
                 fbxBone.offsetMatrix = ConvertMatrixToGLMFormat(offset);
                 
-                // Initialize localTransform to identity (will be updated by FbxPlayer)
-                fbxBone.localTransform = mat4(1.0f);
 
                 boneDataByAiBoneName[aiBoneName] = boneEntity;
                 bonesByIndex.emplace_back(boneEntity);

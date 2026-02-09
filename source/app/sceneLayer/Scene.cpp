@@ -136,54 +136,6 @@ void Scene::UpdateMatrices()
 			UpdateMatricesRecursive(entity, glm::mat4(1.0f));
 		}
 	}
-
-	UpdateSkeletonMatrices();
-}
-
-void Scene::UpdateSkeletonMatrices()
-{
-	// Update skeleton bone world transforms
-	auto skeletonView = _registry.view<FBXSkeletonComponent>();
-	for (auto skeletonEntity : skeletonView) {
-		const auto& skeleton = _registry.get<FBXSkeletonComponent>(skeletonEntity);
-
-		// Get the skeleton entity's world transform (if it has one)
-		glm::mat4 skeletonWorldTransform = glm::mat4(1.0f);
-
-		if (_registry.all_of<LocalToWorld>(skeletonEntity)) {
-			skeletonWorldTransform = _registry.get<LocalToWorld>(skeletonEntity).Value;
-		}
-		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.05f, .05f, .05f));
-
-		// Find root bones (bones with no parent)
-		std::vector<int> rootBones;
-		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			const FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[boneIndex]);
-			if (bone.parentIndex < 0) {
-				rootBones.push_back(static_cast<int>(boneIndex));
-			}
-		}
-
-		// Recursive function to update bone transforms in hierarchy order
-		std::function<void(int, const glm::mat4&)> updateBoneHierarchy =
-			[&](int boneIndex, const glm::mat4& parentWorldTransform) {
-			entt::entity boneEntity = skeleton.bones[boneIndex];
-			auto [bone, localToWorld] = _registry.get<FBXBone, LocalToWorld>(boneEntity);
-
-			// Compute this bone's world transform
-			localToWorld.Value = parentWorldTransform * bone.localTransform;
-
-			// Recursively update all child bones using stored childIndices
-			for (int childIndex : bone.childIndices) {
-				updateBoneHierarchy(childIndex, localToWorld.Value);
-			}
-			};
-
-		// Start traversal from all root bones
-		for (int rootIndex : rootBones) {
-			updateBoneHierarchy(rootIndex, skeletonWorldTransform);
-		}
-	}
 }
 
 void Scene::UpdateMatricesRecursive(entt::entity entity, const mat4& parentWorldTransform)

@@ -74,8 +74,20 @@
 		// Reset all bones to rest transform
 		for (auto boneEntity : skeleton.bones)
 		{
+			//@Todo: expensive, pos rot scale rest should be stored once
 			FBXBone& bone = registry.get<FBXBone>(boneEntity);
-			bone.localTransform = bone.localRestTransform;
+
+			vec3 position;
+			glm::quat rotation;
+			vec3 scale;
+			glm::vec3 skew;
+			glm::vec4 perspective;
+			glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
+
+			Transform& transform = registry.get<Transform>(boneEntity);
+			transform.Position = position;
+			transform.Rotation = glm::degrees(glm::eulerAngles(rotation));
+			transform.Scale = scale;
 		}
 
 		// Apply animation channels to bones
@@ -86,8 +98,6 @@
 			if (boneIndex < 0 || boneIndex >= static_cast<int>(skeleton.bones.size()))
 				continue;
 
-			FBXBone& bone = registry.get<FBXBone>(skeleton.bones[boneIndex]);
-
 			//vec3 position;
 			//glm::quat rotation;
 			//vec3 scale;
@@ -95,15 +105,20 @@
 			//glm::vec4 perspective;
 			//glm::decompose(bone.localRestTransform, scale, rotation, position, skew, perspective);
 
-			vec3 positionAdditive = InterpolatePosition(*channel, currentTime);
-			glm::quat rotationAdditive = InterpolateRotation(*channel, currentTime);
-			vec3 scaleAdditive = InterpolateScale(*channel, currentTime);
+			Transform& transform = registry.get<Transform>(skeleton.bones[boneIndex]);
 
-			mat4 translationMat = glm::translate(mat4(1.0f), positionAdditive);
-			mat4 rotationMat = glm::toMat4(rotationAdditive);
-			mat4 scaleMat = glm::scale(mat4(1.0f), scaleAdditive);
+			vec3 position = InterpolatePosition(*channel, currentTime);
+			glm::quat rotation = InterpolateRotation(*channel, currentTime);
+			vec3 scale = InterpolateScale(*channel, currentTime);
 
-			bone.localTransform = translationMat * rotationMat * scaleMat;
+			//mat4 translationMat = glm::translate(mat4(1.0f), position);
+			//mat4 rotationMat = glm::toMat4(rotation);
+			//mat4 scaleMat = glm::scale(mat4(1.0f), scale);
+			////bone.localTransform = translationMat * rotationMat * scaleMat;
+
+			transform.Position = position;
+			transform.Rotation = glm::degrees(glm::eulerAngles(rotation));
+			transform.Scale = scale;
 		}
 
 	}

@@ -30,7 +30,6 @@ class Scene
 		// Camera/View management
 		void UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight);
 		void UpdateMatrices();
-		void UpdateSkeletonMatrices();
 		const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; }
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		
