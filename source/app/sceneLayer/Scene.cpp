@@ -214,6 +214,17 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 						2.0f, 
 						{ 1.0f, 0.8f, 0.0f, 1.0f }
 					);
+
+					//draw a box around the bone
+					float length = std::sqrt(std::pow(bonePos.x - parentPos.x, 2) + std::pow(bonePos.y - parentPos.y, 2) + std::pow(bonePos.z - parentPos.z, 2));
+					glm::vec3 translation = vec3(parentPos) + (vec3(bonePos - parentPos) * 0.5f);
+					glm::mat4 rotation = glm::toMat4(glm::quatLookAt(glm::normalize(vec3(bonePos - parentPos)), vec3(0.f, 1.f, 0.f)));
+
+					glm::mat4 boneBoxMat = glm::translate(glm::mat4(1.0f), translation)
+						* rotation
+						* glm::scale(glm::mat4(1.0f), vec3(10, 10, length));
+
+					recorder.Cube(boneBoxMat, { 0.2f + boneIndex * 0.1f, 0.5f, 1.0f, 1.0f });
 				}
 			}
 		}

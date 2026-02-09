@@ -126,7 +126,7 @@ void CameraController::ZoomCamera(float zoomDelta)
 	
 	// Clamp minimum distance to avoid getting too close
 	const float minDistance = 0.1f;
-	const float maxDistance = 1000.0f;
+	const float maxDistance = 100000.0f;
 	newDistance = glm::clamp(newDistance, minDistance, maxDistance);
 
 	// Update camera position

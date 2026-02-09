@@ -81,7 +81,6 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
     Entity rootEntity = scene->CreateEntity(filename);
     if (parent)
         scene->SetParent(rootEntity, *parent);
-    rootEntity.GetComponent<Transform>().Scale = vec3(0.05, 0.05, 0.05);
 
     Entity skeletonEntity;
     std::map<std::string, int> boneNameToIndex;

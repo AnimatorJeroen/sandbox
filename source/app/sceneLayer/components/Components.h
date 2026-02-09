@@ -36,12 +36,12 @@ struct Parent {
 
 // Camera component for camera entities
 struct CameraComponent {
-	vec3 position{0.0f, 5.0f, 10.0f};
+	vec3 position{ 500.0f, 250.0f, 500.0f};
 	vec3 target{0.0f, 0.0f, 0.0f};
 	vec3 up{0.0f, 1.0f, 0.0f};
 	float fov = 45.0f;
 	float nearPlane = 0.01f;
-	float farPlane = 10000.0f;
+	float farPlane = 100000.0f;
 
 	CameraComponent() = default;
 };
