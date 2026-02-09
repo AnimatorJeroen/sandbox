@@ -62,15 +62,10 @@ struct MeshComponent {
 
 // Bone data structure
 struct FBXBone {
-	String64 name;
 	mat4 offsetMatrix;     // Transforms from mesh space to bone space (inverse bind pose - constant)
 	mat4 localRestTransform;
 	
-	//runtime data (not serialized, not reflected)
-	int parentIndex = -1;  // Index in bones array, -1 for root
-	std::vector<int> childIndices; // Indices of child bones in the bones array
-
-	FBXBone() /*: localTransform(1.0f)*/ {}
+	FBXBone() = default;
 };
 
 // Vertex skinning data
@@ -84,8 +79,6 @@ struct FBXVertexWeight {
 
 // Skeleton structure containing bone hierarchy
 struct FBXSkeletonComponent {
-	String64 skeletonName;
-	
 	// Runtime data (not serialized, not reflected)
 	std::vector<entt::entity> bones;
 	FBXSkeletonComponent() = default;

@@ -109,8 +109,8 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
                 auto& registry = scene->GetRegistry();
                 for (size_t i = 0; i < skeletonComp.bones.size(); i++)
                 {
-                    FBXBone& bone = registry.get<FBXBone>(skeletonComp.bones[i]);
-                    boneNameToIndex[bone.name.to_string()] = static_cast<int>(i);
+                    NameComponent& name = registry.get<NameComponent>(skeletonComp.bones[i]);
+                    boneNameToIndex[name.name.to_string()] = static_cast<int>(i);
                 }
                 _stats.boneCount = static_cast<int>(skeletonComp.bones.size());
             }
@@ -187,7 +187,6 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
         return false;
 
     auto& skeletonComp = skeletonEntity->AddComponent<FBXSkeletonComponent>();
-    skeletonComp.skeletonName = skeletonEntity->GetComponent<NameComponent>().name.to_string();
 
     // Map aiBone name to bone data (offsetMatrix, etc.)
     std::map<std::string, Entity> boneDataByAiBoneName;
@@ -213,8 +212,6 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
 
                 auto& fbxBone = boneEntity.AddComponent<FBXBone>();
 
-                fbxBone.name = aiBoneName;
-                
                 const aiMatrix4x4& offset = bone->mOffsetMatrix;
                 fbxBone.offsetMatrix = ConvertMatrixToGLMFormat(offset);
                 
@@ -241,7 +238,6 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
         else
         {
             scene->SetParent(bone, bonesByIndex[parentIdx]);
-            bone.GetComponent<FBXBone>().parentIndex = parentIdx;
         }
 		int currentIdx = static_cast<int>(std::find(bonesByIndex.begin(), bonesByIndex.end(), bone) - bonesByIndex.begin());
         currentIdx = currentIdx == bonesByIndex.size() ? -1 : currentIdx;
@@ -311,8 +307,8 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
             int boneIndex = -1;
             for (size_t i = 0; i < skeletonComp.bones.size(); i++)
             {
-                FBXBone& bone = scene->GetRegistry().get<FBXBone>(skeletonComp.bones[i]);
-                if (std::strcmp(bone.name.data, boneName.data()) == 0)
+                NameComponent& name = scene->GetRegistry().get<NameComponent>(skeletonComp.bones[i]);
+                if (std::strcmp(name.name.data, boneName.data()) == 0)
                 {
                     boneIndex = static_cast<int>(i);
                     break;

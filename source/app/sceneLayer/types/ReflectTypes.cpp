@@ -76,7 +76,6 @@ void ReflectTypes() {
     // Reflect FBXBone
     entt::meta_factory<FBXBone>()
         .type("FBXBone"_hs)
-        .data<&FBXBone::name, entt::as_ref_t>("name"_hs)
         .data<&FBXBone::offsetMatrix, entt::as_ref_t>("offsetMatrix"_hs);
 
     // Reflect FBXVertexWeight
@@ -87,8 +86,7 @@ void ReflectTypes() {
 
     // Reflect FBXSkeletonComponent
     entt::meta_factory<FBXSkeletonComponent>()
-        .type("FBXSkeletonComponent"_hs)
-        .data<&FBXSkeletonComponent::skeletonName, entt::as_ref_t>("skeletonName"_hs);
+        .type("FBXSkeletonComponent"_hs);
         // Note: bones vector not individually reflected
 
     // Reflect FBXSkinComponent

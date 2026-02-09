@@ -196,25 +196,23 @@ namespace ComponentSerialization {
     // FBXSkeletonComponent: contains std::vector<FBXBone> + String64
     template<>
     inline void Serialize<FBXSkeletonComponent>(std::ofstream& file, const FBXSkeletonComponent& component) {
-        Serialize(file, component.skeletonName);
+
     }
 
     template<>
     inline void Deserialize<FBXSkeletonComponent>(std::ifstream& file, FBXSkeletonComponent& component) {
-        Deserialize(file, component.skeletonName);
+
     }
 
     // FBXBone: contains String64, int, std::vector<int>, and mat4 members
     template<>
     inline void Serialize<FBXBone>(std::ofstream& file, const FBXBone& component) {
-        Serialize(file, component.name);
         Serialize(file, component.offsetMatrix);
         Serialize(file, component.localRestTransform);
     }
 
     template<>
     inline void Deserialize<FBXBone>(std::ifstream& file, FBXBone& component) {
-        Deserialize(file, component.name);
         Deserialize(file, component.offsetMatrix);
         Deserialize(file, component.localRestTransform);
     }

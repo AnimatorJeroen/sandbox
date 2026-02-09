@@ -183,42 +183,57 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		// Draw lines from each bone to its parent
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
 			entt::entity boneEntity = skeleton.bones[boneIndex];
-			auto [bone, localToWorld] = _registry.get<FBXBone, LocalToWorld>(boneEntity);
 			
-			//find parentBone
-
-			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
-				// Extract positions from world transforms and apply skeleton world transform
-				glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			// Check if bone has a parent
+			if (_registry.all_of<Parent>(boneEntity)) {
+				const Parent& parentComp = _registry.get<Parent>(boneEntity);
 				
-				entt::entity parentBoneEntity = skeleton.bones[bone.parentIndex];
-				const LocalToWorld& parentLocalToWorld = _registry.get<LocalToWorld>(parentBoneEntity);
-				glm::vec4 parentPos = parentLocalToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				// Find parent entity by UUID
+				entt::entity parentBoneEntity = entt::null;
+				for (const auto& candidateEntity : skeleton.bones) {
+					if (_registry.all_of<Core::UUID>(candidateEntity)) {
+						if (_registry.get<Core::UUID>(candidateEntity).value == parentComp.parentUUID.value) {
+							parentBoneEntity = candidateEntity;
+							break;
+						}
+					}
+				}
+				
+				if (parentBoneEntity != entt::null && _registry.all_of<LocalToWorld>(boneEntity) && _registry.all_of<LocalToWorld>(parentBoneEntity)) {
+					// Extract positions from world transforms
+					const LocalToWorld& localToWorld = _registry.get<LocalToWorld>(boneEntity);
+					glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+					
+					const LocalToWorld& parentLocalToWorld = _registry.get<LocalToWorld>(parentBoneEntity);
+					glm::vec4 parentPos = parentLocalToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-				// Draw line from parent to child bone
-				recorder.Line(
-					Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
-					Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
-					2.0f, 
-					{ 1.0f, 0.8f, 0.0f, 1.0f }
-				);
+					// Draw line from parent to child bone
+					recorder.Line(
+						Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
+						Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
+						2.0f, 
+						{ 1.0f, 0.8f, 0.0f, 1.0f }
+					);
+				}
 			}
 		}
 		
 		// Draw small spheres at bone positions for visibility
 		for (const auto boneEntity : skeleton.bones) {
-			const LocalToWorld& localToWorld = _registry.get<LocalToWorld>(boneEntity);
-			glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			if (_registry.all_of<LocalToWorld>(boneEntity)) {
+				const LocalToWorld& localToWorld = _registry.get<LocalToWorld>(boneEntity);
+				glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-			// Draw a small circle at each bone position
-			recorder.Circle(
-				Core::Vec2{ bonePos.x, bonePos.y }, 
-				0.05f, 
-				true, 
-				{ 1.0f, 0.5f, 0.0f, 1.0f }, 
-				8, 
-				1.0f
-			);
+				// Draw a small circle at each bone position
+				recorder.Circle(
+					Core::Vec2{ bonePos.x, bonePos.y }, 
+					0.05f, 
+					true, 
+					{ 1.0f, 0.5f, 0.0f, 1.0f }, 
+					8, 
+					1.0f
+				);
+			}
 		}
 	}
 }
@@ -509,40 +524,11 @@ void Scene::RebuildSkeletonForEntity(Entity skeletonEntity)
 
 	skeleton.bones.clear();
 	auto children = skeletonEntity.GetAllSiblingsUntilComponent<FBXSkeletonComponent>();
-	std::vector<Entity> boneEntities;
 	for (const auto c : children)
 	{
 		if (!_registry.any_of<FBXBone>(c))
 			continue;
 		skeleton.bones.emplace_back(c);
-		boneEntities.emplace_back(Entity(c, &_registry));
-	}
-
-	//now update indices for easy lookup
-	for (size_t i = 0; i < skeleton.bones.size(); i++)
-	{
-		FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[i]);
-		const Entity& boneEntity = boneEntities[i];
-		Entity parent = boneEntity.GetParent();
-		if (!parent)
-			continue;
-		bone.parentIndex = static_cast<int>(std::find(boneEntities.begin(), boneEntities.end(), parent) - boneEntities.begin());
-		bone.parentIndex = bone.parentIndex == skeleton.bones.size() ? -1 : bone.parentIndex;
-	}
-	
-	for (size_t i = 0; i < skeleton.bones.size(); i++)
-	{
-		FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[i]);
-		bone.childIndices.clear();
-		// Find all rt_children of this bone
-		for (size_t j = 0; j < skeleton.bones.size(); j++)
-		{
-			FBXBone& childBone = _registry.get<FBXBone>(skeleton.bones[j]);
-			if (childBone.parentIndex == static_cast<int>(i))
-			{
-				bone.childIndices.push_back(static_cast<int>(j));
-			}
-		}
 	}
 }
 

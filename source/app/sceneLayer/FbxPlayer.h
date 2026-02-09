@@ -16,10 +16,7 @@ private:
 	// Apply animation to skeleton bones
 	void ApplyAnimationToSkeleton(Core::Registry& registry, Entity animEntity,
 		const FBXAnimationClip& clip, double currentTime);
-	
-	// Find bone index by name
-	int FindBoneIndex(Core::Registry& registry, const FBXSkeletonComponent& skeleton, const String64& boneName) const;
-	
+
 	// Interpolate position between keyframes
 	vec3 InterpolatePosition(const FBXAnimationChannel& channel, double time) const;
 	

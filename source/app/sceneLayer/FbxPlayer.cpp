@@ -123,42 +123,6 @@
 
 	}
 
-	// Find bone index by name
-	int FbxPlayer::FindBoneIndex(Core::Registry& registry, const FBXSkeletonComponent& skeleton, const String64& boneName) const
-	{
-		for (size_t i = 0; i < skeleton.bones.size(); i++)
-		{
-			FBXBone& bone = registry.get<FBXBone>(skeleton.bones[i]);
-			// First try exact match
-			if (std::strcmp(bone.name.data, boneName.data) == 0)
-				return static_cast<int>(i);
-		}
-		for (size_t i = 0; i < skeleton.bones.size(); i++)
-		{
-			FBXBone& bone = registry.get<FBXBone>(skeleton.bones[i]);
-			// Second try: strip last character from skeleton bone name
-
-			if (bone.name.length() > boneName.length())
-			{
-				std::string skeletonBoneName = bone.name.data;
-				std::string strippedName = skeletonBoneName.substr(0, boneName.length());
-				if (std::strcmp(strippedName.data(), boneName.data) == 0)
-					return static_cast<int>(i);
-			}
-			else
-			{
-				std::string skeletonBoneName = boneName.data;
-				std::string strippedName = skeletonBoneName.substr(0, bone.name.length());
-				if (std::strcmp(strippedName.data(), bone.name.data) == 0)
-					return static_cast<int>(i);
-			}
-		}
-
-		// Log when a bone isn't found to help debug name mismatches
-		LOG_WARN() << "Animation channel bone '" << boneName.data << "' not found in skeleton";
-		return -1;
-	}
-
 	// Interpolate position between keyframes
 	vec3 FbxPlayer::InterpolatePosition(const FBXAnimationChannel& channel, double time) const
 	{
