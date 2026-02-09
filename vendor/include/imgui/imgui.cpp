@@ -4730,7 +4730,7 @@ void ImGui::MarkItemEdited(ImGuiID id)
 
 bool ImGui::IsWindowContentHoverable(ImGuiWindow* window, ImGuiHoveredFlags flags)
 {
-    // An active popup disable hovering on other windows (apart from its own children)
+    // An active popup disable hovering on other windows (apart from its own rt_children)
     // FIXME-OPT: This could be cached/stored within the window.
     ImGuiContext& g = *GImGui;
     if (g.NavWindow)
@@ -5760,7 +5760,7 @@ static void AddWindowToDrawData(ImGuiWindow* window, int layer)
         window->DrawList->ChannelsMerge(); // Merge if user forgot to merge back. Also required in Docking branch for ImGuiWindowFlags_DockNodeHost windows.
     ImGui::AddDrawListToDrawDataEx(&viewport->DrawDataP, viewport->DrawDataBuilder.Layers[layer], window->DrawList);
     for (ImGuiWindow* child : window->DC.ChildWindows)
-        if (IsWindowActiveAndVisible(child)) // Clipped children may have been marked not active
+        if (IsWindowActiveAndVisible(child)) // Clipped rt_children may have been marked not active
             AddWindowToDrawData(child, layer);
 }
 
@@ -5986,7 +5986,7 @@ void ImGui::EndFrame()
     UpdateMouseMovingWindowEndFrame();
 
     // Sort the window list so that all child windows are after their parent
-    // We cannot do that on FocusWindow() because children may not exist yet
+    // We cannot do that on FocusWindow() because rt_children may not exist yet
     g.WindowsTempSortBuffer.resize(0);
     g.WindowsTempSortBuffer.reserve(g.Windows.Size);
     for (ImGuiWindow* window : g.Windows)
@@ -13452,7 +13452,7 @@ void ImGui::NavMoveRequestTryWrapping(ImGuiWindow* window, ImGuiNavMoveFlags wra
 }
 
 // FIXME: This could be replaced by updating a frame number in each window when (window == NavWindow) and (NavLayer == 0).
-// This way we could find the last focused window among our children. It would be much less confusing this way?
+// This way we could find the last focused window among our rt_children. It would be much less confusing this way?
 static void ImGui::NavSaveLastChildNavWindowIntoParent(ImGuiWindow* nav_window)
 {
     ImGuiWindow* parent = nav_window;

@@ -174,7 +174,7 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow 
                              | ImGuiTreeNodeFlags_SpanAvailWidth;
     
-    // Check if entity has children
+    // Check if entity has rt_children
     bool hasChildren = entity.HasComponent<Children>() && entity.GetComponent<Children>().HasChildren();
     if (!hasChildren) {
         flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
@@ -261,11 +261,11 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
         ImGui::EndTooltip();
     }
 
-    // Render children if node is open
+    // Render rt_children if node is open
     if (nodeOpen && hasChildren) {
         const Children& childrenComp = entity.GetComponent<Children>();
         
-        // Convert children to Entity wrappers and sort by UUID
+        // Convert rt_children to Entity wrappers and sort by UUID
         std::vector<Entity> children;
         for (entt::entity childHandle : childrenComp.children) {
             Entity childEntity(childHandle, &_scene->GetRegistry());
@@ -278,7 +278,7 @@ void Panel_SceneHierarchy::RenderEntityNode(Entity entity, const std::set<Entity
             return a.UUID().value < b.UUID().value;
         });
         
-        // Recursively render children
+        // Recursively render rt_children
         for (Entity child : children) {
             RenderEntityNode(child, selectedEntities, deleteEntitiesPressed);
         }

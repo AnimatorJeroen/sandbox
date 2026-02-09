@@ -69,6 +69,15 @@ public:
     TransformBundle GetTransformBundle();
 
 	std::unordered_set<entt::entity> GetAllSiblingsIncludingSelf() const;
+	std::unordered_set<entt::entity> GetAllSiblings() const;
+
+    template<typename UntilComponentType>
+    inline std::unordered_set<entt::entity> GetAllSiblingsUntilComponent() const
+    {
+        std::unordered_set<entt::entity> siblings;
+        GetAllSiblingsRecursiveUntilComponent<UntilComponentType>(*this, siblings);
+		return siblings;
+    }
 
 	Entity GetParent() const;
 
@@ -114,6 +123,27 @@ public:
 private:
 
 	void GetAllSiblingsRecursive(Entity parent, std::unordered_set<entt::entity>& siblings) const;
+
+    template<typename UntilComponentType>
+    inline void GetAllSiblingsRecursiveUntilComponent(Entity parent, std::unordered_set<entt::entity>& siblings) const
+    {
+
+        if (!parent.HasComponent<Children>())
+            return;
+
+        auto childrenComp = parent.GetComponent<Children>();
+        for (entt::entity childHandle : childrenComp.children)
+        {
+            Entity childEntity(childHandle, _registry);
+            if (childEntity.HasComponent<UntilComponentType>())
+                continue;
+
+            siblings.insert(childHandle);
+            GetAllSiblingsRecursiveUntilComponent<UntilComponentType>(childEntity, siblings);
+        }
+
+    }
+
     entt::entity _entityHandle{ entt::null };
     Core::Registry* _registry = nullptr;
 };

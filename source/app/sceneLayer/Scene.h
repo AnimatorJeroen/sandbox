@@ -20,16 +20,8 @@
 class Scene
 {
 	public:
-		Scene() {
-			_sceneEntity = _registry.Create(); 
-			_registry.emplace<SceneData>(_sceneEntity);
-			
-			 // Create default camera entity
-			_activeCamera = CreateCameraEntity();
-		}
-		~Scene() {
-			_registry.clear();
-		}
+		Scene();
+		~Scene();
 
 		Scene(const Scene&) {}
 		
@@ -46,7 +38,7 @@ class Scene
 		void SetActiveCamera(Entity camera) { _activeCamera = camera.GetHandle(); }
 
 		 // FBX Animation playback
-		void UpdateFbxPlayer(float deltaTime) { _fbxPlayer.Update(_registry, deltaTime); }
+		void UpdateFbxPlayer(float deltaTime) { _fbxPlayer.Update(*this, deltaTime); }
 		FbxPlayer& GetFbxPlayer() { return _fbxPlayer; }
 
 		// Scene serialization using SelectionArchive
@@ -71,6 +63,20 @@ class Scene
 		// Get an entity by its UUID
 		Entity GetEntity(uint64_t uuid) const;
 
+		template<typename... Components>
+		auto GetEntitiesOfType()
+		{
+			auto view = _registry.view<Components...>();
+			std::set<Entity> entities;
+			for (auto e : view)
+			{
+				// Exclude the scene entity itself
+				if (_sceneEntity != e)
+					entities.insert(Entity(e, const_cast<Core::Registry*>(&_registry)));
+			}
+			return entities;
+		}
+
 		Entity GetSceneEntity() const { return Entity(_sceneEntity, const_cast<Core::Registry*>(&_registry)); }
 
 		void SetName(const std::string& name);
@@ -90,9 +96,12 @@ class Scene
 		void RebuildChildrenForEntity(Entity entity);
 		void RebuildChildrenForAllEntities();
 
+
 	private:
 		// Recursive helper for hierarchical transform updates
-		void UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4& parentWorldMatrix);
+		void UpdateMatricesRecursive(entt::entity entity, const mat4& parentWorldTransform);
+		void RebuildSkeletonForEntity(Entity skeletonEntity);
+		void RebuildAnimChannelsForEntity(Entity animEntity);
 
 		entt::entity _sceneEntity;
 		entt::entity _activeCamera = entt::null;

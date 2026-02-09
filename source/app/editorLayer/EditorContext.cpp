@@ -102,9 +102,6 @@ void EditorContext::Cut()
     DeleteSelection();
 
     LOG_DEBUG() << "Cut " << entityHandles.size() << " entities (including descendants)";
-
-    if (_sceneManager.GetActiveScene())
-        _sceneManager.GetActiveScene()->RebuildChildrenForAllEntities();
 }   
 
 void EditorContext::Paste()
@@ -139,6 +136,8 @@ void EditorContext::DeleteSelection()
 
     // Clear selection after deletion
     _selectedEntities.clear();
+
+    scene->RebuildChildrenForAllEntities();
 }
 
 void EditorContext::Undo()

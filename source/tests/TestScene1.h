@@ -14,7 +14,7 @@ private:
 	Core::Renderer_OpenGL::RenderTargetSpecs _renderSpecs;
 
 	// Helper function to render the grid floor
-	inline void RenderGrid(Core::DrawCommandRecorder& recorder, float gridSize = 20.0f, float gridStep = 1.0f)
+	inline void RenderGrid(Core::DrawCommandRecorder& recorder, float gridSize = 2000.0f, float gridStep = 100.0f)
 	{
 		Core::ColorRGBA gridColor = {0.5f, 0.5f, 0.5f, 0.5f}; // Gray color
 		Core::ColorRGBA axisColorX = {1.0f, 0.2f, 0.2f, 0.5f }; // Red for X axis

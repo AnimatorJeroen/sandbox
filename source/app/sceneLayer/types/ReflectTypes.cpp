@@ -41,19 +41,9 @@ void ReflectTypes() {
         .data<&Transform::Rotation, entt::as_ref_t>("Rotation"_hs)
         .data<&Transform::Scale, entt::as_ref_t>("Scale"_hs);
 
-    // Reflect LocalToWorld component
-    entt::meta_factory<LocalToWorld>()
-        .type("LocalToWorld"_hs)
-        .data<&LocalToWorld::Value, entt::as_ref_t>("Value"_hs);
-
     entt::meta_factory<Parent>()
         .type("Parent"_hs)  // Register type name
         .data<&Parent::parentUUID, entt::as_ref_t>("parentUUID"_hs);
-
-    // Reflect Children component
-    entt::meta_factory<Children>()
-        .type("Children"_hs);
-        // Note: std::vector<entt::entity> is not reflected as individual data members
 
     entt::meta_factory<SceneData>()
         .type("Scene"_hs)  // Register type name - THIS IS CRITICAL!
@@ -86,8 +76,6 @@ void ReflectTypes() {
     // Reflect FBXBone
     entt::meta_factory<FBXBone>()
         .type("FBXBone"_hs)
-        .data<&FBXBone::name, entt::as_ref_t>("name"_hs)
-        .data<&FBXBone::parentIndex, entt::as_ref_t>("parentIndex"_hs)
         .data<&FBXBone::offsetMatrix, entt::as_ref_t>("offsetMatrix"_hs);
 
     // Reflect FBXVertexWeight
@@ -98,8 +86,7 @@ void ReflectTypes() {
 
     // Reflect FBXSkeletonComponent
     entt::meta_factory<FBXSkeletonComponent>()
-        .type("FBXSkeletonComponent"_hs)
-        .data<&FBXSkeletonComponent::skeletonName, entt::as_ref_t>("skeletonName"_hs);
+        .type("FBXSkeletonComponent"_hs);
         // Note: bones vector not individually reflected
 
     // Reflect FBXSkinComponent
@@ -129,8 +116,14 @@ void ReflectTypes() {
     // Reflect FBXAnimationChannel
     entt::meta_factory<FBXAnimationChannel>()
         .type("FBXAnimationChannel"_hs)
+        .data<&FBXAnimationChannel::clipIndex, entt::as_ref_t>("clipIndex"_hs)
         .data<&FBXAnimationChannel::boneIndex, entt::as_ref_t>("boneIndex"_hs);
         // Note: keyframe vectors not individually reflected
+
+    // Reflect FBXAnimationChannels
+    entt::meta_factory<FBXAnimationChannels>()
+        .type("FBXAnimationChannels"_hs);
+        // Note: channels vector not individually reflected
 
     // Reflect FBXAnimationClip
     entt::meta_factory<FBXAnimationClip>()

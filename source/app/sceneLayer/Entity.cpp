@@ -43,6 +43,13 @@ std::unordered_set<entt::entity> Entity::GetAllSiblingsIncludingSelf() const
     return siblings;
 }
 
+std::unordered_set<entt::entity> Entity::GetAllSiblings() const
+{
+    std::unordered_set<entt::entity> siblings;
+    GetAllSiblingsRecursive(*this, siblings);
+    return siblings;
+}
+
 Entity Entity::GetParent() const
 {
     Entity parentEntity = Entity::Null();
@@ -63,14 +70,14 @@ Entity Entity::GetParent() const
 void Entity::GetAllSiblingsRecursive(Entity parent, std::unordered_set<entt::entity>& siblings) const
 {
     
-    if (parent.HasComponent<Children>())
+    if (!parent.HasComponent<Children>())
+        return;
+
+    auto childrenComp = parent.GetComponent<Children>();
+    for (entt::entity childHandle : childrenComp.children)
     {
-        auto childrenComp = parent.GetComponent<Children>();
-        for (entt::entity childHandle : childrenComp.children)
-        {
-            Entity childEntity(childHandle, _registry);
-            siblings.insert(childHandle);
-            GetAllSiblingsRecursive(childEntity, siblings);
-        }
-	}
+        Entity childEntity(childHandle, _registry);
+        siblings.insert(childHandle);
+        GetAllSiblingsRecursive(childEntity, siblings);
+    }
 }

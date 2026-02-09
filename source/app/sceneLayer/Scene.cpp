@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <core/Logger.h>
 #include "components/ComponentSerialization.h"
+#include "components/SetupComponentGroups.h"
 
 // C++17 compatible helper structs for Scene serialization
 // Must be defined outside function scope for member templates to work
@@ -101,6 +102,20 @@ namespace {
 	};
 }
 
+Scene::Scene() {
+	_sceneEntity = _registry.Create();
+	_registry.emplace<SceneData>(_sceneEntity);
+
+	// Setup component groups for performance optimization
+	SetupComponentGroups(_registry.GetRegistry());
+
+	// Create default camera entity
+	_activeCamera = CreateCameraEntity();
+}
+Scene::~Scene() {
+	_registry.clear();
+}
+
 void Scene::UpdateCameraMatrices(uint32_t viewportWidth, uint32_t viewportHeight)
 {
 	auto& camera = GetActiveCamera();
@@ -118,12 +133,12 @@ void Scene::UpdateMatrices()
 		// Only process entities without a parent - they are roots of hierarchy trees
 		if (!_registry.all_of<Parent>(entity)) {
 			// Update this root entity with identity parent matrix
-			UpdateEntityHierarchyRecursive(entity, glm::mat4(1.0f));
+			UpdateMatricesRecursive(entity, glm::mat4(1.0f));
 		}
 	}
 }
 
-void Scene::UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4& parentWorldMatrix)
+void Scene::UpdateMatricesRecursive(entt::entity entity, const mat4& parentWorldTransform)
 {
 	// Get this entity's transform components
 	auto& transform = _registry.get<Transform>(entity);
@@ -136,15 +151,15 @@ void Scene::UpdateEntityHierarchyRecursive(entt::entity entity, const glm::mat4&
 		* glm::scale(glm::mat4(1.0f), transform.Scale);
 	
 	// Compute world matrix by combining parent's world matrix with local matrix
-	localToWorld.Value = parentWorldMatrix * localMatrix;
-	
-	// Recursively update all children with this entity's world matrix
+	localToWorld.Value = parentWorldTransform * localMatrix;
+
+	// Recursively update all child entities with this entity's world matrix
 	if (_registry.all_of<Children>(entity)) {
 		const auto& children = _registry.get<Children>(entity);
 		for (entt::entity childEntity : children.children) {
 			// Only recurse if the child has transform components
 			if (_registry.all_of<Transform, LocalToWorld>(childEntity)) {
-				UpdateEntityHierarchyRecursive(childEntity, localToWorld.Value);
+				UpdateMatricesRecursive(childEntity, localToWorld.Value);
 			}
 		}
 	}
@@ -164,83 +179,86 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 	auto skeletonView = _registry.view<FBXSkeletonComponent>();
 	for (auto skeletonEntity : skeletonView) {
 		const auto& skeleton = _registry.get<FBXSkeletonComponent>(skeletonEntity);
-		
-		// Get the skeleton entity's world transform (if it has one)
-		glm::mat4 skeletonWorldTransform = glm::mat4(1.0f);
-		
-		if (_registry.all_of<LocalToWorld>(skeletonEntity)) {
-			skeletonWorldTransform = _registry.get<LocalToWorld>(skeletonEntity).Value;
-		}
-		skeletonWorldTransform = glm::scale(skeletonWorldTransform, vec3(.05f, .05f, .05f));
-		
-		 // Find root bones (bones with no parent)
-		std::vector<int> rootBones;
-		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			const FBXBone& bone = skeleton.bones[boneIndex];
-			if (bone.parentIndex < 0) {
-				rootBones.push_back(static_cast<int>(boneIndex));
-			}
-		}
-		
-		// Compute world transforms for all bones hierarchically using depth-first traversal
-		// Each bone's world transform = parent's world transform * bone's animated local transform
-		std::vector<glm::mat4> boneWorldTransforms(skeleton.bones.size());
-		
-		// Recursive function to update bone transforms in hierarchy order
-		std::function<void(int, const glm::mat4&)> updateBoneHierarchy = 
-			[&](int boneIndex, const glm::mat4& parentWorldTransform) {
-			const FBXBone& bone = skeleton.bones[boneIndex];
-			
-			// Compute this bone's world transform
-			boneWorldTransforms[boneIndex] = parentWorldTransform * bone.localTransform;
-			
-			// Recursively update all children using stored childIndices
-			for (int childIndex : bone.childIndices) {
-				updateBoneHierarchy(childIndex, boneWorldTransforms[boneIndex]);
-			}
-		};
-		
-		// Start traversal from all root bones
-		for (int rootIndex : rootBones) {
-			updateBoneHierarchy(rootIndex, glm::mat4(1.0f));
-		}
-		
+
 		// Draw lines from each bone to its parent
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			const FBXBone& bone = skeleton.bones[boneIndex];
+			entt::entity boneEntity = skeleton.bones[boneIndex];
 			
-			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
-				// Extract positions from world transforms and apply skeleton world transform
-				glm::vec4 bonePosLocal =  (boneWorldTransforms[boneIndex]) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				glm::vec4 parentPosLocal =  (boneWorldTransforms[bone.parentIndex]) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			// Check if bone has a parent
+			if (_registry.all_of<Parent>(boneEntity)) {
+				const Parent& parentComp = _registry.get<Parent>(boneEntity);
+				
+				// Find parent entity by UUID
+				entt::entity parentBoneEntity = entt::null;
+				for (const auto& candidateEntity : skeleton.bones) {
+					if (_registry.all_of<Core::UUID>(candidateEntity)) {
+						if (_registry.get<Core::UUID>(candidateEntity).value == parentComp.parentUUID.value) {
+							parentBoneEntity = candidateEntity;
+							break;
+						}
+					}
+				}
+				
+				if (parentBoneEntity != entt::null && _registry.all_of<LocalToWorld>(boneEntity) && _registry.all_of<LocalToWorld>(parentBoneEntity)) {
+					// Extract positions from world transforms
+					const LocalToWorld& localToWorld = _registry.get<LocalToWorld>(boneEntity);
+					
+					const LocalToWorld& parentLocalToWorld = _registry.get<LocalToWorld>(parentBoneEntity);
 
-				glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
-				glm::vec3 parentPos = glm::vec3(skeletonWorldTransform * parentPosLocal);
+					static bool drawLines = false;
+					if (drawLines)
+					{
+						glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+						glm::vec4 parentPos = parentLocalToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+						// Draw line from parent to child bone
+						recorder.Line(
+							Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
+							Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
+							2.0f,
+							{ 1.0f, 0.8f, 0.0f, 1.0f }
+						);
+					}
+					else
+					{
+						const FBXBone& fbxBone = _registry.get<FBXBone>(boneEntity);
+						const FBXBone& fbxParentBone = _registry.get<FBXBone>(parentBoneEntity);
 
-				// Draw line from parent to child bone
-				recorder.Line(
-					Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
-					Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
-					2.0f, 
-					{ 1.0f, 0.8f, 0.0f, 1.0f }
-				);
+						glm::vec4 restPos = glm::inverse(fbxBone.offsetMatrix) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+						glm::vec4 restParentPos = glm::inverse(fbxParentBone.offsetMatrix) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+						//draw a box around the bone
+						float length = std::sqrt(std::pow(restPos.x - restParentPos.x, 2) + std::pow(restPos.y - restParentPos.y, 2) + std::pow(restPos.z - restParentPos.z, 2));
+						glm::vec3 translation = vec3(restParentPos) + (vec3(restPos - restParentPos) * 0.5f);
+						glm::mat4 rotation = glm::toMat4(glm::quatLookAt(glm::normalize(vec3(restPos - restParentPos)), vec3(0.f, 1.f, 0.f)));
+
+						glm::mat4 boneBoxRestMat = glm::translate(glm::mat4(1.0f), translation)
+							* rotation
+							* glm::scale(glm::mat4(1.0f), vec3(length * 0.25f, length * 0.1f, length));
+
+						boneBoxRestMat = parentLocalToWorld.Value * fbxParentBone.offsetMatrix * boneBoxRestMat;
+
+						recorder.Cube(boneBoxRestMat, { 0.2f + boneIndex * 0.1f, 0.5f, 1.0f, 1.0f });
+					}
+				}
 			}
 		}
 		
 		// Draw small spheres at bone positions for visibility
-		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			glm::vec4 bonePosLocal = boneWorldTransforms[boneIndex] * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-			glm::vec3 bonePos = glm::vec3(skeletonWorldTransform * bonePosLocal);
-			
-			// Draw a small circle at each bone position
-			recorder.Circle(
-				Core::Vec2{ bonePos.x, bonePos.y }, 
-				0.05f, 
-				true, 
-				{ 1.0f, 0.5f, 0.0f, 1.0f }, 
-				8, 
-				1.0f
-			);
+		for (const auto boneEntity : skeleton.bones) {
+			if (_registry.all_of<LocalToWorld>(boneEntity)) {
+				const LocalToWorld& localToWorld = _registry.get<LocalToWorld>(boneEntity);
+				glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+				// Draw a small circle at each bone position
+				recorder.Circle(
+					Core::Vec2{ bonePos.x, bonePos.y }, 
+					0.05f, 
+					true, 
+					{ 1.0f, 0.5f, 0.0f, 1.0f }, 
+					8, 
+					1.0f
+				);
+			}
 		}
 	}
 }
@@ -436,7 +454,7 @@ void Scene::SetParent(Entity child, Entity parent)
 		if (child.HasComponent<Parent>()) {
 			Parent& parentComp = child.GetComponent<Parent>();
 
-			// Find the old parent entity by UUID to rebuild its children
+			// Find the old parent entity by UUID to rebuild its rt_children
 			if (parentComp.HasParent()) {
 				auto view = _registry.view<Core::UUID>();
 				for (auto entity : view) {
@@ -468,7 +486,7 @@ void Scene::SetParent(Entity child, Entity parent)
 			return;
 		}
 
-		// Find the old parent entity by UUID to rebuild its children
+		// Find the old parent entity by UUID to rebuild its rt_children
 		if (parentComp.HasParent()) {
 			auto view = _registry.view<Core::UUID>();
 			for (auto childEntity : view) {
@@ -487,12 +505,12 @@ void Scene::SetParent(Entity child, Entity parent)
 		child.AddComponent<Parent>(parentUUID);
 	}
 
-	// Rebuild children for the old parent (if any)
+	// Rebuild rt_children for the old parent (if any)
 	if (oldParent) {
 		RebuildChildrenForEntity(oldParent);
 	}
 
-	// Rebuild children for the new parent
+	// Rebuild rt_children for the new parent
 	RebuildChildrenForEntity(parent);
 
 	LOG_DEBUG() << "Set parent: child UUID=" << childUUID.value << ", parent UUID=" << parentUUID.value;
@@ -525,11 +543,72 @@ void Scene::RebuildChildrenForEntity(Entity entity)
 	}
 }
 
+void Scene::RebuildSkeletonForEntity(Entity skeletonEntity)
+{
+	auto& skeleton = skeletonEntity.GetComponent<FBXSkeletonComponent>();
+
+	skeleton.bones.clear();
+	auto children = skeletonEntity.GetAllSiblingsUntilComponent<FBXSkeletonComponent>();
+	for (const auto c : children)
+	{
+		if (!_registry.any_of<FBXBone>(c))
+			continue;
+		skeleton.bones.emplace_back(c);
+	}
+}
+
 void Scene::RebuildChildrenForAllEntities()
 {
 	auto view = _registry.view<Core::UUID>();
 	for (auto entity : view) {
 		RebuildChildrenForEntity(Entity(entity, &_registry));
+	}
+
+	auto skeletonView = _registry.view<FBXSkeletonComponent>();
+	for (auto entity : skeletonView) {
+		RebuildSkeletonForEntity(Entity(entity, &_registry));
+	}
+
+	// Rebuild animation clip channels from bone entity animation channels
+	auto animView = _registry.view<FBXAnimationComponent>();
+	for (auto entity : animView) {
+		RebuildAnimChannelsForEntity(Entity(entity, &_registry));
+	}
+
+}
+
+void Scene::RebuildAnimChannelsForEntity(Entity animEntity)
+{
+	auto& animComp = animEntity.GetComponent<FBXAnimationComponent>();
+
+	// For each clip, rebuild its channels vector from bone entities
+	for (size_t clipIndex = 0; clipIndex < animComp.clips.size(); clipIndex++) {
+		FBXAnimationClip& clip = animComp.clips[clipIndex];
+		clip.channels.clear();
+
+		if (_registry.all_of<FBXSkeletonComponent>(animEntity)) {
+			auto& skeleton = _registry.get<FBXSkeletonComponent>(animEntity);
+
+			// For each bone in the skeleton
+			for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
+				entt::entity boneEntity = skeleton.bones[boneIndex];
+
+				// Check if this bone entity has animation channels
+				if (_registry.all_of<FBXAnimationChannels>(boneEntity)) {
+					FBXAnimationChannels& animChannels = _registry.get<FBXAnimationChannels>(boneEntity);
+
+					// Find the channel that matches this clipIndex
+					for (auto& channel : animChannels.channels) {
+						if (channel.clipIndex == static_cast<int>(clipIndex)) {
+							// Set the runtime boneIndex and add pointer to clip's channels
+							channel.boneIndex = static_cast<int>(boneIndex);
+							clip.channels.push_back(&channel);
+							break;  // Found the channel for this clip, no need to continue
+						}
+					}
+				}
+			}
+		}
 	}
 }
 

@@ -102,11 +102,15 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
             skeletonEntity = scene->CreateEntity(filename + "_Skeleton");
             scene->SetParent(skeletonEntity, rootEntity);
             
-            if (ProcessSkeleton(aiScene, &skeletonEntity))
+            if (ProcessSkeleton(aiScene, &skeletonEntity, scene))
             {
                 auto& skeletonComp = skeletonEntity.GetComponent<FBXSkeletonComponent>();
+                auto& registry = scene->GetRegistry();
                 for (size_t i = 0; i < skeletonComp.bones.size(); i++)
-                    boneNameToIndex[skeletonComp.bones[i].name] = static_cast<int>(i);
+                {
+                    NameComponent& name = registry.get<NameComponent>(skeletonComp.bones[i]);
+                    boneNameToIndex[name.name.to_string()] = static_cast<int>(i);
+                }
                 _stats.boneCount = static_cast<int>(skeletonComp.bones.size());
             }
         }
@@ -114,7 +118,7 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
 
     if (options.importAnimations && aiScene->mNumAnimations > 0 && skeletonEntity)
     {
-        if (ProcessAnimations(aiScene, &skeletonEntity, &skeletonEntity))
+        if (ProcessAnimations(aiScene, &skeletonEntity, &skeletonEntity, scene))
             _stats.animationCount = aiScene->mNumAnimations;
     }
 
@@ -176,22 +180,25 @@ Entity MeshImporter::ImportModel(const std::string& filepath, Scene* scene, Enti
     return rootEntity;
 }
 
-bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntity)
+bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntity, Scene* scene)
 {
     if (!aiScene || !skeletonEntity)
         return false;
 
     auto& skeletonComp = skeletonEntity->AddComponent<FBXSkeletonComponent>();
-    skeletonComp.skeletonName = skeletonEntity->GetComponent<NameComponent>().name.to_string();
 
     // Map aiBone name to bone data (offsetMatrix, etc.)
-    std::map<std::string, FBXBone> boneDataByAiBoneName;
+    std::map<std::string, Entity> boneDataByAiBoneName;
+    std::vector<Entity> bonesByIndex;
 
     for (unsigned int m = 0; m < aiScene->mNumMeshes; m++)
     {
         aiMesh* mesh = aiScene->mMeshes[m];
         if (!mesh->HasBones())
             continue;
+
+        bonesByIndex.reserve(mesh->mNumBones);
+
 
         for (unsigned int b = 0; b < mesh->mNumBones; b++)
         {
@@ -200,77 +207,73 @@ bool MeshImporter::ProcessSkeleton(const aiScene* aiScene, Entity* skeletonEntit
 
             if (boneDataByAiBoneName.find(aiBoneName) == boneDataByAiBoneName.end())
             {
-                FBXBone fbxBone;
+                Entity boneEntity = scene->CreateEntity(aiBoneName);
 
-                fbxBone.name = aiBoneName;
-                
+                auto& fbxBone = boneEntity.AddComponent<FBXBone>();
+
                 const aiMatrix4x4& offset = bone->mOffsetMatrix;
                 fbxBone.offsetMatrix = ConvertMatrixToGLMFormat(offset);
                 
-                // Initialize localTransform to identity (will be updated by FbxPlayer)
-                fbxBone.localTransform = mat4(1.0f);
 
-                boneDataByAiBoneName[aiBoneName] = fbxBone;
+                boneDataByAiBoneName[aiBoneName] = boneEntity;
+                bonesByIndex.emplace_back(boneEntity);
+
             }
         }
     }
 
+    //build parenting hierarchy
     std::function<void(aiNode*, int)> buildHierarchy = [&](aiNode* node, int parentIdx) {
         std::string nodeName = node->mName.C_Str();
         
-        auto it = boneDataByAiBoneName.find(nodeName);
-        if (it != boneDataByAiBoneName.end())
+    auto it = boneDataByAiBoneName.find(nodeName);
+    if (it != boneDataByAiBoneName.end())
+    {
+        Entity bone = it->second;
+        if (parentIdx == -1 || parentIdx >= bonesByIndex.size())
         {
-            FBXBone& bone = it->second;
-
-            bone.parentIndex = parentIdx;
-
-            const aiMatrix4x4& transform = node->mTransformation;
-
-            int currentIdx = static_cast<int>(skeletonComp.bones.size());
-            skeletonComp.bones.push_back(bone);
-
-            for (unsigned int i = 0; i < node->mNumChildren; i++)
-                buildHierarchy(node->mChildren[i], currentIdx);
+            scene->SetParent(bone, *skeletonEntity);
         }
         else
         {
-            for (unsigned int i = 0; i < node->mNumChildren; i++)
-                buildHierarchy(node->mChildren[i], parentIdx);
+            scene->SetParent(bone, bonesByIndex[parentIdx]);
         }
-    };
+		int currentIdx = static_cast<int>(std::find(bonesByIndex.begin(), bonesByIndex.end(), bone) - bonesByIndex.begin());
+        currentIdx = currentIdx == bonesByIndex.size() ? -1 : currentIdx;
 
+        for (unsigned int i = 0; i < node->mNumChildren; i++)
+            buildHierarchy(node->mChildren[i], currentIdx);
+    }
+    else
+    {
+        for (unsigned int i = 0; i < node->mNumChildren; i++)
+            buildHierarchy(node->mChildren[i], parentIdx);
+    }
+    };
     buildHierarchy(aiScene->mRootNode, -1);
 
-    // Build child indices for all bones
-    for (size_t i = 0; i < skeletonComp.bones.size(); i++)
-    {
-        FBXBone& bone = skeletonComp.bones[i];
-        // Find all children of this bone
-        for (size_t j = 0; j < skeletonComp.bones.size(); j++)
-        {
-            if (skeletonComp.bones[j].parentIndex == static_cast<int>(i))
-            {
-                bone.childIndices.push_back(static_cast<int>(j));
-            }
-        }
-    }
+    //now update the hierarchy based on parent components
+    //order my differ from assimp bone order
+    scene->RebuildChildrenForAllEntities();
 
-    for (auto& bone : skeletonComp.bones)
+    //set transforms
+    for (auto& boneEntity : bonesByIndex)
     {
+        auto& boneComp = boneEntity.GetComponent<FBXBone>();
         mat4 parWorldM = glm::mat4(1.0f);
-        if (bone.parentIndex != -1)
-            parWorldM = skeletonComp.bones[bone.parentIndex].offsetMatrix;
-        bone.localRestTransform = parWorldM * glm::inverse(bone.offsetMatrix);
+        if (boneEntity.GetParent())
+            parWorldM = boneEntity.GetParent().HasComponent<FBXBone>() ? boneEntity.GetParent().GetComponent<FBXBone>().offsetMatrix :
+                                                                   boneEntity.GetParent().GetTransformBundle().LocalToWorld;
+        boneComp.localRestTransform = parWorldM * glm::inverse(boneComp.offsetMatrix);
     }
 
     LOG_INFO() << "Skeleton processed: " << skeletonComp.bones.size() << " bones";
     return true;
 }
 
-bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity, Entity* skeletonEntity)
+bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animationEntity, Entity* skeletonEntity, Scene* scene)
 {
-    if (!aiScene || !animationEntity || aiScene->mNumAnimations == 0)
+    if (!aiScene || !animationEntity || !scene || aiScene->mNumAnimations == 0)
         return false;
 
     auto& skeletonComp = skeletonEntity->GetComponent<FBXSkeletonComponent>();
@@ -289,22 +292,35 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
         clip.duration = anim->mDuration;
         clip.ticksPerSecond = anim->mTicksPerSecond != 0.0 ? anim->mTicksPerSecond : 25.0;
 
+        // Process each animation channel and store it on the bone entity
         for (unsigned int c = 0; c < anim->mNumChannels; c++)
         {
             aiNodeAnim* nodeAnim = anim->mChannels[c];
             
             FBXAnimationChannel channel;
+            channel.clipIndex = static_cast<int>(a);  // Set which clip this channel belongs to
+            
             std::string boneName = nodeAnim->mNodeName.C_Str();
 
+            // Find the bone index in the skeleton
+            int boneIndex = -1;
             for (size_t i = 0; i < skeletonComp.bones.size(); i++)
             {
-                if (std::strcmp(skeletonComp.bones[i].name.data, boneName.data()) == 0)
+                NameComponent& name = scene->GetRegistry().get<NameComponent>(skeletonComp.bones[i]);
+                if (std::strcmp(name.name.data, boneName.data()) == 0)
                 {
-                    channel.boneIndex = static_cast<int>(i);
+                    boneIndex = static_cast<int>(i);
                     break;
                 }
             }
+            
+            if (boneIndex < 0)
+            {
+                LOG_WARN() << "Animation channel bone '" << boneName << "' not found in skeleton";
+                continue;
+            }
         
+            // Load keyframes into the channel
             for (unsigned int k = 0; k < nodeAnim->mNumPositionKeys; k++)
             {
                 const aiVectorKey& key = nodeAnim->mPositionKeys[k];
@@ -329,12 +345,28 @@ bool MeshImporter::ProcessAnimations(const ::aiScene* aiScene, Entity* animation
                 channel.scaleKeys.emplace_back(key.mTime, vec3(key.mValue.x, key.mValue.y, key.mValue.z));
             }
 
-            clip.channels.push_back(channel);
+            // Get the bone entity directly from skeleton bones array
+            entt::entity boneEntity = skeletonComp.bones[boneIndex];
+            
+            // Add the channel to the FBXAnimationChannels component
+            auto& registry = scene->GetRegistry();
+            if (!registry.all_of<FBXAnimationChannels>(boneEntity))
+            {
+                FBXAnimationChannels animChannels;
+                animChannels.channels.push_back(channel);
+                registry.emplace<FBXAnimationChannels>(boneEntity, animChannels);
+            }
+            else
+            {
+                // Add to existing channels
+                auto& animChannels = registry.get<FBXAnimationChannels>(boneEntity);
+                animChannels.channels.push_back(channel);
+            }
         }
 
         animComp.clips.push_back(clip);
         
-        LOG_INFO() << "  Animation '" << clip.name << "': " << clip.channels.size() << " channels, duration: " << clip.duration << " ticks";
+        LOG_INFO() << "  Animation '" << clip.name << "': " << anim->mNumChannels << " channels, duration: " << clip.duration << " ticks";
     }
 
     return true;

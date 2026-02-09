@@ -196,31 +196,23 @@ namespace ComponentSerialization {
     // FBXSkeletonComponent: contains std::vector<FBXBone> + String64
     template<>
     inline void Serialize<FBXSkeletonComponent>(std::ofstream& file, const FBXSkeletonComponent& component) {
-        Serialize(file, component.bones);
-        Serialize(file, component.skeletonName);
+
     }
 
     template<>
     inline void Deserialize<FBXSkeletonComponent>(std::ifstream& file, FBXSkeletonComponent& component) {
-        Deserialize(file, component.bones);
-        Deserialize(file, component.skeletonName);
+
     }
 
     // FBXBone: contains String64, int, std::vector<int>, and mat4 members
     template<>
     inline void Serialize<FBXBone>(std::ofstream& file, const FBXBone& component) {
-        Serialize(file, component.name);
-        Serialize(file, component.parentIndex);
-        Serialize(file, component.childIndices);
         Serialize(file, component.offsetMatrix);
         Serialize(file, component.localRestTransform);
     }
 
     template<>
     inline void Deserialize<FBXBone>(std::ifstream& file, FBXBone& component) {
-        Deserialize(file, component.name);
-        Deserialize(file, component.parentIndex);
-        Deserialize(file, component.childIndices);
         Deserialize(file, component.offsetMatrix);
         Deserialize(file, component.localRestTransform);
     }
@@ -238,10 +230,21 @@ namespace ComponentSerialization {
         Deserialize(file, component.skeletonEntityIndex);
     }
 
+    // FBXAnimationChannels: contains vector of FBXAnimationChannel
+    template<>
+    inline void Serialize<FBXAnimationChannels>(std::ofstream& file, const FBXAnimationChannels& component) {
+        Serialize(file, component.channels);
+    }
+
+    template<>
+    inline void Deserialize<FBXAnimationChannels>(std::ifstream& file, FBXAnimationChannels& component) {
+        Deserialize(file, component.channels);
+    }
+
     // FBXAnimationChannel: contains multiple vectors
     template<>
     inline void Serialize<FBXAnimationChannel>(std::ofstream& file, const FBXAnimationChannel& component) {
-		Serialize(file, component.boneIndex);
+        Serialize(file, component.clipIndex);
         Serialize(file, component.positionKeys);
         Serialize(file, component.rotationKeys);
         Serialize(file, component.scaleKeys);
@@ -249,7 +252,7 @@ namespace ComponentSerialization {
 
     template<>
     inline void Deserialize<FBXAnimationChannel>(std::ifstream& file, FBXAnimationChannel& component) {
-        Deserialize(file, component.boneIndex);
+        Deserialize(file, component.clipIndex);
         Deserialize(file, component.positionKeys);
         Deserialize(file, component.rotationKeys);
         Deserialize(file, component.scaleKeys);
@@ -261,7 +264,6 @@ namespace ComponentSerialization {
         Serialize(file, component.name);
         Serialize(file, component.duration);
         Serialize(file, component.ticksPerSecond);
-        Serialize(file, component.channels);
     }
 
     template<>
@@ -269,7 +271,6 @@ namespace ComponentSerialization {
         Deserialize(file, component.name);
         Deserialize(file, component.duration);
         Deserialize(file, component.ticksPerSecond);
-        Deserialize(file, component.channels);
     }
 
     // FBXAnimationComponent: contains vector of clips
@@ -291,7 +292,7 @@ namespace ComponentSerialization {
         Deserialize(file, component.loop);
     }
 
-	// MeshComponent: contains std::vector<uint32_t>
+    // MeshComponent: contains std::vector<uint32_t>
     template<>
     inline void Serialize<MeshComponent>(std::ofstream& file, const MeshComponent& component) {
         Serialize(file, component.filepath);
@@ -307,6 +308,9 @@ namespace ComponentSerialization {
         Deserialize(file, component.normals);
         Deserialize(file, component.vertices);
         Deserialize(file, component.texCoords);
-	}
+    }
 
+    //runtime components, don't need to serialize
+    template<>
+    inline void Serialize<Children>(std::ofstream& file, const Children& component) {}
 } // namespace ComponentSerialization
