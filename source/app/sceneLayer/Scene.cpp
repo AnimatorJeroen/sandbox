@@ -202,29 +202,43 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 				if (parentBoneEntity != entt::null && _registry.all_of<LocalToWorld>(boneEntity) && _registry.all_of<LocalToWorld>(parentBoneEntity)) {
 					// Extract positions from world transforms
 					const LocalToWorld& localToWorld = _registry.get<LocalToWorld>(boneEntity);
-					glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 					
 					const LocalToWorld& parentLocalToWorld = _registry.get<LocalToWorld>(parentBoneEntity);
-					glm::vec4 parentPos = parentLocalToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-					// Draw line from parent to child bone
-					recorder.Line(
-						Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
-						Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
-						2.0f, 
-						{ 1.0f, 0.8f, 0.0f, 1.0f }
-					);
+					static bool drawLines = false;
+					if (drawLines)
+					{
+						glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+						glm::vec4 parentPos = parentLocalToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+						// Draw line from parent to child bone
+						recorder.Line(
+							Core::Vec3{ parentPos.x, parentPos.y, parentPos.z },
+							Core::Vec3{ bonePos.x, bonePos.y, bonePos.z },
+							2.0f,
+							{ 1.0f, 0.8f, 0.0f, 1.0f }
+						);
+					}
+					else
+					{
+						const FBXBone& fbxBone = _registry.get<FBXBone>(boneEntity);
+						const FBXBone& fbxParentBone = _registry.get<FBXBone>(parentBoneEntity);
 
-					//draw a box around the bone
-					float length = std::sqrt(std::pow(bonePos.x - parentPos.x, 2) + std::pow(bonePos.y - parentPos.y, 2) + std::pow(bonePos.z - parentPos.z, 2));
-					glm::vec3 translation = vec3(parentPos) + (vec3(bonePos - parentPos) * 0.5f);
-					glm::mat4 rotation = glm::toMat4(glm::quatLookAt(glm::normalize(vec3(bonePos - parentPos)), vec3(0.f, 1.f, 0.f)));
+						glm::vec4 restPos = glm::inverse(fbxBone.offsetMatrix) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+						glm::vec4 restParentPos = glm::inverse(fbxParentBone.offsetMatrix) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-					glm::mat4 boneBoxMat = glm::translate(glm::mat4(1.0f), translation)
-						* rotation
-						* glm::scale(glm::mat4(1.0f), vec3(10, 10, length));
+						//draw a box around the bone
+						float length = std::sqrt(std::pow(restPos.x - restParentPos.x, 2) + std::pow(restPos.y - restParentPos.y, 2) + std::pow(restPos.z - restParentPos.z, 2));
+						glm::vec3 translation = vec3(restParentPos) + (vec3(restPos - restParentPos) * 0.5f);
+						glm::mat4 rotation = glm::toMat4(glm::quatLookAt(glm::normalize(vec3(restPos - restParentPos)), vec3(0.f, 1.f, 0.f)));
 
-					recorder.Cube(boneBoxMat, { 0.2f + boneIndex * 0.1f, 0.5f, 1.0f, 1.0f });
+						glm::mat4 boneBoxRestMat = glm::translate(glm::mat4(1.0f), translation)
+							* rotation
+							* glm::scale(glm::mat4(1.0f), vec3(length * 0.25f, length * 0.1f, length));
+
+						boneBoxRestMat = parentLocalToWorld.Value * fbxParentBone.offsetMatrix * boneBoxRestMat;
+
+						recorder.Cube(boneBoxRestMat, { 0.2f + boneIndex * 0.1f, 0.5f, 1.0f, 1.0f });
+					}
 				}
 			}
 		}
