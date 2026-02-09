@@ -73,7 +73,7 @@ namespace Core
 			return _registry.erase<Component>(entity);
 		}
 
-		// Component access
+		// Component access - single component
 		template<typename Component>
 		decltype(auto) get(entt::entity entity)
 		{
@@ -84,6 +84,19 @@ namespace Core
 		decltype(auto) get(entt::entity entity) const
 		{
 			return _registry.get<Component>(entity);
+		}
+
+		// Multi-component access (for structured bindings with 2+ components)
+		template<typename Component1, typename Component2, typename... Rest>
+		decltype(auto) get(entt::entity entity)
+		{
+			return _registry.get<Component1, Component2, Rest...>(entity);
+		}
+
+		template<typename Component1, typename Component2, typename... Rest>
+		decltype(auto) get(entt::entity entity) const
+		{
+			return _registry.get<Component1, Component2, Rest...>(entity);
 		}
 
 		 // Try get (returns pointer, nullptr if component doesn't exist)

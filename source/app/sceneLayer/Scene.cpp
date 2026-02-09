@@ -142,7 +142,7 @@ void Scene::UpdateMatrices()
 
 void Scene::UpdateSkeletonMatrices()
 {
-	// Draw skeleton bones as lines
+	// Update skeleton bone world transforms
 	auto skeletonView = _registry.view<FBXSkeletonComponent>();
 	for (auto skeletonEntity : skeletonView) {
 		const auto& skeleton = _registry.get<FBXSkeletonComponent>(skeletonEntity);
@@ -167,14 +167,15 @@ void Scene::UpdateSkeletonMatrices()
 		// Recursive function to update bone transforms in hierarchy order
 		std::function<void(int, const glm::mat4&)> updateBoneHierarchy =
 			[&](int boneIndex, const glm::mat4& parentWorldTransform) {
-			FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[boneIndex]);
+			entt::entity boneEntity = skeleton.bones[boneIndex];
+			auto [bone, localToWorld] = _registry.get<FBXBone, LocalToWorld>(boneEntity);
 
 			// Compute this bone's world transform
-			bone.localToWorld = parentWorldTransform * bone.localTransform;
+			localToWorld.Value = parentWorldTransform * bone.localTransform;
 
 			// Recursively update all child bones using stored childIndices
 			for (int childIndex : bone.childIndices) {
-				updateBoneHierarchy(childIndex, bone.localToWorld);
+				updateBoneHierarchy(childIndex, localToWorld.Value);
 			}
 			};
 
@@ -229,15 +230,18 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 
 		// Draw lines from each bone to its parent
 		for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); boneIndex++) {
-			const FBXBone& bone = _registry.get<FBXBone>(skeleton.bones[boneIndex]);
+			entt::entity boneEntity = skeleton.bones[boneIndex];
+			auto [bone, localToWorld] = _registry.get<FBXBone, LocalToWorld>(boneEntity);
 			
 			//find parentBone
 
 			if (bone.parentIndex >= 0 && bone.parentIndex < static_cast<int>(skeleton.bones.size())) {
 				// Extract positions from world transforms and apply skeleton world transform
-				glm::vec4 bonePos =  bone.localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-				const FBXBone& parentBone = _registry.get<FBXBone>(skeleton.bones[bone.parentIndex]);
-				glm::vec4 parentPos =  parentBone.localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+				
+				entt::entity parentBoneEntity = skeleton.bones[bone.parentIndex];
+				const LocalToWorld& parentLocalToWorld = _registry.get<LocalToWorld>(parentBoneEntity);
+				glm::vec4 parentPos = parentLocalToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 				// Draw line from parent to child bone
 				recorder.Line(
@@ -251,8 +255,8 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 		
 		// Draw small spheres at bone positions for visibility
 		for (const auto boneEntity : skeleton.bones) {
-			const FBXBone& bone = _registry.get<FBXBone>(boneEntity);
-			glm::vec4 bonePos = bone.localToWorld * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			const LocalToWorld& localToWorld = _registry.get<LocalToWorld>(boneEntity);
+			glm::vec4 bonePos = localToWorld.Value * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 			// Draw a small circle at each bone position
 			recorder.Circle(
