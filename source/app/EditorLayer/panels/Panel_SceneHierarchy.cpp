@@ -27,7 +27,76 @@ void Panel_SceneHierarchy::Render()
     if (!_scene)
         return;
 
-    ImGui::Begin("Scene Hierarchy");
+    // Get viewport size
+    ImGuiIO& io = ImGui::GetIO();
+    float viewportWidth = io.DisplaySize.x;
+    float viewportHeight = io.DisplaySize.y;
+    
+    // Define hierarchy panel width (resizable, but start at 300px)
+    static float hierarchyWidth = 300.0f;
+    const float minWidth = 200.0f;
+    const float maxWidth = viewportWidth * 0.5f; // Max 50% of screen width
+    
+    // Position the window on the right side, full height
+    ImGui::SetNextWindowPos(ImVec2(viewportWidth - hierarchyWidth, 0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(hierarchyWidth, viewportHeight), ImGuiCond_Always);
+    
+    // Window flags: no move, no collapse, no title bar
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoMove | 
+                                   ImGuiWindowFlags_NoCollapse |
+                                   ImGuiWindowFlags_NoTitleBar;
+
+    ImGui::Begin("Scene Hierarchy", nullptr, windowFlags);
+    
+    // Manual resize handle on the left edge
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 windowSize = ImGui::GetWindowSize();
+    ImVec2 mousePos = io.MousePos;
+    
+    const float resizeHandleWidth = 6.0f;
+    bool isHoveringResizeArea = (mousePos.x >= windowPos.x - resizeHandleWidth && 
+                                  mousePos.x <= windowPos.x + resizeHandleWidth &&
+                                  mousePos.y >= windowPos.y && 
+                                  mousePos.y <= windowPos.y + windowSize.y);
+    
+    if (isHoveringResizeArea || ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+    {
+        static bool isDragging = false;
+        
+        if (isHoveringResizeArea && !isDragging)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+        }
+        
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && isHoveringResizeArea)
+        {
+            isDragging = true;
+        }
+        
+        if (isDragging)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+            
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+            {
+                float delta = io.MouseDelta.x;
+                hierarchyWidth -= delta; // Subtract because we're resizing from the left
+                
+                // Clamp to min/max
+                if (hierarchyWidth < minWidth) hierarchyWidth = minWidth;
+                if (hierarchyWidth > maxWidth) hierarchyWidth = maxWidth;
+            }
+            
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+            {
+                isDragging = false;
+            }
+        }
+    }
+    
+    // Add a title manually since we disabled the title bar
+    ImGui::Text("Scene Hierarchy");
+    ImGui::Separator();
 	
     sceneColor = _scene->GetSceneColor();
     ImGui::InputFloat("Scene Color: %f", &sceneColor);
