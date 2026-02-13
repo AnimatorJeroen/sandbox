@@ -36,19 +36,19 @@ public:
 
     // === Selection Management ===
     void RefreshSelectionState();
-    const std::set<Entity>& GetSelectedEntities() const { return _selectedEntities; }
+    const std::set<Entity>& GetSelectedEntities() const { return _selectedEntitiesCache; }
     void SetSelection(const std::set<Entity>& entities) { 
-        _selectedEntities = entities; 
+        _selectedEntitiesCache = entities; 
         _selectedEntityUUIDs.clear();
         for (const auto& entity : entities)
             _selectedEntityUUIDs.emplace(entity.UUID());
     }
     void AddToSelection(Entity entity) {
-        _selectedEntities.insert(entity); _selectedEntityUUIDs.insert(entity.UUID());
+        _selectedEntitiesCache.insert(entity); _selectedEntityUUIDs.insert(entity.UUID());
     }
-    void RemoveFromSelection(Entity entity) { _selectedEntities.erase(entity); _selectedEntityUUIDs.erase(entity.UUID()); }
-    void ClearSelection() { _selectedEntities.clear(); _selectedEntityUUIDs.clear(); }
-    bool IsSelected(Entity entity) const { return _selectedEntities.find(entity) != _selectedEntities.end(); }
+    void RemoveFromSelection(Entity entity) { _selectedEntitiesCache.erase(entity); _selectedEntityUUIDs.erase(entity.UUID()); }
+    void ClearSelection() { _selectedEntitiesCache.clear(); _selectedEntityUUIDs.clear(); }
+    bool IsSelected(Entity entity) const { return _selectedEntitiesCache.find(entity) != _selectedEntitiesCache.end(); }
 
     // === Edit Operations ===
     void Copy();
@@ -117,7 +117,7 @@ public:
 
 private:
     // State
-    std::set<Entity> _selectedEntities;
+    std::set<Entity> _selectedEntitiesCache;
     std::set<Core::UUID> _selectedEntityUUIDs;
 	ImGuizmo::MODE _imGuizmoMode = ImGuizmo::LOCAL;
 	ImGuizmo::OPERATION _imGuizmoOperation = ImGuizmo::TRANSLATE;

@@ -69,7 +69,7 @@ static std::set<entt::entity> CollectEntitiesWithDescendants(const std::set<Enti
 
 void EditorContext::Copy()
 {
-    if (_selectedEntities.empty())
+    if (_selectedEntitiesCache.empty())
         return;
 
     auto scene = _sceneManager.GetActiveScene();
@@ -77,7 +77,7 @@ void EditorContext::Copy()
         return;
 
     // Collect selected entities and all their descendants
-    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntities, &scene->GetRegistry());
+    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntitiesCache, &scene->GetRegistry());
 
     _applicator.CopyToClipboard(entityHandles);
     LOG_DEBUG() << "Copied " << entityHandles.size() << " entities (including descendants) to clipboard";
@@ -85,7 +85,7 @@ void EditorContext::Copy()
 
 void EditorContext::Cut()
 {
-    if (_selectedEntities.empty())
+    if (_selectedEntitiesCache.empty())
         return;
 
     auto scene = _sceneManager.GetActiveScene();
@@ -93,7 +93,7 @@ void EditorContext::Cut()
         return;
 
     // Collect selected entities and all their descendants
-    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntities, &scene->GetRegistry());
+    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntitiesCache, &scene->GetRegistry());
 
     // Copy to clipboard first
     _applicator.CopyToClipboard(entityHandles);
@@ -119,7 +119,7 @@ void EditorContext::Paste()
 
 void EditorContext::DeleteSelection()
 {
-    if (_selectedEntities.empty())
+    if (_selectedEntitiesCache.empty())
         return;
 
     auto scene = _sceneManager.GetActiveScene();
@@ -127,7 +127,7 @@ void EditorContext::DeleteSelection()
         return;
 
     // Collect selected entities and all their descendants
-    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntities, &scene->GetRegistry());
+    std::set<entt::entity> entityHandles = CollectEntitiesWithDescendants(_selectedEntitiesCache, &scene->GetRegistry());
 
     _applicator.BeginUndo();
     _applicator.CaptureDelete(entityHandles);
@@ -136,7 +136,7 @@ void EditorContext::DeleteSelection()
     LOG_DEBUG() << "Deleted " << entityHandles.size() << " entities (including descendants)";
 
     // Clear selection after deletion
-    _selectedEntities.clear();
+    _selectedEntitiesCache.clear();
 
     RefreshSelectionState();
     scene->RebuildChildrenForAllEntities();
@@ -299,9 +299,9 @@ void EditorContext::ImportModel()
     
     // Get selected entity as parent (if any)
     Entity parent;
-    if (!_selectedEntities.empty())
+    if (!_selectedEntitiesCache.empty())
     {
-        parent = *_selectedEntities.begin();
+        parent = *_selectedEntitiesCache.begin();
     }
 
     Entity sceneRoot = importer.ImportModel(result.value(), scene.get(), parent ? &parent : nullptr);
@@ -340,7 +340,7 @@ void EditorContext::ImportModel()
 void EditorContext::OnActiveSceneChanged()
 {
     // Clear selection when scene changes
-    _selectedEntities.clear();
+    _selectedEntitiesCache.clear();
 
     // Update undo manager context
     auto scene = _sceneManager.GetActiveScene();
@@ -368,7 +368,7 @@ bool EditorContext::IsRecording() const noexcept
 
 void EditorContext::RefreshSelectionState()
 {
-    _selectedEntities.clear();
+    _selectedEntitiesCache.clear();
     auto scene = _sceneManager.GetActiveScene();
     if (!scene)
         return;
@@ -378,7 +378,7 @@ void EditorContext::RefreshSelectionState()
     {
         e = reg.GetEntityByUUID(uuid);
         if (e != entt::null)
-            _selectedEntities.emplace(Entity{ e, &reg });
+            _selectedEntitiesCache.emplace(Entity{ e, &reg });
     }
         
 }
