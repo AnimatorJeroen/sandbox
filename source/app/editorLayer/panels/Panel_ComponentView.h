@@ -22,6 +22,7 @@ private:
 	void RenderParentComponent(Entity entity);
 	void RenderChildrenComponent(Entity entity);
 	void RenderFBXComponents(Entity entity);
+	void RenderAddComponentButton(Entity entity);
 	
 	Scene* _scene;
 	EditorContext& _editorContext;

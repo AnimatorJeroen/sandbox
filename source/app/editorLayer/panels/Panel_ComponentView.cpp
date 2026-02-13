@@ -100,6 +100,10 @@ void Panel_ComponentView::RenderComponentUI(Entity entity)
     {
         RenderFBXComponents(entity);
     }
+    
+    // Add Component button at the bottom
+    ImGui::Separator();
+    RenderAddComponentButton(entity);
 }
 
 void Panel_ComponentView::RenderNameComponent(Entity entity)
@@ -365,5 +369,150 @@ void Panel_ComponentView::RenderFBXComponents(Entity entity)
             // Current Time display (read-only for now)
             ImGui::Text("Current Time: %.2f", anim.currentTime);
         }
+    }
+}
+
+void Panel_ComponentView::RenderAddComponentButton(Entity entity)
+{
+    if (!entity)
+        return;
+    
+    // Center the button
+    float buttonWidth = 150.0f;
+    float availWidth = ImGui::GetContentRegionAvail().x;
+    ImGui::SetCursorPosX((availWidth - buttonWidth) * 0.5f);
+    
+    if (ImGui::Button("Add Component", ImVec2(buttonWidth, 0)))
+    {
+        ImGui::OpenPopup("AddComponentPopup");
+    }
+    
+    // Render the popup context menu
+    if (ImGui::BeginPopup("AddComponentPopup"))
+    {
+        ImGui::TextDisabled("Select a component to add:");
+        ImGui::Separator();
+        
+        // NameComponent
+        if (!entity.HasComponent<NameComponent>())
+        {
+            if (ImGui::MenuItem("Name Component"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<NameComponent>("Unnamed");
+                _editorContext.applicator().CaptureCreate<NameComponent>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        // Transform
+        if (!entity.HasComponent<Transform>())
+        {
+            if (ImGui::MenuItem("Transform"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<Transform>();
+                _editorContext.applicator().CaptureCreate<Transform>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        // MeshComponent
+        if (!entity.HasComponent<MeshComponent>())
+        {
+            if (ImGui::MenuItem("Mesh Component"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<MeshComponent>();
+                _editorContext.applicator().CaptureCreate<MeshComponent>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        // CameraComponent
+        if (!entity.HasComponent<CameraComponent>())
+        {
+            if (ImGui::MenuItem("Camera Component"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<CameraComponent>();
+                _editorContext.applicator().CaptureCreate<CameraComponent>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        // Parent
+        if (!entity.HasComponent<Parent>())
+        {
+            if (ImGui::MenuItem("Parent Component"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<Parent>();
+                _editorContext.applicator().CaptureCreate<Parent>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        // LocalToWorld
+        if (!entity.HasComponent<LocalToWorld>())
+        {
+            if (ImGui::MenuItem("LocalToWorld"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<LocalToWorld>();
+                _editorContext.applicator().CaptureCreate<LocalToWorld>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        ImGui::Separator();
+        ImGui::TextDisabled("FBX Components:");
+        
+        // FBXSkeletonComponent
+        if (!entity.HasComponent<FBXSkeletonComponent>())
+        {
+            if (ImGui::MenuItem("FBX Skeleton Component"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<FBXSkeletonComponent>();
+                _editorContext.applicator().CaptureCreate<FBXSkeletonComponent>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        // FBXSkinComponent
+        if (!entity.HasComponent<FBXSkinComponent>())
+        {
+            if (ImGui::MenuItem("FBX Skin Component"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<FBXSkinComponent>();
+                _editorContext.applicator().CaptureCreate<FBXSkinComponent>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        // FBXAnimationComponent
+        if (!entity.HasComponent<FBXAnimationComponent>())
+        {
+            if (ImGui::MenuItem("FBX Animation Component"))
+            {
+                _editorContext.BeginUndo();
+                entity.AddComponent<FBXAnimationComponent>();
+                _editorContext.applicator().CaptureCreate<FBXAnimationComponent>({entity.GetHandle()});
+                _editorContext.EndUndo();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        
+        ImGui::EndPopup();
     }
 }
