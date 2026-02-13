@@ -34,8 +34,8 @@ void Panel_SceneHierarchy::Render()
     
     // Define hierarchy panel width (resizable, but start at 300px)
     static float hierarchyWidth = 300.0f;
-    const float minWidth = 200.0f;
-    const float maxWidth = viewportWidth * 0.5f; // Max 50% of screen width
+    const float minWidth = 10.0f;
+    const float maxWidth = viewportWidth - 10.f; // Max 50% of screen width
     
     // Position the window on the right side, full height
     ImGui::SetNextWindowPos(ImVec2(viewportWidth - hierarchyWidth, 0), ImGuiCond_Always);
