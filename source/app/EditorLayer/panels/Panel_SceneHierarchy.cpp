@@ -524,6 +524,7 @@ void Panel_SceneHierarchy::HandleDragDropAsParent(Entity entity, float relativeY
                     _scene->GetRegistry(), { draggedEntity.GetHandle() });
 
                 _scene->SetParent(draggedEntity, entity);
+                _scene->RebuildChildrenForAllEntities();
 
                 auto after = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, Parent>(
                     _scene->GetRegistry(), { draggedEntity.GetHandle() });

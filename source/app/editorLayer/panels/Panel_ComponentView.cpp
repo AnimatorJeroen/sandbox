@@ -88,11 +88,6 @@ void Panel_ComponentView::RenderComponentUI(Entity entity)
         RenderParentComponent(entity);
     }
     
-    if (entity.HasComponent<Children>())
-    {
-        RenderChildrenComponent(entity);
-    }
-    
     // Render FBX-specific components
     if (entity.HasComponent<FBXSkeletonComponent>() || 
         entity.HasComponent<FBXSkinComponent>() || 
@@ -101,6 +96,25 @@ void Panel_ComponentView::RenderComponentUI(Entity entity)
         RenderFBXComponents(entity);
     }
     
+    // Render FBXBone component
+    if (entity.HasComponent<FBXBone>())
+    {
+        RenderFBXBoneComponent(entity);
+    }
+    
+    // Render FBXAnimationChannels component
+    if (entity.HasComponent<FBXAnimationChannels>())
+    {
+        RenderFBXAnimationChannelsComponent(entity);
+    }
+    
+    ImGui::TextDisabled("Runtime Components");
+    ImGui::Separator();
+    if (entity.HasComponent<Children>())
+    {
+        RenderChildrenComponent(entity);
+    }
+
     // Add Component button at the bottom
     ImGui::Separator();
     RenderAddComponentButton(entity);
@@ -372,6 +386,157 @@ void Panel_ComponentView::RenderFBXComponents(Entity entity)
     }
 }
 
+void Panel_ComponentView::RenderFBXBoneComponent(Entity entity)
+{
+    if (ImGui::CollapsingHeader("FBX Bone Component"))
+    {
+        const auto& bone = entity.GetComponent<FBXBone>();
+        
+        // Display offset matrix (inverse bind pose)
+        if (ImGui::TreeNode("Offset Matrix (Inverse Bind Pose)"))
+        {
+            ImGui::TextDisabled("Transforms from mesh space to bone space");
+            ImGui::Separator();
+            
+            for (int i = 0; i < 4; i++)
+            {
+                ImGui::Text("[%.3f, %.3f, %.3f, %.3f]", 
+                    bone.offsetMatrix[i][0], 
+                    bone.offsetMatrix[i][1], 
+                    bone.offsetMatrix[i][2], 
+                    bone.offsetMatrix[i][3]);
+            }
+            
+            ImGui::TreePop();
+        }
+        
+        // Display local rest transform
+        if (ImGui::TreeNode("Local Rest Transform"))
+        {
+            ImGui::TextDisabled("Local transform in rest pose");
+            ImGui::Separator();
+            
+            for (int i = 0; i < 4; i++)
+            {
+                ImGui::Text("[%.3f, %.3f, %.3f, %.3f]", 
+                    bone.localRestTransform[i][0], 
+                    bone.localRestTransform[i][1], 
+                    bone.localRestTransform[i][2], 
+                    bone.localRestTransform[i][3]);
+            }
+            
+            ImGui::TreePop();
+        }
+    }
+}
+
+void Panel_ComponentView::RenderFBXAnimationChannelsComponent(Entity entity)
+{
+    if (ImGui::CollapsingHeader("FBX Animation Channels"))
+    {
+        const auto& animChannels = entity.GetComponent<FBXAnimationChannels>();
+        
+        ImGui::Text("Total Channels: %zu", animChannels.channels.size());
+        ImGui::Separator();
+        
+        if (animChannels.channels.empty())
+        {
+            ImGui::TextDisabled("No animation channels");
+        }
+        else
+        {
+            // Display each animation channel
+            for (size_t i = 0; i < animChannels.channels.size(); i++)
+            {
+                const auto& channel = animChannels.channels[i];
+                
+                char label[64];
+                snprintf(label, sizeof(label), "Channel %zu (Clip Index: %d)", i, channel.clipIndex);
+                
+                if (ImGui::TreeNode(label))
+                {
+                    ImGui::Indent();
+                    
+                    // Position keys
+                    if (ImGui::TreeNode("Position Keys"))
+                    {
+                        ImGui::Text("Count: %zu", channel.positionKeys.size());
+                        
+                        if (!channel.positionKeys.empty())
+                        {
+                            ImGui::Separator();
+                            for (size_t j = 0; j < std::min(channel.positionKeys.size(), size_t(5)); j++)
+                            {
+                                const auto& key = channel.positionKeys[j];
+                                ImGui::Text("[%.2f] (%.3f, %.3f, %.3f)", 
+                                    key.time, key.value.x, key.value.y, key.value.z);
+                            }
+                            
+                            if (channel.positionKeys.size() > 5)
+                            {
+                                ImGui::TextDisabled("... and %zu more", channel.positionKeys.size() - 5);
+                            }
+                        }
+                        
+                        ImGui::TreePop();
+                    }
+                    
+                    // Rotation keys
+                    if (ImGui::TreeNode("Rotation Keys"))
+                    {
+                        ImGui::Text("Count: %zu", channel.rotationKeys.size());
+                        
+                        if (!channel.rotationKeys.empty())
+                        {
+                            ImGui::Separator();
+                            for (size_t j = 0; j < std::min(channel.rotationKeys.size(), size_t(5)); j++)
+                            {
+                                const auto& key = channel.rotationKeys[j];
+                                ImGui::Text("[%.2f] (%.3f, %.3f, %.3f, %.3f)", 
+                                    key.time, key.value.x, key.value.y, key.value.z, key.value.w);
+                            }
+                            
+                            if (channel.rotationKeys.size() > 5)
+                            {
+                                ImGui::TextDisabled("... and %zu more", channel.rotationKeys.size() - 5);
+                            }
+                        }
+                        
+                        ImGui::TreePop();
+                    }
+                    
+                    // Scale keys
+                    if (ImGui::TreeNode("Scale Keys"))
+                    {
+                        ImGui::Text("Count: %zu", channel.scaleKeys.size());
+                        
+                        if (!channel.scaleKeys.empty())
+                        {
+                            ImGui::Separator();
+                            for (size_t j = 0; j < std::min(channel.scaleKeys.size(), size_t(5)); j++)
+                            {
+                                const auto& key = channel.scaleKeys[j];
+                                ImGui::Text("[%.2f] (%.3f, %.3f, %.3f)", 
+                                    key.time, key.value.x, key.value.y, key.value.z);
+                            }
+                            
+                            if (channel.scaleKeys.size() > 5)
+                            {
+                                ImGui::TextDisabled("... and %zu more", channel.scaleKeys.size() - 5);
+                            }
+                        }
+                        
+                        ImGui::TreePop();
+                    }
+                    
+                    ImGui::Unindent();
+                    ImGui::TreePop();
+                }
+            }
+        }
+    }
+}
+
 void Panel_ComponentView::RenderAddComponentButton(Entity entity)
 {
     if (!entity)
@@ -393,126 +558,20 @@ void Panel_ComponentView::RenderAddComponentButton(Entity entity)
         ImGui::TextDisabled("Select a component to add:");
         ImGui::Separator();
         
-        // NameComponent
-        if (!entity.HasComponent<NameComponent>())
-        {
-            if (ImGui::MenuItem("Name Component"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<NameComponent>("Unnamed");
-                _editorContext.applicator().CaptureCreate<NameComponent>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
-        // Transform
-        if (!entity.HasComponent<Transform>())
-        {
-            if (ImGui::MenuItem("Transform"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<Transform>();
-                _editorContext.applicator().CaptureCreate<Transform>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
-        // MeshComponent
-        if (!entity.HasComponent<MeshComponent>())
-        {
-            if (ImGui::MenuItem("Mesh Component"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<MeshComponent>();
-                _editorContext.applicator().CaptureCreate<MeshComponent>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
-        // CameraComponent
-        if (!entity.HasComponent<CameraComponent>())
-        {
-            if (ImGui::MenuItem("Camera Component"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<CameraComponent>();
-                _editorContext.applicator().CaptureCreate<CameraComponent>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
-        // Parent
-        if (!entity.HasComponent<Parent>())
-        {
-            if (ImGui::MenuItem("Parent Component"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<Parent>();
-                _editorContext.applicator().CaptureCreate<Parent>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
-        // LocalToWorld
-        if (!entity.HasComponent<LocalToWorld>())
-        {
-            if (ImGui::MenuItem("LocalToWorld"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<LocalToWorld>();
-                _editorContext.applicator().CaptureCreate<LocalToWorld>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
+        // Basic Components
+        AddComponentMenuItem<Transform>(entity, "Transform");
+        AddComponentMenuItem<MeshComponent>(entity, "Mesh Component");
+
         ImGui::Separator();
         ImGui::TextDisabled("FBX Components:");
         
-        // FBXSkeletonComponent
-        if (!entity.HasComponent<FBXSkeletonComponent>())
-        {
-            if (ImGui::MenuItem("FBX Skeleton Component"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<FBXSkeletonComponent>();
-                _editorContext.applicator().CaptureCreate<FBXSkeletonComponent>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
-        // FBXSkinComponent
-        if (!entity.HasComponent<FBXSkinComponent>())
-        {
-            if (ImGui::MenuItem("FBX Skin Component"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<FBXSkinComponent>();
-                _editorContext.applicator().CaptureCreate<FBXSkinComponent>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
-        // FBXAnimationComponent
-        if (!entity.HasComponent<FBXAnimationComponent>())
-        {
-            if (ImGui::MenuItem("FBX Animation Component"))
-            {
-                _editorContext.BeginUndo();
-                entity.AddComponent<FBXAnimationComponent>();
-                _editorContext.applicator().CaptureCreate<FBXAnimationComponent>({entity.GetHandle()});
-                _editorContext.EndUndo();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        
+        // FBX Components
+        AddComponentMenuItem<FBXSkeletonComponent>(entity, "FBX Skeleton Component");
+        AddComponentMenuItem<FBXSkinComponent>(entity, "FBX Skin Component");
+        AddComponentMenuItem<FBXAnimationComponent>(entity, "FBX Animation Component");
+        AddComponentMenuItem<FBXBone>(entity, "FBX Bone Component");
+        AddComponentMenuItem<FBXAnimationChannels>(entity, "FBX Animation Channels");
+
         ImGui::EndPopup();
     }
 }

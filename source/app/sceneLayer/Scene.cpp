@@ -468,7 +468,6 @@ void Scene::SetParent(Entity child, Entity parent)
 		child.RemoveComponent<Parent>();
 		if (oldParent)
 			RebuildChildrenForEntity(oldParent);
-
 		return;
 	}
 

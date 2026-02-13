@@ -75,6 +75,7 @@ namespace Core {
 		}
 
         // Capture component add/remove - captures specified component types
+        // Note we should always capture UUID as well for entity tracking
         template<typename... Cs>
         void CaptureComponentChange(
             const std::unordered_set<entt::entity>& entities,
