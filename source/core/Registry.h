@@ -256,7 +256,7 @@ namespace Core
 			return entt::null;
 		}
 
-		// Only called internally by applicator after a Paste operation or after , to update the duplicate UUID.
+		// Only called internally by applicator after bringing back a UUID component, or pasting
 		void ModifyUUID(entt::entity entity, UUID newUUID)
 		{
 			_entityToUUID[entity] = newUUID;
