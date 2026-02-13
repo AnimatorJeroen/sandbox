@@ -112,6 +112,7 @@ void EditorContext::Paste()
 
     LOG_DEBUG() << "Pasted entities from clipboard";
 
+    RefreshSelectionState();
     if (_sceneManager.GetActiveScene())
         _sceneManager.GetActiveScene()->RebuildChildrenForAllEntities();
 }
@@ -137,6 +138,7 @@ void EditorContext::DeleteSelection()
     // Clear selection after deletion
     _selectedEntities.clear();
 
+    RefreshSelectionState();
     scene->RebuildChildrenForAllEntities();
 }
 
@@ -362,4 +364,21 @@ void EditorContext::EndUndo()
 bool EditorContext::IsRecording() const noexcept
 {
     return _applicator.IsRecording();
+}
+
+void EditorContext::RefreshSelectionState()
+{
+    _selectedEntities.clear();
+    auto scene = _sceneManager.GetActiveScene();
+    if (!scene)
+        return;
+    auto& reg = scene->GetRegistry();
+    entt::entity e;
+    for (const auto& uuid : _selectedEntityUUIDs)
+    {
+        e = reg.GetEntityByUUID(uuid);
+        if (e != entt::null)
+            _selectedEntities.emplace(Entity{ e, &reg });
+    }
+        
 }

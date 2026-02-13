@@ -382,6 +382,7 @@ bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 {
 	_editorContext.Undo();
 	//@Todo dit moet met een flag of een Do command gebeuren alleen wanneer nodig ipv brute force
+	_editorContext.RefreshSelectionState();
 	if (_sceneManager->GetActiveScene())
 	{
 		_sceneManager->GetActiveScene()->RebuildChildrenForAllEntities();
@@ -392,6 +393,7 @@ bool EditorApplicationLayer::OnRequestUndo(const RequestUndoEvent& e)
 bool EditorApplicationLayer::OnRequestRedo(const RequestRedoEvent& e)
 {
 	_editorContext.Redo();
+	_editorContext.RefreshSelectionState();
 	if (_sceneManager->GetActiveScene())
 	{
 		_sceneManager->GetActiveScene()->RebuildChildrenForAllEntities();

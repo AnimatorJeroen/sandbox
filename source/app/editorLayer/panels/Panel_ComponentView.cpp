@@ -25,7 +25,7 @@ void Panel_ComponentView::Render()
     // Get the selected entities from editor context
     const auto& selectedEntities = _editorContext.GetSelectedEntities();
     
-    ImGui::BeginChild("ComponentView", ImVec2(0, 250), true);
+    ImGui::BeginChild("ComponentView", ImVec2(0, 250), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
     
     if (selectedEntities.empty())
     {
