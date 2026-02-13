@@ -2,8 +2,9 @@
 #include "PropertiesBar.h"
 #include "app/sceneLayer/Scene.h"
 #include "EditorContext.h"
+#include "EditorApplicationLayer.h"
 
-void PropertiesBar::Render()
+void PropertiesBar::Render(const EditorLayout& layout)
 {
     // Create a window for the properties bar with specific flags to make it a bar below document tabs
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar |
@@ -12,9 +13,10 @@ void PropertiesBar::Render()
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
-    float topBarHeight = ImGui::GetFrameHeight() + 5;
-    ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight() + topBarHeight)); // Position below document tabs
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetFrameHeight() + 5)); // Full width
+    // Position below open documents bar using layout values
+    float posY = layout.mainMenuHeight + layout.openDocumentsHeight;
+    ImGui::SetNextWindowPos(ImVec2(0, posY));
+    ImGui::SetNextWindowSize(ImVec2(layout.viewportWidth, layout.propertiesBarHeight));
 
     ImGui::Begin("##GizmoProperties", nullptr, windowFlags);
 

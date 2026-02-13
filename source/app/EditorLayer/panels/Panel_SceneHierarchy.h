@@ -6,6 +6,7 @@
 
 class Scene;
 class EditorContext;
+struct EditorLayout;
 
 namespace Core {
 	template<typename T1, typename T2>
@@ -17,7 +18,7 @@ class Panel_SceneHierarchy
 public:
 	explicit Panel_SceneHierarchy(Scene& scene, EditorContext& editorContext);
 	~Panel_SceneHierarchy() = default;
-	void Render();
+	void Render(const EditorLayout& layout);
 	void SetContext(Scene& scene);
 	
 	// Prints all components present on an entity to the console

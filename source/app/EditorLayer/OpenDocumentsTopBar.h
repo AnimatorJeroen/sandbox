@@ -8,6 +8,7 @@
 
 // Forward declaration
 class EditorContext;
+struct EditorLayout;
 
 class OpenDocumentsTopBar
 {
@@ -23,5 +24,5 @@ public:
     OpenDocumentsTopBar(SceneManager& sceneManager, Core::EventBus& eventBus, EditorContext& editorContext) 
         : _eventBus(eventBus), _sceneManager(sceneManager), _editorContext(editorContext) {}
 
-    void Render();
+    void Render(const EditorLayout& layout);
 };

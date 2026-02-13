@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Panel_SceneHierarchy.h"
 #include "app/editorLayer/EditorContext.h"
+#include "app/editorLayer/EditorApplicationLayer.h"
 #include <core/applicator/Applicator.h>
 #include "app/sceneLayer/Scene.h"
 #include <imgui/imgui.h>
@@ -19,7 +20,7 @@ void Panel_SceneHierarchy::SetContext(Scene& scene)
     _componentViewPanel.SetContext(scene);
 }
 
-void Panel_SceneHierarchy::Render()
+void Panel_SceneHierarchy::Render(const EditorLayout& layout)
 {
     static char inputTextbuffer[64];
     static Scene* lastScene = nullptr;
@@ -27,19 +28,17 @@ void Panel_SceneHierarchy::Render()
     if (!_scene)
         return;
 
-    // Get viewport size
-    ImGuiIO& io = ImGui::GetIO();
-    float viewportWidth = io.DisplaySize.x;
-    float viewportHeight = io.DisplaySize.y;
+    // Use layout values passed from EditorApplicationLayer
+    float hierarchyAvailableHeight = layout.viewportHeight - layout.hierarchyStartY;
     
     // Define hierarchy panel width (resizable, but start at 300px)
     static float hierarchyWidth = 300.0f;
     const float minWidth = 10.0f;
-    const float maxWidth = viewportWidth - 10.f; // Max 50% of screen width
+    const float maxWidth = layout.viewportWidth - 10.0f;
     
-    // Position the window on the right side, full height
-    ImGui::SetNextWindowPos(ImVec2(viewportWidth - hierarchyWidth, 0), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(hierarchyWidth, viewportHeight), ImGuiCond_Always);
+    // Position the window on the right side, below PropertiesBar
+    ImGui::SetNextWindowPos(ImVec2(layout.viewportWidth - hierarchyWidth, layout.hierarchyStartY), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(hierarchyWidth, hierarchyAvailableHeight), ImGuiCond_Always);
     
     // Window flags: no move, no collapse, no title bar
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoMove | 
@@ -49,6 +48,7 @@ void Panel_SceneHierarchy::Render()
     ImGui::Begin("Scene Hierarchy", nullptr, windowFlags);
     
     // Manual resize handle on the left edge
+    ImGuiIO& io = ImGui::GetIO();
     ImVec2 windowPos = ImGui::GetWindowPos();
     ImVec2 windowSize = ImGui::GetWindowSize();
     ImVec2 mousePos = io.MousePos;
@@ -59,21 +59,20 @@ void Panel_SceneHierarchy::Render()
                                   mousePos.y >= windowPos.y && 
                                   mousePos.y <= windowPos.y + windowSize.y);
     
-    if (isHoveringResizeArea || ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+    static bool isDraggingResizeHandle = false;
+    if (isHoveringResizeArea || isDraggingResizeHandle)
     {
-        static bool isDragging = false;
-        
-        if (isHoveringResizeArea && !isDragging)
+        if (isHoveringResizeArea && !isDraggingResizeHandle)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
         }
         
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && isHoveringResizeArea)
         {
-            isDragging = true;
+            isDraggingResizeHandle = true;
         }
         
-        if (isDragging)
+        if (isDraggingResizeHandle)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
             
@@ -89,7 +88,7 @@ void Panel_SceneHierarchy::Render()
             
             if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
             {
-                isDragging = false;
+                isDraggingResizeHandle = false;
             }
         }
     }

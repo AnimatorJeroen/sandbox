@@ -24,6 +24,18 @@ class EventBus;
 // Forward declare enum
 enum class PopupResult : int;
 
+// Layout information for editor panels
+struct EditorLayout
+{
+	float frameHeight = 0.0f;
+	float mainMenuHeight = 0.0f;
+	float openDocumentsHeight = 0.0f;
+	float propertiesBarHeight = 0.0f;
+	float hierarchyStartY = 0.0f;
+	float viewportWidth = 0.0f;
+	float viewportHeight = 0.0f;
+};
+
 class EditorApplicationLayer : public Core::IApplicationLayer
 {
 public:
@@ -57,6 +69,7 @@ public:
 
 private:
 	void RenderImGuizmo();
+	EditorLayout CalculateLayout() const;
 	
 	// Core services
 	std::shared_ptr<SceneManager> _sceneManager;

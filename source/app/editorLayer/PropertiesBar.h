@@ -4,6 +4,7 @@
 
 class Scene;
 class EditorContext;
+struct EditorLayout;
 
 class PropertiesBar
 {
@@ -15,7 +16,7 @@ public:
     explicit PropertiesBar(EditorContext& editorContext)
         : _editorContext(editorContext) {}
 
-    void Render();
+    void Render(const EditorLayout& layout);
 
     void SetContext(Scene& scene);
 

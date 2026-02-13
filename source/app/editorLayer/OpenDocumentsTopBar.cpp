@@ -2,9 +2,10 @@
 #include "OpenDocumentsTopBar.h"
 #include "EditorContext.h"
 #include "PopupManager.h"
+#include "EditorApplicationLayer.h"
 #include <imgui/imgui.h>
 
-void OpenDocumentsTopBar::Render()
+void OpenDocumentsTopBar::Render(const EditorLayout& layout)
 {
     // Get all open scenes
     const auto& scenes = _sceneManager.GetAllScenes();
@@ -20,8 +21,9 @@ void OpenDocumentsTopBar::Render()
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoScrollWithMouse;
 
-    ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight())); // Position below main menu bar
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetFrameHeight() + 5)); // Full width
+    // Position below main menu bar using layout values
+    ImGui::SetNextWindowPos(ImVec2(0, layout.mainMenuHeight));
+    ImGui::SetNextWindowSize(ImVec2(layout.viewportWidth, layout.openDocumentsHeight));
 
     ImGui::Begin("##OpenDocuments", nullptr, windowFlags);
 

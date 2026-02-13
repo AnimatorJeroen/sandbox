@@ -63,20 +63,40 @@ void EditorApplicationLayer::OnUpdate(const float deltaTime)
 {
 }
 
+EditorLayout EditorApplicationLayer::CalculateLayout() const
+{
+	EditorLayout layout;
+	
+	ImGuiIO& io = ImGui::GetIO();
+	layout.viewportWidth = io.DisplaySize.x;
+	layout.viewportHeight = io.DisplaySize.y;
+	
+	layout.frameHeight = ImGui::GetFrameHeight();
+	layout.mainMenuHeight = layout.frameHeight;
+	layout.openDocumentsHeight = layout.frameHeight + 10.0f;
+	layout.propertiesBarHeight = layout.openDocumentsHeight + 10.0f;
+	
+	// Calculate where hierarchy panel should start (below all top bars)
+	layout.hierarchyStartY = layout.mainMenuHeight + layout.openDocumentsHeight + layout.propertiesBarHeight;
+	
+	return layout;
+}
+
 void EditorApplicationLayer::OnRender()
 {
+	// Calculate layout once per frame
+	EditorLayout layout = CalculateLayout();
+	
 	_mainMenu.Render();
-	_openDocumentsTopBar.Render();
-	_propertiesBar.Render();
-	_sceneHierarchyPanel.Render();
+	_openDocumentsTopBar.Render(layout);
+	_propertiesBar.Render(layout);
+	_sceneHierarchyPanel.Render(layout);
 	
 	RenderImGuizmo();
 
 	// Render popups last so they appear on top of everything
 	_popupManager.Render();
 }
-
-
 
 bool EditorApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
 {
