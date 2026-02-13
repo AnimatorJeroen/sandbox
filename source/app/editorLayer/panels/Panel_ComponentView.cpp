@@ -293,12 +293,68 @@ void Panel_ComponentView::RenderFBXComponents(Entity entity)
     {
         if (ImGui::CollapsingHeader("FBX Animation Component"))
         {
-            const auto& anim = entity.GetComponent<FBXAnimationComponent>();
+            auto& anim = entity.GetComponent<FBXAnimationComponent>();
+            
             ImGui::Text("Clips: %zu", anim.clips.size());
-            ImGui::Text("Active Clip: %d", anim.activeClipIndex);
+            
+            // Active Clip dropdown
+            if (!anim.clips.empty())
+            {
+                // Build list of clip names for the dropdown
+                std::vector<const char*> clipNames;
+                for (const auto& clip : anim.clips)
+                {
+                    clipNames.push_back(clip.name.data);
+                }
+                
+                // Clamp active clip index to valid range
+                int currentClip = anim.activeClipIndex;
+                if (currentClip < 0 || currentClip >= static_cast<int>(anim.clips.size()))
+                {
+                    currentClip = 0;
+                    anim.activeClipIndex = 0;
+                }
+                
+                if (ImGui::Combo("Active Clip", &currentClip, clipNames.data(), static_cast<int>(clipNames.size())))
+                {
+                    anim.activeClipIndex = currentClip;
+                    anim.currentTime = 0.0; // Reset to start of new clip
+                    
+                    _editorContext.BeginUndo();
+                    _editorContext.applicator().SetField(entity.GetHandle(), "FBXAnimationComponent.activeClipIndex", currentClip);
+                    _editorContext.applicator().SetField(entity.GetHandle(), "FBXAnimationComponent.currentTime", 0.0);
+                    _editorContext.EndUndo();
+                }
+            }
+            else
+            {
+                ImGui::TextDisabled("Active Clip: None");
+            }
+            
+            // Playing checkbox
+            bool isPlaying = anim.isPlaying;
+            if (ImGui::Checkbox("Playing", &isPlaying))
+            {
+                anim.isPlaying = isPlaying;
+                
+                _editorContext.BeginUndo();
+                _editorContext.applicator().SetField(entity.GetHandle(), "FBXAnimationComponent.isPlaying", isPlaying);
+                _editorContext.EndUndo();
+            }
+            
+            // Loop checkbox
+            bool loop = anim.loop;
+            if (ImGui::Checkbox("Loop", &loop))
+            {
+                anim.loop = loop;
+                
+                _editorContext.BeginUndo();
+                _editorContext.applicator().SetField(entity.GetHandle(), "FBXAnimationComponent.loop", loop);
+                _editorContext.EndUndo();
+            }
+            
+            // Current Time display (read-only for now)
             ImGui::Text("Current Time: %.2f", anim.currentTime);
-            ImGui::Text("Playing: %s", anim.isPlaying ? "Yes" : "No");
-            ImGui::Text("Loop: %s", anim.loop ? "Yes" : "No");
         }
     }
 }
