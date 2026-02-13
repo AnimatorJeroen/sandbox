@@ -2,6 +2,7 @@
 #include <memory>
 #include <set>
 #include "app/sceneLayer/Entity.h"
+#include "Panel_ComponentView.h"
 
 class Scene;
 class EditorContext;
@@ -33,6 +34,9 @@ private:
 	Scene* _scene;
 	EditorContext& _editorContext;
 	Entity _lastClickedEntity;
+	
+	// Component view panel (docked at bottom)
+	Panel_ComponentView _componentViewPanel;
 	
 	// Drag-drop visual feedback
 	enum class DropLocation { None, OnEntity, BeforeEntity, AfterEntity };

@@ -9,13 +9,14 @@
 #include <core/Logger.h>
 
 Panel_SceneHierarchy::Panel_SceneHierarchy(Scene& scene, EditorContext& editorContext) 
-    : _scene(&scene), _editorContext(editorContext)
+    : _scene(&scene), _editorContext(editorContext), _componentViewPanel(scene, editorContext)
 {
 }
 
 void Panel_SceneHierarchy::SetContext(Scene& scene)
 {
     _scene = &scene;
+    _componentViewPanel.SetContext(scene);
 }
 
 void Panel_SceneHierarchy::Render()
@@ -69,6 +70,14 @@ void Panel_SceneHierarchy::Render()
     }
 
     ImGui::Separator();
+    
+    // Create a child region for the hierarchy tree, leaving space for component view at bottom
+    float componentViewHeight = 250.0f;
+    float availableHeight = ImGui::GetContentRegionAvail().y;
+    float hierarchyHeight = availableHeight - componentViewHeight - 10.0f; // 10px spacing
+    
+    ImGui::BeginChild("HierarchyTree", ImVec2(0, hierarchyHeight), false);
+    
     ImGui::Text("Scene Entities:");
     
     // Get all entities from scene
@@ -154,6 +163,14 @@ void Panel_SceneHierarchy::Render()
             _lastClickedEntity = Entity::Null();
         }
 	}
+    
+    ImGui::EndChild();
+    
+    // Add separator between hierarchy and component view
+    ImGui::Separator();
+    
+    // Render the component view panel at the bottom
+    _componentViewPanel.Render();
 
     ImGui::End();
 }
