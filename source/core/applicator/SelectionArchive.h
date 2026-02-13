@@ -197,6 +197,7 @@ namespace Core {
 
                     if constexpr (std::is_same_v<C, Core::UUID>) {
                         reg.emplace_or_replace<C>(new_e, component);
+                        reg.ModifyUUID(new_e, component);
                     }
                     else {
                         reg.emplace<C>(new_e, component);

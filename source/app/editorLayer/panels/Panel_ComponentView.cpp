@@ -135,13 +135,16 @@ void Panel_ComponentView::RenderTransformComponent(Entity entity)
         ImGui::Text("Position");
         float pos[3] = { transform.Position.x, transform.Position.y, transform.Position.z };
         if (ImGui::DragFloat3("##Position", pos, 0.1f))
-        {
             transform.Position = vec3{ pos[0], pos[1], pos[2] };
-        }
+
+        static vec3 posStartVal;
+        if (ImGui::IsItemActivated())
+            posStartVal = transform.Position;
         
         if (ImGui::IsItemDeactivatedAfterEdit())
         {
             _editorContext.BeginUndo();
+            transform.Position = posStartVal;
             _editorContext.applicator().SetField(entity.GetHandle(), "Transform.Position", vec3{ pos[0], pos[1], pos[2] });
             _editorContext.EndUndo();
         }
@@ -149,13 +152,16 @@ void Panel_ComponentView::RenderTransformComponent(Entity entity)
         ImGui::Text("Rotation");
         float rot[3] = { transform.Rotation.x, transform.Rotation.y, transform.Rotation.z };
         if (ImGui::DragFloat3("##Rotation", rot, 0.1f))
-        {
             transform.Rotation = vec3{ rot[0], rot[1], rot[2] };
-        }
-        
+
+        static vec3 rotStartVal;
+        if (ImGui::IsItemActivated())
+            rotStartVal = transform.Rotation;
+
         if (ImGui::IsItemDeactivatedAfterEdit())
         {
             _editorContext.BeginUndo();
+            transform.Rotation = rotStartVal;
             _editorContext.applicator().SetField(entity.GetHandle(), "Transform.Rotation", vec3{ rot[0], rot[1], rot[2] });
             _editorContext.EndUndo();
         }
@@ -163,13 +169,16 @@ void Panel_ComponentView::RenderTransformComponent(Entity entity)
         ImGui::Text("Scale");
         float scale[3] = { transform.Scale.x, transform.Scale.y, transform.Scale.z };
         if (ImGui::DragFloat3("##Scale", scale, 0.1f))
-        {
             transform.Scale = vec3{ scale[0], scale[1], scale[2] };
-        }
+
+        static vec3 scaleStartVal;
+        if (ImGui::IsItemActivated())
+            scaleStartVal = transform.Scale;
         
         if (ImGui::IsItemDeactivatedAfterEdit())
         {
             _editorContext.BeginUndo();
+            transform.Scale = scaleStartVal;
             _editorContext.applicator().SetField(entity.GetHandle(), "Transform.Scale", vec3{ scale[0], scale[1], scale[2] });
             _editorContext.EndUndo();
         }
