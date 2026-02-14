@@ -67,49 +67,21 @@ void Panel_ComponentView::RenderComponentUI(Entity entity)
     RenderComponent<NameComponent>(entity, [this](Entity e) {
         RenderNameComponent(e);
         });
+    RenderComponent<Transform>(entity, [this](Entity e) {
+        RenderTransformComponent(e);
+        });
+    RenderComponent<MeshComponent>(entity, [this](Entity e) {
+        RenderMeshComponent(e);
+        });
+    RenderComponent<CameraComponent>(entity, [this](Entity e) {
+        RenderCameraComponent(e);
+        });
+    RenderComponent<Parent>(entity, [this](Entity e) {
+        RenderParentComponent(e);
+        });
 
-    if (entity.HasComponent<Transform>())
-    {
-        RenderComponent<Transform>(entity, [this](Entity e) {
-            RenderTransformComponent(e);
-            });
-    }
-    
-    if (entity.HasComponent<MeshComponent>())
-    {
-        RenderMeshComponent(entity);
-    }
-    
-    if (entity.HasComponent<CameraComponent>())
-    {
-        RenderCameraComponent(entity);
-    }
-    
-    if (entity.HasComponent<Parent>())
-    {
-        RenderParentComponent(entity);
-    }
-    
-    // Render FBX-specific components
-    if (entity.HasComponent<FBXSkeletonComponent>() || 
-        entity.HasComponent<FBXSkinComponent>() || 
-        entity.HasComponent<FBXAnimationComponent>())
-    {
-        RenderFBXComponents(entity);
-    }
-    
-    // Render FBXBone component
-    if (entity.HasComponent<FBXBone>())
-    {
-        RenderFBXBoneComponent(entity);
-    }
-    
-    // Render FBXAnimationChannels component
-    if (entity.HasComponent<FBXAnimationChannels>())
-    {
-        RenderFBXAnimationChannelsComponent(entity);
-    }
-    
+    RenderFBXComponents(entity);
+
     ImGui::TextDisabled("Runtime Components");
     ImGui::Separator();
     if (entity.HasComponent<Children>())
@@ -400,6 +372,18 @@ void Panel_ComponentView::RenderFBXComponents(Entity entity)
             // Current Time display (read-only for now)
             ImGui::Text("Current Time: %.2f", anim.currentTime);
         }
+    }
+
+    // Render FBXBone component
+    if (entity.HasComponent<FBXBone>())
+    {
+        RenderFBXBoneComponent(entity);
+    }
+
+    // Render FBXAnimationChannels component
+    if (entity.HasComponent<FBXAnimationChannels>())
+    {
+        RenderFBXAnimationChannelsComponent(entity);
     }
 }
 

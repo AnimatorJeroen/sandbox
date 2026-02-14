@@ -101,6 +101,8 @@ private:
 	template<typename ComponentType>
 	void RenderComponent(Entity entity, std::function<void(Entity)> renderComponentImpl)
 	{
+		if (!entity.HasComponent<NameComponent>())
+			return;
 		const char* name = typeid(ComponentType).name();
 		if (ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen))
 		{
