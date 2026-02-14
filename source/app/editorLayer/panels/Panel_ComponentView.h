@@ -22,7 +22,9 @@ private:
 	void RenderCameraComponent(Entity entity);
 	void RenderParentComponent(Entity entity);
 	void RenderChildrenComponent(Entity entity);
-	void RenderFBXComponents(Entity entity);
+	void RenderFBXSkeletonComponent(Entity entity);
+	void RenderFBXSkinComponent(Entity entity);
+	void RenderFBXAnimationComponent(Entity entity);
 	void RenderFBXBoneComponent(Entity entity);
 	void RenderFBXAnimationChannelsComponent(Entity entity);
 	void RenderAddComponentButton(Entity entity);
@@ -101,7 +103,7 @@ private:
 	template<typename ComponentType>
 	void RenderComponent(Entity entity, std::function<void(Entity)> renderComponentImpl)
 	{
-		if (!entity.HasComponent<NameComponent>())
+		if (!entity.HasComponent<ComponentType>())
 			return;
 		const char* name = typeid(ComponentType).name();
 		if (ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen))
