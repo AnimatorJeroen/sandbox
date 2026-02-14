@@ -6,6 +6,7 @@
 #include <imgui/imgui.h>
 #include <core/Logger.h>
 #include <core/UUID.h>
+#include <functional>
 
 Panel_ComponentView::Panel_ComponentView(Scene& scene, EditorContext& editorContext)
     : _scene(&scene), _editorContext(editorContext)
@@ -62,15 +63,16 @@ void Panel_ComponentView::RenderComponentUI(Entity entity)
     ImGui::TextDisabled("(UUID: %llu)", entity.UUID().value);
     ImGui::Separator();
     
-    // Render each component type
-    if (entity.HasComponent<NameComponent>())
-    {
-        RenderNameComponent(entity);
-    }
-    
+
+    RenderComponent<NameComponent>(entity, [this](Entity e) {
+        RenderNameComponent(e);
+        });
+
     if (entity.HasComponent<Transform>())
     {
-        RenderTransformComponent(entity);
+        RenderComponent<Transform>(entity, [this](Entity e) {
+            RenderTransformComponent(e);
+            });
     }
     
     if (entity.HasComponent<MeshComponent>())
@@ -122,32 +124,33 @@ void Panel_ComponentView::RenderComponentUI(Entity entity)
 
 void Panel_ComponentView::RenderNameComponent(Entity entity)
 {
-    if (ImGui::CollapsingHeader("Name Component", ImGuiTreeNodeFlags_DefaultOpen))
+    auto& name = entity.GetComponent<NameComponent>();
+
+    char buffer[64];
+    strncpy_s(buffer, name.name.data, sizeof(buffer) - 1);
+
+    if (ImGui::InputText("Name", buffer, sizeof(buffer)))
     {
-        auto& name = entity.GetComponent<NameComponent>();
-        
-        char buffer[64];
-        strncpy_s(buffer, name.name.data, sizeof(buffer) - 1);
-        
-        if (ImGui::InputText("Name", buffer, sizeof(buffer)))
-        {
-            // Update the name immediately
-            name.name = String64(buffer);
-        }
-        
-        if (ImGui::IsItemDeactivatedAfterEdit())
-        {
-            _editorContext.BeginUndo();
-            _editorContext.applicator().SetField(entity.GetHandle(), "NameComponent.name", String64(buffer));
-            _editorContext.EndUndo();
-        }
+        // Update the name immediately
+        name.name = String64(buffer);
+    }
+
+    if (ImGui::IsItemDeactivatedAfterEdit())
+    {
+        _editorContext.BeginUndo();
+        _editorContext.applicator().SetField(entity.GetHandle(), "NameComponent.name", String64(buffer));
+        _editorContext.EndUndo();
     }
 }
+
+
 
 void Panel_ComponentView::RenderTransformComponent(Entity entity)
 {
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        RenderComponentContextMenu<Transform>(entity, "Transform");
+        
         auto& transform = entity.GetComponent<Transform>();
         
         ImGui::Text("Position");
@@ -207,6 +210,8 @@ void Panel_ComponentView::RenderMeshComponent(Entity entity)
 {
     if (ImGui::CollapsingHeader("Mesh Component"))
     {
+        RenderComponentContextMenu<MeshComponent>(entity, "Mesh Component");
+        
         const auto& mesh = entity.GetComponent<MeshComponent>();
         
         ImGui::Text("Filepath: %s", mesh.filepath.data);
@@ -221,6 +226,8 @@ void Panel_ComponentView::RenderCameraComponent(Entity entity)
 {
     if (ImGui::CollapsingHeader("Camera Component"))
     {
+        RenderComponentContextMenu<CameraComponent>(entity, "Camera Component");
+        
         auto& camera = entity.GetComponent<CameraComponent>();
         
         ImGui::Text("Position: (%.2f, %.2f, %.2f)", camera.position.x, camera.position.y, camera.position.z);
@@ -236,6 +243,8 @@ void Panel_ComponentView::RenderParentComponent(Entity entity)
 {
     if (ImGui::CollapsingHeader("Parent Component"))
     {
+        RenderComponentContextMenu<Parent>(entity, "Parent Component");
+        
         const auto& parent = entity.GetComponent<Parent>();
         
         if (parent.HasParent())
@@ -269,6 +278,8 @@ void Panel_ComponentView::RenderChildrenComponent(Entity entity)
 {
     if (ImGui::CollapsingHeader("Children Component"))
     {
+        RenderComponentContextMenu<Children>(entity, "Children Component");
+        
         const auto& children = entity.GetComponent<Children>();
         
         ImGui::Text("Child Count: %zu", children.Count());
@@ -301,6 +312,8 @@ void Panel_ComponentView::RenderFBXComponents(Entity entity)
     {
         if (ImGui::CollapsingHeader("FBX Skeleton Component"))
         {
+            RenderComponentContextMenu<FBXSkeletonComponent>(entity, "FBX Skeleton Component");
+            
             const auto& skeleton = entity.GetComponent<FBXSkeletonComponent>();
             ImGui::Text("Bones: %zu", skeleton.bones.size());
         }
@@ -310,6 +323,8 @@ void Panel_ComponentView::RenderFBXComponents(Entity entity)
     {
         if (ImGui::CollapsingHeader("FBX Skin Component"))
         {
+            RenderComponentContextMenu<FBXSkinComponent>(entity, "FBX Skin Component");
+            
             const auto& skin = entity.GetComponent<FBXSkinComponent>();
             ImGui::Text("Skeleton Entity Index: %d", skin.skeletonEntityIndex);
             ImGui::Text("Vertex Weights: %zu", skin.vertexWeights.size());
@@ -320,6 +335,8 @@ void Panel_ComponentView::RenderFBXComponents(Entity entity)
     {
         if (ImGui::CollapsingHeader("FBX Animation Component"))
         {
+            RenderComponentContextMenu<FBXAnimationComponent>(entity, "FBX Animation Component");
+            
             auto& anim = entity.GetComponent<FBXAnimationComponent>();
             
             ImGui::Text("Clips: %zu", anim.clips.size());
@@ -390,6 +407,8 @@ void Panel_ComponentView::RenderFBXBoneComponent(Entity entity)
 {
     if (ImGui::CollapsingHeader("FBX Bone Component"))
     {
+        RenderComponentContextMenu<FBXBone>(entity, "FBX Bone Component");
+        
         const auto& bone = entity.GetComponent<FBXBone>();
         
         // Display offset matrix (inverse bind pose)
@@ -434,6 +453,8 @@ void Panel_ComponentView::RenderFBXAnimationChannelsComponent(Entity entity)
 {
     if (ImGui::CollapsingHeader("FBX Animation Channels"))
     {
+        RenderComponentContextMenu<FBXAnimationChannels>(entity, "FBX Animation Channels");
+        
         const auto& animChannels = entity.GetComponent<FBXAnimationChannels>();
         
         ImGui::Text("Total Channels: %zu", animChannels.channels.size());

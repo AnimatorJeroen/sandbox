@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <functional>
 #include "app/sceneLayer/Entity.h"
 
 class Scene;
@@ -59,6 +60,58 @@ private:
 		if (hasComponent)
 		{
 			ImGui::EndDisabled();
+		}
+	}
+	
+	// Generic helper to remove a component with undo support
+	template<typename ComponentType>
+	void RemoveComponentWithUndo(Entity entity)
+	{
+		if (!entity.HasComponent<ComponentType>())
+			return;
+		
+		auto before = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, ComponentType>(
+			_scene->GetRegistry(), { entity.GetHandle() });
+		
+		entity.RemoveComponent<ComponentType>();
+		
+		auto after = Core::ArchiveHelpers::MakeSnapshot<Core::UUID, ComponentType>(
+			_scene->GetRegistry(), { entity.GetHandle() });
+		
+		_editorContext.BeginUndo();
+		_editorContext.applicator().CaptureComponentChange<Core::UUID, ComponentType>(
+			{ entity.GetHandle() }, std::move(before), std::move(after));
+		_editorContext.EndUndo();
+	}
+	
+	// Generic helper to render component context menu
+	template<typename ComponentType>
+	void RenderComponentContextMenu(Entity entity, const char* componentName)
+	{
+		if (ImGui::BeginPopupContextItem(componentName))
+		{
+			if (ImGui::MenuItem("Remove Component"))
+			{
+				RemoveComponentWithUndo<ComponentType>(entity);
+			}
+			ImGui::EndPopup();
+		}
+	}
+
+	template<typename ComponentType>
+	void RenderComponent(Entity entity, std::function<void(Entity)> renderComponentImpl)
+	{
+		const char* name = typeid(ComponentType).name();
+		if (ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			RenderComponentContextMenu<ComponentType>(entity, name);
+			if (!entity.HasComponent<ComponentType>())
+				return;
+			renderComponentImpl(entity);
+		}
+		else
+		{
+			RenderComponentContextMenu<ComponentType>(entity, name);
 		}
 	}
 	
