@@ -18,7 +18,7 @@ void Panel_ComponentView::SetContext(Scene& scene)
     _scene = &scene;
 }
 
-void Panel_ComponentView::Render()
+void Panel_ComponentView::Render(float height)
 {
     if (!_scene)
         return;
@@ -26,7 +26,8 @@ void Panel_ComponentView::Render()
     // Get the selected entities from editor context
     const auto& selectedEntities = _editorContext.GetSelectedEntities();
     
-    ImGui::BeginChild("ComponentView", ImVec2(0, 250), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+    // Use provided height, or 0 for auto-sizing (will use remaining space)
+    ImGui::BeginChild("ComponentView", ImVec2(0, height), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
     
     if (selectedEntities.empty())
     {

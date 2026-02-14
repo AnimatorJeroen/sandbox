@@ -140,8 +140,10 @@ void Panel_SceneHierarchy::Render(const EditorLayout& layout)
     ImGui::Separator();
     
     // Create a child region for the hierarchy tree, leaving space for component view at bottom
-    float componentViewHeight = 250.0f;
+    static float componentViewHeight = 250.0f;
+    const float minComponentViewHeight = 50.0f;
     float availableHeight = ImGui::GetContentRegionAvail().y;
+    const float maxComponentViewHeight = availableHeight - 50.0f; // Leave at least 50px for hierarchy
     float hierarchyHeight = availableHeight - componentViewHeight - 10.0f; // 10px spacing
     
     ImGui::BeginChild("HierarchyTree", ImVec2(0, hierarchyHeight), false);
@@ -234,11 +236,56 @@ void Panel_SceneHierarchy::Render(const EditorLayout& layout)
     
     ImGui::EndChild();
     
+    // Manual horizontal resize handle for component view divider
+    ImVec2 hierarchyEndPos = ImGui::GetItemRectMax();
+    const float separatorHeight = 8.0f;
+    ImVec2 separatorMin = ImVec2(windowPos.x, hierarchyEndPos.y);
+    ImVec2 separatorMax = ImVec2(windowPos.x + windowSize.x, hierarchyEndPos.y + separatorHeight);
+    
+    bool isHoveringComponentDivider = (mousePos.x >= separatorMin.x && 
+                                        mousePos.x <= separatorMax.x &&
+                                        mousePos.y >= separatorMin.y - 3.0f && 
+                                        mousePos.y <= separatorMax.y + 3.0f);
+    
+    static bool isDraggingComponentDivider = false;
+    if (isHoveringComponentDivider || isDraggingComponentDivider)
+    {
+        if (isHoveringComponentDivider && !isDraggingComponentDivider && !isDraggingResizeHandle)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+        }
+        
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && isHoveringComponentDivider && !isDraggingResizeHandle)
+        {
+            isDraggingComponentDivider = true;
+        }
+        
+        if (isDraggingComponentDivider)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+            
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+            {
+                float delta = io.MouseDelta.y;
+                componentViewHeight -= delta; // When dragging up (negative delta), component view grows
+                
+                // Clamp to min/max
+                if (componentViewHeight < minComponentViewHeight) componentViewHeight = minComponentViewHeight;
+                if (componentViewHeight > maxComponentViewHeight) componentViewHeight = maxComponentViewHeight;
+            }
+            
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+            {
+                isDraggingComponentDivider = false;
+            }
+        }
+    }
+    
     // Add separator between hierarchy and component view
     ImGui::Separator();
     
-    // Render the component view panel at the bottom
-    _componentViewPanel.Render();
+    // Render the component view panel at the bottom with the dynamic height
+    _componentViewPanel.Render(componentViewHeight);
 
     ImGui::End();
 }

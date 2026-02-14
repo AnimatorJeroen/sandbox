@@ -11,7 +11,7 @@ class Panel_ComponentView
 public:
 	explicit Panel_ComponentView(Scene& scene, EditorContext& editorContext);
 	~Panel_ComponentView() = default;
-	void Render();
+	void Render(float height = 0.0f);
 	void SetContext(Scene& scene);
 	
 private:
