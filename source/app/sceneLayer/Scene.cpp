@@ -171,7 +171,8 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 	int i = 0;
 	for (auto entity : _registry.view<MeshComponent>()) {
 		auto& localToWorld = _registry.get<LocalToWorld>(entity);
-		recorder.Cube(localToWorld.Value, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
+		mat4 cubeTransform = glm::scale(localToWorld.Value, vec3{ 100.f,100.f,100.f });
+		recorder.Cube(cubeTransform, { 0.2f + i * 0.1f, 0.5f, 1.0f, 1.0f });
 		i++;
 	}
 
