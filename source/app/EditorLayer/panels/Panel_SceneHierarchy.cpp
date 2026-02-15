@@ -24,7 +24,7 @@ void Panel_SceneHierarchy::Render(const EditorLayout& layout)
 {
     static char inputTextbuffer[64];
     static Scene* lastScene = nullptr;
-    static float sceneColor = _scene->GetSceneColor();
+
     if (!_scene)
         return;
 
@@ -96,24 +96,16 @@ void Panel_SceneHierarchy::Render(const EditorLayout& layout)
     // Add a title manually since we disabled the title bar
     ImGui::Text("Scene Hierarchy");
     ImGui::Separator();
-	
-    sceneColor = _scene->GetSceneColor();
-    ImGui::InputFloat("Scene Color: %f", &sceneColor);
-    if (ImGui::IsItemDeactivatedAfterEdit())
-    {
-        _editorContext.BeginUndo();
-        _editorContext.applicator().SetField(_scene->GetSceneEntity().GetHandle(), "Scene.sceneColor", sceneColor);
-        _editorContext.EndUndo();
-    }
-	// Update scene name when input changes
-    strncpy_s(inputTextbuffer, _scene->GetName().data, sizeof(inputTextbuffer) - 1);
-    ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer));
-    if (ImGui::IsItemDeactivatedAfterEdit())
-    {
-        _editorContext.BeginUndo();
-        _editorContext.applicator().SetField(_scene->GetSceneEntity().GetHandle(), "Scene.name", String64(inputTextbuffer));
-        _editorContext.EndUndo();
-    }
+
+	//// Update scene description when input changes
+ //   strncpy_s(inputTextbuffer, _scene->GetName().data, sizeof(inputTextbuffer) - 1);
+ //   ImGui::InputText("input field", inputTextbuffer, sizeof(inputTextbuffer));
+ //   if (ImGui::IsItemDeactivatedAfterEdit())
+ //   {
+ //       _editorContext.BeginUndo();
+ //       _editorContext.applicator().SetField(_scene->GetSceneEntity().GetHandle(), "Scene.name", String64(inputTextbuffer));
+ //       _editorContext.EndUndo();
+ //   }
 
     if (ImGui::Button("Add Entity"))
     {

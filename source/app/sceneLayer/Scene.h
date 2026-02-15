@@ -82,8 +82,6 @@ class Scene
 		void SetName(const std::string& name);
 		const String64& GetName();
 		const std::string& GetFileName();
-		inline const float GetSceneColor() { return data().sceneColor; }
-		inline void SetSceneColor(float color) { data().sceneColor = color; }
 
 		// Filepath management
 		void SetFilepath(const std::string& filepath) {

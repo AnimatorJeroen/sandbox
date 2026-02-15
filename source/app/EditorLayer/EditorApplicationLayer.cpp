@@ -11,6 +11,7 @@
 #include <core/Logger.h>
 #include <core/Window.h>
 #include <core/BrowserWindow.h>
+#include "InitImguiStyles.h"
 
 #include <random>
 
@@ -32,6 +33,8 @@ _propertiesBar(_editorContext),
 _popupManager(),
 _cameraController()
 {
+	InitImGuiStyles();
+
 	// Set popup manager reference in editor context
 	_editorContext.SetPopupManager(&_popupManager);
 	
@@ -149,7 +152,8 @@ bool EditorApplicationLayer::OnMouseMoveEvent(const Core::MouseMoveEvent& e)
 
 bool EditorApplicationLayer::OnMouseScrollEvent(const Core::MouseScrollEvent& e)
 {
-	_cameraController.OnMouseScroll(e.scrollY);
+	if (!ImGui::GetIO().WantCaptureMouse)
+		_cameraController.OnMouseScroll(e.scrollY);
 
 	if (!ImGui::GetIO().WantCaptureMouse)
 		return false;

@@ -47,8 +47,7 @@ void ReflectTypes() {
 
     entt::meta_factory<SceneData>()
         .type("Scene"_hs)  // Register type name - THIS IS CRITICAL!
-        .data<&SceneData::_name, entt::as_ref_t>("name"_hs)
-        .data<&SceneData::sceneColor, entt::as_ref_t>("sceneColor"_hs);
+        .data<&SceneData::_description, entt::as_ref_t>("name"_hs);
 
     // Reflect NameComponent
     entt::meta_factory<NameComponent>()

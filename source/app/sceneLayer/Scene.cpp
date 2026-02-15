@@ -266,12 +266,12 @@ void Scene::Draw(Core::DrawCommandRecorder& recorder)
 
 void Scene::SetName(const std::string& name)
 {
-	data()._name = name;
+	data()._description = name;
 }
 
 const String64& Scene::GetName()
 {
-	return data()._name;
+	return data()._description;
 }
 
 const std::string& Scene::GetFileName()

@@ -163,8 +163,7 @@ struct FBXAnimationComponent {
 
 // SceneData component - uniquely identifies the scene root entity
 struct SceneData {
-	float sceneColor = 0.f;
-	String64 _name;
+	String64 _description;
 };
 
 // LocalToWorld component - stores the computed world transformation matrix
