@@ -106,12 +106,40 @@ private:
 		if (!entity.HasComponent<ComponentType>())
 			return;
 		const char* name = typeid(ComponentType).name();
-		if (ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen))
+		bool isOpen = ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen);
+		
+		if (isOpen)
 		{
 			RenderComponentContextMenu<ComponentType>(entity, name);
 			if (!entity.HasComponent<ComponentType>())
 				return;
+			
+			// Get the current cursor position to start drawing the border
+			ImVec2 contentStart = ImGui::GetCursorScreenPos();
+			
+			// Add small padding
+			ImGui::Indent();
+			
+			// Render the component content
 			renderComponentImpl(entity);
+			
+			ImGui::Unindent();
+			
+			// Get the end position after rendering content
+			ImVec2 contentEnd = ImGui::GetCursorScreenPos();
+			
+			// Draw border around the component content
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			ImVec4 borderColor = ImGui::GetStyle().Colors[ImGuiCol_Border];
+			ImU32 borderColorU32 = ImGui::ColorConvertFloat4ToU32(borderColor);
+			
+			// Add some padding to the border
+			float borderPadding = 4.0f;
+			ImVec2 borderMin = ImVec2(contentStart.x - borderPadding, contentStart.y - borderPadding);
+			ImVec2 borderMax = ImVec2(contentEnd.x + ImGui::GetContentRegionAvail().x + borderPadding, contentEnd.y + borderPadding);
+			
+			// Draw the border rectangle
+			drawList->AddRect(borderMin, borderMax, borderColorU32, 0.0f, 0, 1.5f);
 		}
 		else
 		{
