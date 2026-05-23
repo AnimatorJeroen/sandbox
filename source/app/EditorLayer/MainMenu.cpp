@@ -28,7 +28,7 @@ void MainMenu::Render()
 			}
 
 			int activeSceneIndex = _editorContext.sceneManager().GetActiveSceneIndex();
-			if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex != -1))
+			if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex != -1 && !Core::Platform::IsWasm))
 			{
 				_editorContext.SaveScene(activeSceneIndex);
 			}
