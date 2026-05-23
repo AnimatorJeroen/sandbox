@@ -12,21 +12,6 @@ _testScene(ctx.Get<SceneManager>()),
 _eventBus(*ctx.Get<Core::EventBus>().get())
 {
 	_testScene.Setup();
-
-	// Seed render specs from the actual window size so the viewport is correct on the first frame
-	{
-		auto window = ctx.Get<Core::Window>();
-		int w = 0, h = 0;
-		window->GetFramebufferSize(w, h);
-		if (w > 0 && h > 0)
-		{
-			Core::IRenderer::RenderTargetSpecs specs;
-			specs.width  = static_cast<uint32_t>(w);
-			specs.height = static_cast<uint32_t>(h);
-			_testScene.SetRenderSpecs(specs);
-		}
-	}
-
     // Store scene pointer in entt registry context for ChangeApplicator direct scene fields
     _sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
 	
