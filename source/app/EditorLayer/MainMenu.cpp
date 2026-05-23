@@ -45,7 +45,7 @@ void MainMenu::Render()
 
             bool canRevert = _editorContext.sceneManager().GetActiveScene() &&
                 !_editorContext.sceneManager().GetActiveScene()->GetFilepath().empty();
-            if(ImGui::MenuItem("Revert", nullptr, false, canRevert && !Core::Platform::IsWasm))
+            if(ImGui::MenuItem("Revert", nullptr, false, canRevert))
             {
                 _editorContext.RevertScene();
             }

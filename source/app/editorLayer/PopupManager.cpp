@@ -6,6 +6,10 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
+#ifdef PLATFORM_WASM
+#include <emscripten.h>
+#endif
+
 std::shared_ptr<PopupWindow> PopupManager::ShowPopup(const std::string& title, const std::string& message)
 {
     auto popup = std::make_shared<PopupWindow>(title, message);
@@ -170,5 +174,10 @@ void PopupManager::RunBlockingPopupLoop(PopupWindow& popup)
 
         // Swap buffers
         glfwSwapBuffers(glfwWindow);
+
+#ifdef PLATFORM_WASM
+        // Yield to the browser's event loop; Asyncify resumes us next iteration
+        emscripten_sleep(0);
+#endif
     }
 }
