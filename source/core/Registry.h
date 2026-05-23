@@ -210,20 +210,20 @@ namespace Core
 		template<typename Component>
 		auto size() const
 		{
-			return _registry.size<Component>();
+			return _registry.storage<Component>().size();
 		}
 
 		template<typename Component>
 		auto capacity() const
 		{
-			return _registry.capacity<Component>();
+			return _registry.storage<Component>().capacity();
 		}
 
 		// Reserve
 		template<typename Component>
-		void reserve(typename entt::storage_type_t<Component>::size_type cap)
+		void reserve(std::size_t cap)
 		{
-			_registry.reserve<Component>(cap);
+			_registry.storage<Component>().reserve(cap);
 		}
 
 		// Direct registry access (for advanced use cases)

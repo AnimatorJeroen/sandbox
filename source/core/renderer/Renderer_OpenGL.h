@@ -3,7 +3,9 @@
 #include "IRenderer.h"
 #include "IMesh.h"
 #include <memory>
+#ifndef PLATFORM_WASM
 #include <glew/glew.h>
+#endif
 
 namespace Core {
 

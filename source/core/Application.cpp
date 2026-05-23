@@ -3,13 +3,18 @@
 #include "Window.h"
 #include "event/EventBus.h"
 
+#ifndef PLATFORM_WASM
 #include "glew/glew.h"
+#endif
 #include <GLFW/glfw3.h>
 #include <imgui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <core/Logger.h>
+#ifdef PLATFORM_WASM
+#include <emscripten.h>
+#endif
 
 namespace Core
 {
@@ -22,10 +27,12 @@ namespace Core
 		
 		_window = std::make_shared<Window>(_applicationSpecs.windowWidth, _applicationSpecs.windowHeight, _applicationSpecs.windowTitle, *_eventBus);
 
+#ifndef PLATFORM_WASM
 		if (glewInit() != GLEW_OK) {
 			LOG_ERROR() << "Failed to initialize GLEW";
 			return;
 		}
+#endif
 
 #ifdef USE_IMGUI
 		IMGUI_CHECKVERSION();
@@ -53,55 +60,60 @@ namespace Core
 		// Register ApplicationCloseEvent callback last, so all layer callbacks are called first
 		REGISTER_CALLBACK((*_eventBus), RequestApplicationCloseEvent, OnRequestApplicationCloseEvent);
 		REGISTER_CALLBACK((*_eventBus), ApplicationCloseEvent, OnApplicationCloseEvent);
-		
-		float deltaTime = 0.0f;
-		float lastFrameTime = 0.0f;
-		float currentFrameTime = 0.0f;
 
+#ifdef PLATFORM_WASM
+		emscripten_set_main_loop_arg([](void* arg) {
+			static_cast<Application*>(arg)->Tick();
+		}, this, 0, true);
+#else
 		while (!shouldClose)
 		{
-			_window->PollEvents();
-			_eventBus->HandleEvents();
-
-			// Skip update and render if the application is paused
-			if (_isPaused)
-			{
-				continue;
-			}
-
-#ifdef USE_IMGUI
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
-			ImGuizmo::BeginFrame();
-#endif
-
-			currentFrameTime = static_cast<float>(glfwGetTime());
-			deltaTime = currentFrameTime - lastFrameTime;
-			lastFrameTime = currentFrameTime;
-
-            for(auto it = _applicationLayers.rbegin(); it != _applicationLayers.rend(); ++it)
-            {
-                (*it)->OnUpdate(deltaTime);
-            }
-
-			for (auto it = _applicationLayers.rbegin(); it != _applicationLayers.rend(); ++it)
-			{
-				(*it)->OnRender();
-			}
-
-#ifdef USE_IMGUI
-			ImGui::Render();
-			// if no renderer handles the glClear, we need to do it here
-			//ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-			//glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-			//glClear(GL_COLOR_BUFFER_BIT);
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif
-
-			_window->SwapBuffers();
+			Tick();
 		}
 		Stop();
+#endif
+	}
+
+	void Application::Tick()
+	{
+		static float lastFrameTime = 0.0f;
+
+		_window->PollEvents();
+		_eventBus->HandleEvents();
+
+		// Skip update and render if the application is paused
+		if (_isPaused)
+		{
+			return;
+		}
+
+#ifdef USE_IMGUI
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ImGuizmo::BeginFrame();
+#endif
+
+		float currentFrameTime = static_cast<float>(glfwGetTime());
+		float deltaTime = currentFrameTime - lastFrameTime;
+		lastFrameTime = currentFrameTime;
+
+		for(auto it = _applicationLayers.rbegin(); it != _applicationLayers.rend(); ++it)
+		{
+			(*it)->OnUpdate(deltaTime);
+		}
+
+		for (auto it = _applicationLayers.rbegin(); it != _applicationLayers.rend(); ++it)
+		{
+			(*it)->OnRender();
+		}
+
+#ifdef USE_IMGUI
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
+
+		_window->SwapBuffers();
 	}
 
 	void Application::Stop()
