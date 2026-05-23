@@ -2,9 +2,8 @@
 #include <memory>
 #include <functional>
 #include "app/sceneLayer/Entity.h"
-
-class Scene;
-class EditorContext;
+#include "app/editorLayer/EditorContext.h"
+#include "app/sceneLayer/Scene.h"
 
 class Panel_ComponentView
 {

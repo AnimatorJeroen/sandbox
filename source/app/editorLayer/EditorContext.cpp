@@ -294,9 +294,10 @@ void EditorContext::ImportModel()
 
     LOG_INFO() << "Importing model from: " << result.value();
 
+#ifndef PLATFORM_WASM
     // Import the model using MeshImporter
     Utils::MeshImporter importer;
-    
+
     // Get selected entity as parent (if any)
     Entity parent;
     if (!_selectedEntitiesCache.empty())
@@ -321,7 +322,7 @@ void EditorContext::ImportModel()
         {
             _popupManager->ShowInfo("Import Successful", "3D model imported successfully!");
         }
-        
+
 
     }
     else
@@ -333,6 +334,9 @@ void EditorContext::ImportModel()
                 "Failed to import model:\n" + importer.GetLastError());
         }
     }
+#else
+    LOG_WARN() << "Model import not supported on WASM";
+#endif
 }
 
 // === Context Update ===

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Window.h"
+#ifndef PLATFORM_WASM
 #include <glew/glew.h>
+#endif
 #include <GLFW/glfw3.h>
 
 #ifdef _WIN32

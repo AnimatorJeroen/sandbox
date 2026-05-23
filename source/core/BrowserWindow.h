@@ -87,6 +87,18 @@ namespace Core
 
     // Convenience typedef for the platform-specific implementation
     using BrowserWindow = WindowsBrowserWindow;
+#elif defined(PLATFORM_WASM)
+    // On WASM, file dialogs are not supported. Provide a no-op stub.
+    class WasmBrowserWindow : public IBrowserWindow
+    {
+    public:
+        WasmBrowserWindow(void* = nullptr) {}
+        std::optional<std::string> OpenFile(const std::string& = {}, const std::vector<FileFilter>& = {}, const std::string& = {}) override { return std::nullopt; }
+        std::vector<std::string>   OpenFiles(const std::string& = {}, const std::vector<FileFilter>& = {}, const std::string& = {}) override { return {}; }
+        std::optional<std::string> SaveFile(const std::string& = {}, const std::vector<FileFilter>& = {}, const std::string& = {}, const std::string& = {}) override { return std::nullopt; }
+        std::optional<std::string> SelectFolder(const std::string& = {}, const std::string& = {}) override { return std::nullopt; }
+    };
+    using BrowserWindow = WasmBrowserWindow;
 #else
     // For non-Windows platforms, you would implement other platform-specific versions here
     // e.g., LinuxBrowserWindow, MacBrowserWindow, etc.

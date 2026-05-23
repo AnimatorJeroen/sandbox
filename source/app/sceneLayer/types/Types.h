@@ -18,6 +18,14 @@ struct String64 {
 
     char data[64];
     String64() { data[0] = '\0'; }
+    String64(const char* s) {
+#ifdef PLATFORM_WASM
+        strncpy(data, s, 63);
+#else
+        strncpy_s(data, s, 63);
+#endif
+        data[63] = '\0';
+    }
     String64(const std::string& s) {
 #ifdef PLATFORM_WASM
         strncpy(data, s.c_str(), 63);
