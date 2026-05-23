@@ -8,6 +8,7 @@
 #include "app/event/UndoEvent.h"
 #include "app/sceneLayer/SceneManager.h"
 #include "core/event/EventBus.h"
+#include "core/Platform.h"
 
 MainMenu::MainMenu(Core::EventBus& eventBus, EditorContext& editorContext)
     : _eventBus(eventBus), _editorContext(editorContext)
@@ -27,24 +28,24 @@ void MainMenu::Render()
 			}
 
 			int activeSceneIndex = _editorContext.sceneManager().GetActiveSceneIndex();
-            if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex != -1))
+            if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex != -1 && !Core::Platform::IsWasm))
             {
                 _editorContext.SaveScene(activeSceneIndex);
             }
 
-            if(ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S", false, activeSceneIndex != -1))
+            if(ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S", false, activeSceneIndex != -1 && !Core::Platform::IsWasm))
             {
                 _editorContext.SaveSceneAs(activeSceneIndex);
             }
             
-            if(ImGui::MenuItem("Open Scene..."))
+            if(ImGui::MenuItem("Open Scene...", nullptr, false, !Core::Platform::IsWasm))
             {
                 _editorContext.OpenScene();
             }
 
             bool canRevert = _editorContext.sceneManager().GetActiveScene() &&
                 !_editorContext.sceneManager().GetActiveScene()->GetFilepath().empty();
-            if(ImGui::MenuItem("Revert", nullptr, false, canRevert))
+            if(ImGui::MenuItem("Revert", nullptr, false, canRevert && !Core::Platform::IsWasm))
             {
                 _editorContext.RevertScene();
             }
@@ -52,14 +53,14 @@ void MainMenu::Render()
             ImGui::Separator();
             
             // Import Model menu item
-            if(ImGui::MenuItem("Import Model...", nullptr, false, activeSceneIndex != -1))
+            if(ImGui::MenuItem("Import Model...", nullptr, false, activeSceneIndex != -1 && !Core::Platform::IsWasm))
             {
                 _editorContext.ImportModel();
             }
             
             ImGui::Separator();
             
-            if (ImGui::MenuItem("Exit"))
+            if (ImGui::MenuItem("Exit", nullptr, false, !Core::Platform::IsWasm))
             {
                 _eventBus.PushEvent<Core::RequestApplicationCloseEvent>(Core::RequestApplicationCloseEvent());
             }
