@@ -167,7 +167,7 @@ void EditorContext::NewScene(const std::string& name, bool makeActive)
 void EditorContext::SaveScene(const int sceneIndex)
 {
     auto scene = _sceneManager.GetScene(sceneIndex);
-    if (scene && !scene->GetFilepath().empty())
+    if (scene && !scene->GetFilepath().empty() && !Core::Platform::IsWasm)
     {
         // Save to current filepath
         LOG_DEBUG() << "Saving scene to: " << scene->GetFilepath();
