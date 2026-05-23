@@ -144,12 +144,5 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem ── Serve ──────────────────────────────────────────────────────────────────
 echo.
-echo Build succeeded. Serving at http://localhost:8080/sandbox.html
-start http://localhost:8080/sandbox.html
-cd /d "%BUILD_DIR%"
-python -m http.server 8080
-echo.
-echo Server stopped. Press any key to close...
-pause > nul
+echo Build succeeded.
