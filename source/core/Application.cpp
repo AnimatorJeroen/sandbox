@@ -39,7 +39,11 @@ namespace Core
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
 		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)_window->GetHandle(), true);
+#ifdef PLATFORM_WASM
+		ImGui_ImplOpenGL3_Init("#version 300 es");
+#else
 		ImGui_ImplOpenGL3_Init("#version 330");
+#endif
 #endif
 
 		_layerContext.Register<EventBus>(_eventBus);
