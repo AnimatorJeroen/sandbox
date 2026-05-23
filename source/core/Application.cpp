@@ -45,7 +45,6 @@ namespace Core
 		ImGui_ImplOpenGL3_Init("#version 330");
 #endif
 #endif
-
 		_layerContext.Register<EventBus>(_eventBus);
 		_layerContext.Register<Window>(_window); // Register Window so layers can access itP
 

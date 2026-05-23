@@ -8,124 +8,146 @@ if not defined WASM_LAUNCHED (
     exit /b
 )
 
-rem Check if em++ is available, install emsdk if not
-where em++ >nul 2>&1
-if errorlevel 1 (
-    echo em++ not found. Installing Emscripten SDK...
+set PROJECT_DIR=%~dp0
+rem Strip trailing backslash so quoted paths like "%PROJECT_DIR%" don't break argument parsing
+if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
 
-    where git >nul 2>&1
-    if errorlevel 1 (
-        echo ERROR: git is not installed or not in PATH. Cannot install emsdk.
-        echo Install Git from: https://git-scm.com/download/win
-        exit /b 1
-    )
-
-    set EMSDK_DIR=%USERPROFILE%\emsdk
-
-    if not exist "!EMSDK_DIR!" (
-        echo Cloning emsdk to !EMSDK_DIR!...
-        git clone https://github.com/emscripten-core/emsdk.git "!EMSDK_DIR!"
-        if errorlevel 1 (
-            echo ERROR: Failed to clone emsdk.
-            exit /b 1
-        )
-    ) else (
-        echo emsdk already exists at !EMSDK_DIR!, pulling latest...
-        cd /d "!EMSDK_DIR!"
-        git pull
-        cd /d "%~dp0"
-    )
-
-    echo Installing and activating latest Emscripten...
-    call "!EMSDK_DIR!\emsdk.bat" install latest
-    if errorlevel 1 (
-        echo ERROR: emsdk install failed.
-        exit /b 1
-    )
-    call "!EMSDK_DIR!\emsdk.bat" activate latest
-    if errorlevel 1 (
-        echo ERROR: emsdk activate failed.
-        exit /b 1
-    )
-    call "!EMSDK_DIR!\emsdk_env.bat"
-
-    where em++ >nul 2>&1
-    if errorlevel 1 (
-        echo ERROR: em++ still not found after install. Try restarting this script.
-        exit /b 1
-    )
-    echo Emscripten installed successfully.
-)
-
-rem Check for release or debug argument
+rem ── Check for release or debug argument ───────────────────────────────────
 if "%1"=="release" (
     echo Building in Release mode...
     set BUILD_TYPE=Release
-    set COMPILER_OPTS=-O3 -std=c++17
     set OUTPUT_DIR=build\ReleaseWasm
 ) else (
     echo Building in Debug mode...
     set BUILD_TYPE=Debug
-    set COMPILER_OPTS=-O0 -g -std=c++17
     set OUTPUT_DIR=build\DebugWasm
 )
 
-rem Include directories
-set INCLUDE_OPTS=-I source -I vendor\include -I vendor\include\imgui
-
-rem Create output folder
-if not exist build (
-    mkdir build
-)
-if not exist %OUTPUT_DIR% (
-    mkdir %OUTPUT_DIR%
+rem ── Ensure Git is available (required for emsdk) ───────────────────────────
+where git >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: git is not installed or not in PATH.
+    echo Install Git from: https://git-scm.com/download/win
+    cmd /k
+    exit /b 1
 )
 
-rem Collect all source .cpp files (excluding pch.cpp and MeshImporter which uses Assimp)
-set SRC_FILES=
-for /R source %%f in (*.cpp) do (
-    echo %%f | findstr /i "pch.cpp" >nul
-    if errorlevel 1 (
-        echo %%f | findstr /i "MeshImporter" >nul
-        if errorlevel 1 (
-            set "SRC_FILES=!SRC_FILES! %%f"
-        )
+rem ── Install / update emsdk ─────────────────────────────────────────────────
+set EMSDK_DIR=%USERPROFILE%\emsdk
+
+where em++ >nul 2>&1
+if errorlevel 1 (
+    echo em++ not found. Setting up Emscripten SDK...
+
+    if not exist "!EMSDK_DIR!" (
+        echo Cloning emsdk to !EMSDK_DIR!...
+        git clone https://github.com/emscripten-core/emsdk.git "!EMSDK_DIR!"
+        if errorlevel 1 ( echo ERROR: Failed to clone emsdk. & cmd /k & exit /b 1 )
+    ) else (
+        echo emsdk already exists at !EMSDK_DIR!, pulling latest...
+        cd /d "!EMSDK_DIR!"
+        git pull
+        cd /d "%PROJECT_DIR%"
     )
+
+    call "!EMSDK_DIR!\emsdk.bat" install latest
+    if errorlevel 1 ( echo ERROR: emsdk install failed. & cmd /k & exit /b 1 )
+
+    call "!EMSDK_DIR!\emsdk.bat" activate latest
+    if errorlevel 1 ( echo ERROR: emsdk activate failed. & cmd /k & exit /b 1 )
+
+    call "!EMSDK_DIR!\emsdk_env.bat"
 )
 
-rem Collect vendor .cpp files
-for /R vendor %%f in (*.cpp) do (
-    set "SRC_FILES=!SRC_FILES! %%f"
+rem Source emsdk_env.bat if emsdk exists at the default location (puts emcmake/emmake on PATH)
+if exist "!EMSDK_DIR!\emsdk_env.bat" (
+    call "!EMSDK_DIR!\emsdk_env.bat"
 )
 
-rem Conditionally add --preload-file if the Assets or resources folders exist
-set PRELOAD_OPTS=
-if exist "%~dp0Assets" (
-    set PRELOAD_OPTS=!PRELOAD_OPTS! --preload-file "%~dp0Assets@/Assets"
-)
-if exist "%~dp0resources" (
-    set PRELOAD_OPTS=!PRELOAD_OPTS! --preload-file "%~dp0resources@/resources"
+where em++ >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: em++ still not found after install. Try restarting this script.
+    echo If emsdk is installed in a non-default location, add it to PATH manually.
+    cmd /k
+    exit /b 1
 )
 
-echo Compiling project for WebAssembly...
-em++ %COMPILER_OPTS% %INCLUDE_OPTS% ^
-    -DPLATFORM_WASM -DGLEW_STATIC ^
-    !SRC_FILES! ^
-    -o %OUTPUT_DIR%\sandbox.html ^
-    -s USE_GLFW=3 -s USE_WEBGL2=1 -s FULL_ES3=1 ^
-    -s ALLOW_MEMORY_GROWTH=1 -s WASM_MEM_MAX=512MB ^
-    -s ASYNCIFY=1 ^
-    !PRELOAD_OPTS!
+rem ── Install CMake via winget if not available ──────────────────────────────
+where cmake >nul 2>&1
+if errorlevel 1 (
+    echo cmake not found. Installing via winget...
+    winget install --id Kitware.CMake --silent --accept-source-agreements --accept-package-agreements
+    if errorlevel 1 (
+        echo ERROR: winget install of CMake failed.
+        echo Please install CMake manually from: https://cmake.org/download/
+        cmd /k
+        exit /b 1
+    )
+    rem Refresh PATH so cmake is visible in this session
+    for /f "tokens=*" %%i in ('where cmake 2^>nul') do set CMAKE_EXE=%%i
+    if not defined CMAKE_EXE (
+        echo CMake was installed but is not on PATH yet.
+        echo Please restart this script or open a new terminal.
+        cmd /k
+        exit /b 1
+    )
+    echo CMake installed successfully.
+)
 
+rem ── Install Ninja via winget if not available ────────────────────────────────
+where ninja >nul 2>&1
+if errorlevel 1 (
+    echo ninja not found. Installing via winget...
+    winget install --id Ninja-build.Ninja --silent --accept-source-agreements --accept-package-agreements
+    if errorlevel 1 (
+        echo ERROR: winget install of Ninja failed.
+        echo Please install Ninja manually from: https://ninja-build.org/
+        cmd /k
+        exit /b 1
+    )
+    rem Refresh PATH for this session
+    for /f "tokens=*" %%i in ('where ninja 2^>nul') do set NINJA_EXE=%%i
+    if not defined NINJA_EXE (
+        echo Ninja was installed but is not on PATH yet. Please restart this script.
+        cmd /k
+        exit /b 1
+    )
+    echo Ninja installed successfully.
+)
+
+rem ── Configure with emcmake (only when build dir is missing or forced) ──────
+set BUILD_DIR=%PROJECT_DIR%\%OUTPUT_DIR%
+
+if not exist "%BUILD_DIR%\build.ninja" (
+    echo Configuring CMake for WebAssembly...
+    emcmake cmake -S "%PROJECT_DIR%" -B "%BUILD_DIR%" -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
+    if errorlevel 1 (
+        echo.
+        echo CMake configuration failed. See errors above.
+        cmd /k
+        exit /b 1
+    )
+) else (
+    echo CMake already configured. Skipping configure step.
+    echo [Tip] Delete %OUTPUT_DIR% to force a full reconfigure.
+)
+
+rem ── Build with emmake (incremental, parallel) ──────────────────────────────
+echo.
+echo Building...
+emmake cmake --build "%BUILD_DIR%" --parallel
 if errorlevel 1 (
     echo.
     echo Build failed. See errors above.
     cmd /k
+    exit /b 1
 )
 
+rem ── Serve ──────────────────────────────────────────────────────────────────
+echo.
 echo Build succeeded. Serving at http://localhost:8080/sandbox.html
 start http://localhost:8080/sandbox.html
-cd %OUTPUT_DIR%
+cd /d "%BUILD_DIR%"
 python -m http.server 8080
 echo.
 echo Server stopped. Press any key to close...
