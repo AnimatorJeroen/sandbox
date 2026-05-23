@@ -9,9 +9,7 @@ Try it live: [Live demo](https://animatorjeroen.github.io/3d-editor/)
 
 ### Prerequisites
 
-- [Visual Studio](https://visualstudio.microsoft.com/) (with C++ workload)
 - [vcpkg](https://github.com/microsoft/vcpkg) (for Assimp dependency) (get's automatically installed with the provided `quick_setup.bat` script)
-- Git
 
 ### Windows — Visual Studio
 
