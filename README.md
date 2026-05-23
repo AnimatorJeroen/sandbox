@@ -17,7 +17,8 @@ Try it live: [Live demo](https://animatorjeroen.github.io/3d-editor/)
 
 1. **Install dependencies and generate project files** using the quick setup script:
    ```bat
-   premake\quick_setup.bat
+   > premake\quick_setup.bat
+   > premake\runPremake_visualStudio.bat
    ```
    This will install Assimp via vcpkg and generate `Sandbox.sln`.
 
