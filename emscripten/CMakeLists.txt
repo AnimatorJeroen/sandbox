@@ -42,7 +42,8 @@ set(EM_LINK_FLAGS
     "-s FULL_ES3=1"
     "-s ALLOW_MEMORY_GROWTH=1"
     "-s WASM_MEM_MAX=512MB"
-    "-s ASYNCIFY=1"
+    "-s EXPORTED_FUNCTIONS=['_main','_malloc','_free','_OnFileLoadedFromBrowser','_OnFileSavedFromBrowser']"
+    "-s EXPORTED_RUNTIME_METHODS=['UTF8ToString','stringToUTF8','lengthBytesUTF8','FS']"
 )
 
 # Preload asset folders when they exist

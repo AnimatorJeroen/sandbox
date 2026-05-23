@@ -28,20 +28,20 @@ void MainMenu::Render()
 			}
 
 			int activeSceneIndex = _editorContext.sceneManager().GetActiveSceneIndex();
-            if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex != -1 && !Core::Platform::IsWasm))
-            {
-                _editorContext.SaveScene(activeSceneIndex);
-            }
+			if(ImGui::MenuItem("Save", "Ctrl+S", false, activeSceneIndex != -1))
+			{
+				_editorContext.SaveScene(activeSceneIndex);
+			}
 
-            if(ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S", false, activeSceneIndex != -1 && !Core::Platform::IsWasm))
-            {
-                _editorContext.SaveSceneAs(activeSceneIndex);
-            }
-            
-            if(ImGui::MenuItem("Open Scene...", nullptr, false, !Core::Platform::IsWasm))
-            {
-                _editorContext.OpenScene();
-            }
+			if(ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S", false, activeSceneIndex != -1))
+			{
+				_editorContext.SaveSceneAs(activeSceneIndex);
+			}
+
+			if(ImGui::MenuItem("Open Scene..."))
+			{
+				_editorContext.OpenScene();
+			}
 
             bool canRevert = _editorContext.sceneManager().GetActiveScene() &&
                 !_editorContext.sceneManager().GetActiveScene()->GetFilepath().empty();
