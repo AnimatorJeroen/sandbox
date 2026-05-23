@@ -1,6 +1,12 @@
 #pragma once
 #include <memory>
 #include <functional>
+#include <string>
+#include <typeinfo>
+#ifndef _MSC_VER
+#include <cxxabi.h>
+#include <cstdlib>
+#endif
 #include "app/sceneLayer/Entity.h"
 #include "app/editorLayer/EditorContext.h"
 #include "app/sceneLayer/Scene.h"
@@ -99,12 +105,32 @@ private:
 		}
 	}
 
+	template<typename T>
+	static const char* GetComponentTypeName()
+	{
+#ifdef _MSC_VER
+		return typeid(T).name();
+#else
+		static std::string name = []() {
+			int status = 0;
+			char* demangled = abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &status);
+			std::string result = (status == 0 && demangled) ? demangled : typeid(T).name();
+			if (demangled) std::free(demangled);
+			auto pos = result.rfind("::");
+			if (pos != std::string::npos)
+				result = result.substr(pos + 2);
+			return result;
+		}();
+		return name.c_str();
+#endif
+	}
+
 	template<typename ComponentType>
 	void RenderComponent(Entity entity, std::function<void(Entity)> renderComponentImpl)
 	{
 		if (!entity.HasComponent<ComponentType>())
 			return;
-		const char* name = typeid(ComponentType).name();
+		const char* name = GetComponentTypeName<ComponentType>();
 		bool isOpen = ImGui::CollapsingHeader(name, ImGuiTreeNodeFlags_DefaultOpen);
 		
 		if (isOpen)
