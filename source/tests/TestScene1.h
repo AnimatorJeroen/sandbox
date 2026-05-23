@@ -55,8 +55,15 @@ public:
 
 	inline void Setup() override
 	{
-		auto scene = _sceneManager->CreateNewScene("Test Scene 1", true);
-
+		static bool openStartupScene = true;
+		if (openStartupScene)
+		{
+			_sceneManager->LoadScene("resources/startup-scene.scene");
+		}
+		else
+		{
+			_sceneManager->CreateNewScene("Test Scene 1", true);
+		}
 	}
 	
 	inline void Teardown() override
