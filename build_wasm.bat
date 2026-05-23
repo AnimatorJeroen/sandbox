@@ -98,6 +98,15 @@ for /R vendor %%f in (*.cpp) do (
     set "SRC_FILES=!SRC_FILES! %%f"
 )
 
+rem Conditionally add --preload-file if the Assets or resources folders exist
+set PRELOAD_OPTS=
+if exist "%~dp0Assets" (
+    set PRELOAD_OPTS=!PRELOAD_OPTS! --preload-file "%~dp0Assets@/Assets"
+)
+if exist "%~dp0resources" (
+    set PRELOAD_OPTS=!PRELOAD_OPTS! --preload-file "%~dp0resources@/resources"
+)
+
 echo Compiling project for WebAssembly...
 em++ %COMPILER_OPTS% %INCLUDE_OPTS% ^
     -DPLATFORM_WASM -DGLEW_STATIC ^
@@ -106,7 +115,7 @@ em++ %COMPILER_OPTS% %INCLUDE_OPTS% ^
     -s USE_GLFW=3 -s USE_WEBGL2=1 -s FULL_ES3=1 ^
     -s ALLOW_MEMORY_GROWTH=1 -s WASM_MEM_MAX=512MB ^
     -s ASYNCIFY=1 ^
-    --preload-file Assets@/Assets
+    !PRELOAD_OPTS!
 
 if errorlevel 1 (
     echo.
