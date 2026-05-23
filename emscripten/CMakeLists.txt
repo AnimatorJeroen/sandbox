@@ -53,6 +53,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../resources")
     list(APPEND EM_LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/../resources@/resources")
 endif()
 
+# Use minimal shell for Release builds
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    list(APPEND EM_LINK_FLAGS "--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/shell_minimal.html")
+endif()
+
 list(JOIN EM_LINK_FLAGS " " EM_LINK_FLAGS_STR)
 
 set_target_properties(sandbox PROPERTIES
