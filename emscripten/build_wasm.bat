@@ -8,9 +8,10 @@ if not defined WASM_LAUNCHED (
     exit /b
 )
 
-set PROJECT_DIR=%~dp0
-rem Strip trailing backslash so quoted paths like "%PROJECT_DIR%" don't break argument parsing
-if "%PROJECT_DIR:~-1%"=="\" set "PROJECT_DIR=%PROJECT_DIR:~0,-1%"
+rem This script lives in emscripten\ — project root is one level up
+set SCRIPT_DIR=%~dp0
+if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+set PROJECT_DIR=%SCRIPT_DIR%\..
 
 rem ── Check for release or debug argument ───────────────────────────────────
 if "%1"=="release" (
@@ -120,7 +121,7 @@ set BUILD_DIR=%PROJECT_DIR%\%OUTPUT_DIR%
 
 if not exist "%BUILD_DIR%\build.ninja" (
     echo Configuring CMake for WebAssembly...
-    emcmake cmake -S "%PROJECT_DIR%" -B "%BUILD_DIR%" -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
+    emcmake cmake -S "%SCRIPT_DIR%" -B "%BUILD_DIR%" -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
     if errorlevel 1 (
         echo.
         echo CMake configuration failed. See errors above.

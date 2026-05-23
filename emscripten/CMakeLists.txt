@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ── Source files ──────────────────────────────────────────────────────────────
 file(GLOB_RECURSE ALL_SRC_FILES CONFIGURE_DEPENDS
-    "source/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/*.cpp"
 )
 
 # Exclude precompiled-header stub and Assimp-dependent importer
@@ -14,7 +14,7 @@ list(FILTER ALL_SRC_FILES EXCLUDE REGEX ".*pch\\.cpp$")
 list(FILTER ALL_SRC_FILES EXCLUDE REGEX ".*MeshImporter\\.cpp$")
 
 file(GLOB_RECURSE VENDOR_SRC_FILES CONFIGURE_DEPENDS
-    "vendor/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../vendor/*.cpp"
 )
 
 add_executable(sandbox
@@ -24,9 +24,9 @@ add_executable(sandbox
 
 # ── Include directories ───────────────────────────────────────────────────────
 target_include_directories(sandbox PRIVATE
-    source
-    vendor/include
-    vendor/include/imgui
+    ${CMAKE_CURRENT_SOURCE_DIR}/../source
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/include/imgui
 )
 
 # ── Compile definitions ───────────────────────────────────────────────────────
@@ -46,11 +46,11 @@ set(EM_LINK_FLAGS
 )
 
 # Preload asset folders when they exist
-if(EXISTS "${CMAKE_SOURCE_DIR}/Assets")
-    list(APPEND EM_LINK_FLAGS "--preload-file ${CMAKE_SOURCE_DIR}/Assets@/Assets")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Assets")
+    list(APPEND EM_LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/../Assets@/Assets")
 endif()
-if(EXISTS "${CMAKE_SOURCE_DIR}/resources")
-    list(APPEND EM_LINK_FLAGS "--preload-file ${CMAKE_SOURCE_DIR}/resources@/resources")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../resources")
+    list(APPEND EM_LINK_FLAGS "--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/../resources@/resources")
 endif()
 
 list(JOIN EM_LINK_FLAGS " " EM_LINK_FLAGS_STR)
