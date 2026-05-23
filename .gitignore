@@ -15,6 +15,7 @@
 
 # Exluding custom folders
 saved files/
+local resources
 
 # Exluding who knows what
 *.ini
