@@ -3,7 +3,9 @@
 #include "IRenderer.h"
 #include "IMesh.h"
 #include <memory>
-#ifndef PLATFORM_WASM
+#ifdef PLATFORM_WASM
+#include <GLES3/gl3.h>
+#else
 #include <glew/glew.h>
 #endif
 

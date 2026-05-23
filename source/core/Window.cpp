@@ -114,9 +114,17 @@ namespace Core
 	Window::Window(int width, int height, const char* title, EventBus& eventBus)
 		: Width(width), Height(height), _eventBus(&eventBus)
 	{
+        // On Emscripten/WebGL2 we need OpenGL ES 3.0 context hints; on desktop use OpenGL 3.3 core.
+#ifdef PLATFORM_WASM
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API);
+#else
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#endif
 
         _glfwWindow = glfwCreateWindow(width, height, title, nullptr, nullptr);
         if (!_glfwWindow) {
