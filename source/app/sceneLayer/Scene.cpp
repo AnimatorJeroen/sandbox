@@ -313,15 +313,15 @@ Entity Scene::CreateCameraEntity()
 
 std::set<Entity> Scene::GetAllEntities() const
 {
-	auto view = _registry.view<Core::UUID>();
-	std::set<Entity> entities;
-	for (auto e : view)
-	{
-		// Exclude the scene entity itself
-		if (_sceneEntity != e)
-			entities.insert(Entity(e, const_cast<Core::Registry*>(&_registry)));
-	}
-	return entities;
+    auto view = _registry.view<Core::UUID>();
+    std::set<Entity> entities;
+    for (auto e : view)
+    {
+        // Exclude the scene entity and camera entities
+        if (_sceneEntity != e && !_registry.all_of<CameraComponent>(e))
+            entities.insert(Entity(e, const_cast<Core::Registry*>(&_registry)));
+    }
+    return entities;
 }
 
 Entity Scene::GetEntity(uint64_t uuid) const
