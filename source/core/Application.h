@@ -24,6 +24,7 @@ namespace Core
 			Application(const ApplicationSpecs& specs);
 			~Application() = default;
 			void Run();
+			void Tick();
 			void Stop();
 			void GetFrameBufferSize(int& width, int& height) const;
 			bool OnWindowResizeEvent(const WindowResizeEvent& e);

@@ -8,9 +8,12 @@
 #include <core/applicator/Clipboard.h>
 #include <core/BrowserWindow.h>
 #include <core/Logger.h>
+#include <core/Platform.h>
 #include "app/event/SceneEvent.h"
 #include "app/importer/MeshImporter.h"
 #include "PopupManager.h"
+#include <sstream>
+#include <fstream>
 
 EditorContext::EditorContext(
     SceneManager& sceneManager,
@@ -164,7 +167,7 @@ void EditorContext::NewScene(const std::string& name, bool makeActive)
 void EditorContext::SaveScene(const int sceneIndex)
 {
     auto scene = _sceneManager.GetScene(sceneIndex);
-    if (scene && !scene->GetFilepath().empty())
+    if (scene && !scene->GetFilepath().empty() && !Core::Platform::IsWasm)
     {
         // Save to current filepath
         LOG_DEBUG() << "Saving scene to: " << scene->GetFilepath();
@@ -176,51 +179,6 @@ void EditorContext::SaveScene(const int sceneIndex)
     {
         // No filepath, show Save As dialog
         SaveSceneAs(sceneIndex);
-    }
-}
-
-void EditorContext::SaveSceneAs(const int sceneIndex)
-{
-    auto scene = _sceneManager.GetScene(sceneIndex);
-    if (scene == nullptr)
-        return;
-
-    Core::BrowserWindow browserWindow(_windowHandle);
-    auto result = browserWindow.SaveFile(
-        "Save Scene As",
-        {
-            Core::FileFilter("Scene Files", "*.scene"),
-            Core::FileFilter("Binary Files", "*.dat"),
-            Core::FileFilter("All Files", "*.*")
-        },
-        "",
-        "scene");
-
-    if (result.has_value())
-    {
-        LOG_DEBUG() << "Saving scene as: " << result.value();
-        bool success = _sceneManager.SaveScene(sceneIndex, result.value());
-        if (success)
-            _undoManager.MarkContextDirty(scene->GetRegistry(), false);
-    }
-}
-
-void EditorContext::OpenScene()
-{
-    Core::BrowserWindow browserWindow(_windowHandle);
-    auto result = browserWindow.OpenFile(
-        "Open Scene",
-        {
-            Core::FileFilter("Scene Files", "*.scene"),
-            Core::FileFilter("Binary Files", "*.dat"),
-            Core::FileFilter("All Files", "*.*")
-        });
-
-    if (result.has_value())
-    {
-        _eventBus.PushEvent<RequestLoadSceneEvent>(
-            RequestLoadSceneEvent(result.value()));
-        LOG_DEBUG() << "Loading scene: " << result.value();
     }
 }
 
@@ -294,9 +252,10 @@ void EditorContext::ImportModel()
 
     LOG_INFO() << "Importing model from: " << result.value();
 
+#ifndef PLATFORM_WASM
     // Import the model using MeshImporter
     Utils::MeshImporter importer;
-    
+
     // Get selected entity as parent (if any)
     Entity parent;
     if (!_selectedEntitiesCache.empty())
@@ -321,7 +280,7 @@ void EditorContext::ImportModel()
         {
             _popupManager->ShowInfo("Import Successful", "3D model imported successfully!");
         }
-        
+
 
     }
     else
@@ -333,6 +292,9 @@ void EditorContext::ImportModel()
                 "Failed to import model:\n" + importer.GetLastError());
         }
     }
+#else
+    LOG_WARN() << "Model import not supported on WASM";
+#endif
 }
 
 // === Context Update ===
@@ -382,3 +344,130 @@ void EditorContext::RefreshSelectionState()
     }
         
 }
+
+#ifndef PLATFORM_WASM
+
+void EditorContext::SaveSceneAs(const int sceneIndex)
+{
+    auto scene = _sceneManager.GetScene(sceneIndex);
+    if (scene == nullptr)
+        return;
+
+    Core::BrowserWindow browserWindow(_windowHandle);
+    auto result = browserWindow.SaveFile(
+        "Save Scene As",
+        {
+            Core::FileFilter("Scene Files", "*.scene"),
+            Core::FileFilter("Binary Files", "*.dat"),
+            Core::FileFilter("All Files", "*.*")
+        },
+        "",
+        "scene");
+
+    if (result.has_value())
+    {
+        LOG_DEBUG() << "Saving scene as: " << result.value();
+        bool success = _sceneManager.SaveScene(sceneIndex, result.value());
+        if (success)
+            _undoManager.MarkContextDirty(scene->GetRegistry(), false);
+    }
+}
+
+void EditorContext::OpenScene()
+{
+    Core::BrowserWindow browserWindow(_windowHandle);
+    auto result = browserWindow.OpenFile(
+        "Open Scene",
+        {
+            Core::FileFilter("Scene Files", "*.scene"),
+            Core::FileFilter("Binary Files", "*.dat"),
+            Core::FileFilter("All Files", "*.*")
+        });
+
+    if (result.has_value())
+    {
+        _eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent(result.value()));
+        LOG_DEBUG() << "Loading scene: " << result.value();
+    }
+}
+
+#else
+
+void EditorContext::SaveSceneAs(const int sceneIndex)
+{
+    auto scene = _sceneManager.GetScene(sceneIndex);
+    if (scene == nullptr)
+        return;
+
+    std::string filename = scene->GetFileName();
+    if (filename.empty())
+        filename = "scene.scene";
+    else if (filename.find(".scene") == std::string::npos)
+        filename += ".scene";
+
+    const std::string tempPath = "/tmp/" + filename;
+
+    if (!_sceneManager.SaveScene(sceneIndex, tempPath))
+    {
+        LOG_ERROR() << "Failed to serialize scene for download";
+        if (_popupManager)
+            _popupManager->ShowWarning("Save Failed", "Could not serialize scene data.");
+        return;
+    }
+
+    std::ifstream file(tempPath, std::ios::binary | std::ios::ate);
+    if (!file.is_open())
+    {
+        LOG_ERROR() << "Failed to read temporary scene file";
+        if (_popupManager)
+            _popupManager->ShowWarning("Save Failed", "Could not read serialized scene data.");
+        return;
+    }
+
+    std::streamsize fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+    std::vector<char> buffer(fileSize);
+    if (!file.read(buffer.data(), fileSize))
+    {
+        LOG_ERROR() << "Failed to read scene data into buffer";
+        if (_popupManager)
+            _popupManager->ShowWarning("Save Failed", "Could not read scene data.");
+        return;
+    }
+    file.close();
+
+    Core::WasmBrowserWindow::SetFileSavedCallback([this, sceneIndex](const std::string& chosenName) {
+        auto s = _sceneManager.GetScene(sceneIndex);
+        if (s) {
+            s->SetFilepath(chosenName);
+            _undoManager.MarkContextDirty(s->GetRegistry(), false);
+            LOG_INFO() << "Scene saved as: " << chosenName;
+        }
+        });
+
+    Core::BrowserWindow browserWindow(_windowHandle);
+    if (!browserWindow.DownloadFile(filename, buffer.data(), buffer.size(), "application/octet-stream"))
+    {
+        LOG_ERROR() << "Failed to trigger scene download";
+        Core::WasmBrowserWindow::SetFileSavedCallback(nullptr);
+    }
+}
+
+void EditorContext::OpenScene()
+{
+    Core::WasmBrowserWindow::SetFileLoadedCallback([this](const std::string& path) {
+        LOG_DEBUG() << "File loaded asynchronously: " << path;
+        _eventBus.PushEvent<RequestLoadSceneEvent>(RequestLoadSceneEvent(path));
+        });
+
+    Core::BrowserWindow browserWindow(_windowHandle);
+    browserWindow.OpenFile(
+        "Open Scene",
+        {
+            Core::FileFilter("Scene Files", "*.scene"),
+            Core::FileFilter("All Files", "*")
+        });
+}
+
+
+#endif // PLATFORM_WASM

@@ -7,17 +7,32 @@
 namespace Core {
 
     // Vertex shader source (for 3D polygons)
+#ifdef PLATFORM_WASM
+    static const char* vertexShaderSource =
+        "#version 300 es\n"
+        "layout (location = 0) in vec3 aPos;\n"
+        "layout (location = 1) in vec2 aTexCoord;\n"
+        "layout (location = 2) in vec4 aColor;\n"
+        "uniform mat4 uViewProjection;\n"
+        "out vec2 TexCoord;\n"
+        "out vec4 Color;\n"
+        "void main() {\n"
+        "    gl_Position = uViewProjection * vec4(aPos, 1.0);\n"
+        "    TexCoord = aTexCoord;\n"
+        "    Color = aColor;\n"
+        "}\n";
+#else
     static const char* vertexShaderSource = R"(
         #version 330 core
         layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec2 aTexCoord;
         layout (location = 2) in vec4 aColor;
-        
+
         uniform mat4 uViewProjection;
-        
+
         out vec2 TexCoord;
         out vec4 Color;
-        
+
         void main()
         {
             gl_Position = uViewProjection * vec4(aPos, 1.0);
@@ -25,33 +40,61 @@ namespace Core {
             Color = aColor;
         }
     )";
+#endif
 
     // Fragment shader source
+#ifdef PLATFORM_WASM
+    static const char* fragmentShaderSource =
+        "#version 300 es\n"
+        "precision mediump float;\n"
+        "in vec2 TexCoord;\n"
+        "in vec4 Color;\n"
+        "out vec4 FragColor;\n"
+        "void main() {\n"
+        "    FragColor = Color;\n"
+        "}\n";
+#else
     static const char* fragmentShaderSource = R"(
         #version 330 core
         in vec2 TexCoord;
         in vec4 Color;
-        
+
         out vec4 FragColor;
-        
+
         void main()
         {
             FragColor = Color;
         }
     )";
+#endif
 
     // 3D Cube vertex shader
+#ifdef PLATFORM_WASM
+    static const char* cubeVertexShaderSource =
+        "#version 300 es\n"
+        "layout (location = 0) in vec3 aPos;\n"
+        "layout (location = 1) in vec3 aNormal;\n"
+        "uniform mat4 uMVP;\n"
+        "uniform vec4 uColor;\n"
+        "out vec4 Color;\n"
+        "out vec3 Normal;\n"
+        "void main() {\n"
+        "    gl_Position = uMVP * vec4(aPos, 1.0);\n"
+        "    Color = uColor;\n"
+        "    Normal = aNormal;\n"
+        "}\n";
+#else
     static const char* cubeVertexShaderSource = R"(
         #version 330 core
         layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec3 aNormal;
-        
+
         uniform mat4 uMVP;
         uniform vec4 uColor;
-        
+
         out vec4 Color;
         out vec3 Normal;
-        
+
         void main()
         {
             gl_Position = uMVP * vec4(aPos, 1.0);
@@ -59,15 +102,29 @@ namespace Core {
             Normal = aNormal;
         }
     )";
+#endif
 
     // 3D Cube fragment shader
+#ifdef PLATFORM_WASM
+    static const char* cubeFragmentShaderSource =
+        "#version 300 es\n"
+        "precision mediump float;\n"
+        "in vec4 Color;\n"
+        "in vec3 Normal;\n"
+        "out vec4 FragColor;\n"
+        "void main() {\n"
+        "    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));\n"
+        "    float diff = max(dot(normalize(Normal), lightDir), 0.3);\n"
+        "    FragColor = vec4(Color.rgb * diff, Color.a);\n"
+        "}\n";
+#else
     static const char* cubeFragmentShaderSource = R"(
         #version 330 core
         in vec4 Color;
         in vec3 Normal;
-        
+
         out vec4 FragColor;
-        
+
         void main()
         {
             // Simple lighting
@@ -76,6 +133,7 @@ namespace Core {
             FragColor = vec4(Color.rgb * diff, Color.a);
         }
     )";
+#endif
 
     // ========== OpenGLMesh Implementation ==========
 
@@ -168,7 +226,7 @@ namespace Core {
         glGetShaderiv(m_VertexShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(m_VertexShader, 512, nullptr, infoLog);
-            // Vertex shader compilation failed
+            LOG_ERROR() << "Vertex shader compile error: " << infoLog;
         }
 
         // Compile 2D fragment shader
@@ -179,7 +237,7 @@ namespace Core {
         glGetShaderiv(m_FragmentShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(m_FragmentShader, 512, nullptr, infoLog);
-            // Fragment shader compilation failed
+            LOG_ERROR() << "Fragment shader compile error: " << infoLog;
         }
 
         // Link 2D shader program
@@ -191,7 +249,7 @@ namespace Core {
         glGetProgramiv(m_ShaderProgram, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(m_ShaderProgram, 512, nullptr, infoLog);
-            // Shader program linking failed
+            LOG_ERROR() << "Shader program link error: " << infoLog;
         }
 
         // Get 2D uniform locations
@@ -262,6 +320,7 @@ namespace Core {
         glGetShaderiv(m_CubeVertexShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(m_CubeVertexShader, 512, nullptr, infoLog);
+            LOG_ERROR() << "Cube vertex shader compile error: " << infoLog;
         }
 
         // Compile 3D cube fragment shader
@@ -272,6 +331,7 @@ namespace Core {
         glGetShaderiv(m_CubeFragmentShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(m_CubeFragmentShader, 512, nullptr, infoLog);
+            LOG_ERROR() << "Cube fragment shader compile error: " << infoLog;
         }
 
         // Link 3D cube shader program
@@ -283,6 +343,7 @@ namespace Core {
         glGetProgramiv(m_CubeShaderProgram, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(m_CubeShaderProgram, 512, nullptr, infoLog);
+            LOG_ERROR() << "Cube shader program link error: " << infoLog;
         }
 
         // Get 3D uniform locations
@@ -458,11 +519,29 @@ namespace Core {
                                     GL_DYNAMIC_DRAW);
 
                         if (m_PolygonFilled) {
-                            // Render as filled polygon (triangle fan)
-                            glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<GLsizei>(m_PolygonVertices.size()));
+                            // Render as filled polygon using triangle fan decomposition
+                            // (GL_TRIANGLE_FAN is not supported in WebGL 2 / GLES 3)
+                            if (m_PolygonVertices.size() >= 3) {
+                                std::vector<Vertex> fanTriangles;
+                                fanTriangles.reserve((m_PolygonVertices.size() - 2) * 3);
+                                const Vertex& pivot = m_PolygonVertices[0];
+                                for (size_t i = 1; i + 1 < m_PolygonVertices.size(); ++i) {
+                                    fanTriangles.push_back(pivot);
+                                    fanTriangles.push_back(m_PolygonVertices[i]);
+                                    fanTriangles.push_back(m_PolygonVertices[i + 1]);
+                                }
+                                glBufferData(GL_ARRAY_BUFFER,
+                                    fanTriangles.size() * sizeof(Vertex),
+                                    fanTriangles.data(),
+                                    GL_DYNAMIC_DRAW);
+                                glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(fanTriangles.size()));
+                            }
                         } else {
                             // Render as line strip
+                            // glLineWidth > 1 is not supported in WebGL 2 / GLES 3; skip it there
+#ifndef PLATFORM_WASM
                             glLineWidth(m_PolygonThickness);
+#endif
                             glDrawArrays(GL_LINE_STRIP, 0, static_cast<GLsizei>(m_PolygonVertices.size()));
                         }
                     }
