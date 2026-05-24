@@ -81,3 +81,25 @@ Note that the assimp importer is not part of the core framework, but is implemen
 | [GLM](https://github.com/g-truc/glm) | Math (vectors, matrices) | ✅ |
 | [libsndfile](https://libsndfile.github.io/libsndfile/) | Audio file I/O | ✅ |
 | [Assimp](https://github.com/assimp/assimp) | 3D model importing (FBX, OBJ, …) | via vcpkg |
+
+## Design motivation
+
+When prototyping ideas for animation/simulation applications, I usually don't want to have to think about the low level systems that handle non-destructive editing and serialization.
+I use this project as the starting point for creating bespoke editor applications. I didn't find existing frameworks that are both leightweight and support undo/redo and serialization out of the boxs.
+Everything else is kept to a minimum intentionally. The renderer implementation is minimal and you would have to write/extend your own to do anything useful.
+
+
+User editable data out of the box.
+Creating new components is trivial. They will automatically become serializable and editable for non-destructive and (undo/redo) and structural (copy/paste) operations.
+Edit operations are described as field ops and structural ops. Field ops operate on basic types, (i.e vector3 Position) and structural ops tackle the more complicated problem
+of adding/removing entities and storing relationships (such as child, parent). These relationships are resolved using UUID, which is the only component that is mandatory for the core functionality to work.
+
+To add a component:
+1. define it in sceneLayer/components/Compontents.h (or whereever you define your components)
+
+2. To register it for undo/redo applicator (structural snapshots):
+    - add the type to the "AppComponentTypes" tuple found in Compoenents.h
+    - if it contains new field types that should be supported for field ops, add these in sceneLayer/types/Types.h (and add to the "AppFieldTypes" tuple)
+
+3. To register it for serialization:
+    - add Serialize and Deserialize functions in components/ComponentSerialization.h. Basic fields will be automatically recognized and serialized, but you need to handle more complex types (such as std::vector) yourself. See the examples in ComponentSerialization.h for reference.
