@@ -4,6 +4,7 @@
 #include <core/serializer/Serializer.h>
 #include <core/Logger.h>
 #include "core/event/eventBus.h"
+#include <core/Window.h>
 
 SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
@@ -11,7 +12,6 @@ _testScene(ctx.Get<SceneManager>()),
 _eventBus(*ctx.Get<Core::EventBus>().get())
 {
 	_testScene.Setup();
-
     // Store scene pointer in entt registry context for ChangeApplicator direct scene fields
     _sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
 	

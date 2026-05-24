@@ -206,46 +206,44 @@ namespace Core {
             }
         }
 
-        // Unified helper: Restore entities and all their components from a SelectionArchive
-        // Creates new entities, builds remap table, and restores all component types
+		// Helper: Restore all component types from archive using fold expression
+		template<class... Cs, std::size_t... Is>
+		void restore_all_components(
+			Core::Registry& reg,
+			const SelectionArchive<Cs...>& archive,
+			const std::unordered_map<entt::entity, entt::entity>& remap,
+			std::index_sequence<Is...>)
+		{
+			(restore_component_set(reg, std::get<Is>(archive.storages), remap), ...);
+		}
+
+		// Unified helper: Restore entities and all their components from a SelectionArchive
+		// Creates new entities, builds remap table, and restores all component types
 		// Returns the new entities created
-        template<class... Cs>
-        std::unordered_set<entt::entity> RestoreEntitiesAndComponents(
-            Core::Registry& reg,
-            const SelectionArchive<Cs...>& archive)
-        {
-            // Create new entities and build remap table
-            std::unordered_map<entt::entity, entt::entity> remap;
-            remap.reserve(archive.entities.size());
+		template<class... Cs>
+		std::unordered_set<entt::entity> RestoreEntitiesAndComponents(
+			Core::Registry& reg,
+			const SelectionArchive<Cs...>& archive)
+		{
+			// Create new entities and build remap table
+			std::unordered_map<entt::entity, entt::entity> remap;
+			remap.reserve(archive.entities.size());
 
-            for (auto old_e : archive.entities) {
-                entt::entity new_e = reg.Create();
-                remap[old_e] = new_e;
-            }
+			for (auto old_e : archive.entities) {
+				entt::entity new_e = reg.Create();
+				remap[old_e] = new_e;
+			}
 
-            // Restore all component types using fold expression
-            // C++17 compatible version using helper function
-            restore_all_components(reg, archive, remap, std::index_sequence_for<Cs...>{});
+			restore_all_components(reg, archive, remap, std::index_sequence_for<Cs...>{});
 
-            // Collect the new entities
-            std::unordered_set<entt::entity> newEntities;
-            for (const auto& [oldEntity, newEntity] : remap) {
-                newEntities.insert(newEntity);
-            }
+			// Collect the new entities
+			std::unordered_set<entt::entity> newEntities;
+			for (const auto& [oldEntity, newEntity] : remap) {
+				newEntities.insert(newEntity);
+			}
 
-            return newEntities;
-        }
-        
-        // Helper function for C++17 compatibility
-        template<class... Cs, std::size_t... Is>
-        void restore_all_components(
-            Core::Registry& reg,
-            const SelectionArchive<Cs...>& archive,
-            const std::unordered_map<entt::entity, entt::entity>& remap,
-            std::index_sequence<Is...>)
-        {
-            (restore_component_set(reg, std::get<Is>(archive.storages), remap), ...);
-        }
+			return newEntities;
+		}
 
         // Create a snapshot of ALL entities in registry (for full scene save)
         template<class... Cs>

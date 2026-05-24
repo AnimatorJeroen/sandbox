@@ -1,4 +1,5 @@
 #pragma once
+#ifndef PLATFORM_WASM
 #include <string>
 #include <vector>
 #include <memory>
@@ -84,3 +85,4 @@ private:
 };
 
 } // namespace Core
+#endif // !PLATFORM_WASM

@@ -3,7 +3,11 @@
 #include "IRenderer.h"
 #include "IMesh.h"
 #include <memory>
+#ifdef PLATFORM_WASM
+#include <GLES3/gl3.h>
+#else
 #include <glew/glew.h>
+#endif
 
 namespace Core {
 

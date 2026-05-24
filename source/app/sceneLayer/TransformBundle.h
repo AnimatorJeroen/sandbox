@@ -25,11 +25,7 @@ private:
 	Core::Registry* _registry;
 
 public:
-    TransformBundle() : Position(vec3()),
-        Rotation(vec3()),
-        Scale(vec3()),
-        LocalToWorld(mat4()) {
-    }
+    TransformBundle() = delete;
     TransformBundle(const TransformBundle& other) = default;
 
     TransformBundle(Core::Registry* registry, vec3& position, vec3& rotation, vec3& scale,
@@ -59,5 +55,10 @@ public:
         return mat4(1.0f);
     }
 
-    static TransformBundle Null() { return TransformBundle(); }
+    static TransformBundle& Null() {
+        static vec3 _dummyVec{};
+        static mat4 _dummyMat{};
+        static TransformBundle _null(nullptr, _dummyVec, _dummyVec, _dummyVec, _dummyMat);
+        return _null;
+    }
 };

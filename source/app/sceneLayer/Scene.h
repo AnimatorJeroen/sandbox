@@ -34,7 +34,7 @@ class Scene
 		const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; }
 		
 		// Active camera management
-		CameraComponent& GetActiveCamera();
+		inline CameraComponent& GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }
 		void SetActiveCamera(Entity camera) { _activeCamera = camera.GetHandle(); }
 
 		 // FBX Animation playback
