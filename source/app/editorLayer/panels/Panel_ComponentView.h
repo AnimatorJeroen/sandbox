@@ -7,9 +7,18 @@
 #include <cxxabi.h>
 #include <cstdlib>
 #endif
+
+
+
 #include "app/sceneLayer/Entity.h"
+
+#ifdef PLATFORM_WASM
 #include "app/editorLayer/EditorContext.h"
 #include "app/sceneLayer/Scene.h"
+#else
+class Scene;
+class EditorContext;
+#endif
 
 class Panel_ComponentView
 {
