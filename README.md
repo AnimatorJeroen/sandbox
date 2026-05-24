@@ -1,3 +1,5 @@
+## About
+
 Sandbox is an ECS-style 3D editor framework designed to support common scene editing workflows.
 It provides a lightweight foundation for building 3D editor applications, with built-in support for serialization, undo/redo management, and multi-file editing.
 
@@ -100,7 +102,7 @@ Components are automatically serializable and support both types of edit operati
 
 **1. Define it**
 
-Add your struct in `source/app/sceneLayer/components/Components.h` (or where your components live)
+Add your struct in `source/app/sceneLayer/components/Components.h` (or where your components are defined)
 
 **2. Register it for undo/redo**
 
