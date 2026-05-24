@@ -3,7 +3,13 @@ It provides a lightweight foundation for building 3D editor applications, with b
 
 The framework is cross-platform (currently only tested on windows) and can run directly in the browser via Emscripten/WebAssembly.
 
-Try it live: [Live demo](https://animatorjeroen.github.io/3d-editor/)
+Try it: [Live demo](https://animatorjeroen.github.io/3d-editor/)
+
+## Design motivation
+
+When prototyping animation and simulation tools, I kept running into the same problem: no lightweight framework that provides undo/redo and serialization out of the box without a lot of overhead. This project is the starting point I use for building bespoke editor applications.
+
+Everything outside of that core goal is intentionally kept minimal. The renderer is a bare-bones OpenGL implementation — you are expected to write or extend your own for anything beyond basic scene display.
 
 ## Building
 
@@ -82,24 +88,26 @@ Note that the assimp importer is not part of the core framework, but is implemen
 | [libsndfile](https://libsndfile.github.io/libsndfile/) | Audio file I/O | ✅ |
 | [Assimp](https://github.com/assimp/assimp) | 3D model importing (FBX, OBJ, …) | via vcpkg |
 
-## Design motivation
 
-When prototyping ideas for animation/simulation applications, I usually don't want to have to think about the low level systems that handle non-destructive editing and serialization.
-I use this project as the starting point for creating bespoke editor applications. I didn't find existing frameworks that are both leightweight and support undo/redo and serialization out of the boxs.
-Everything else is kept to a minimum intentionally. The renderer implementation is minimal and you would have to write/extend your own to do anything useful.
+### Edit operations
 
+Components are automatically serializable and support both types of edit operations:
 
-User editable data out of the box.
-Creating new components is trivial. They will automatically become serializable and editable for non-destructive and (undo/redo) and structural (copy/paste) operations.
-Edit operations are described as field ops and structural ops. Field ops operate on basic types, (i.e vector3 Position) and structural ops tackle the more complicated problem
-of adding/removing entities and storing relationships (such as child, parent). These relationships are resolved using UUID, which is the only component that is mandatory for the core functionality to work.
+- **Field ops** — operate on individual fields of basic types (e.g. a `vec3` position). Supports undo/redo at the field level.
+- **Structural ops** — handle adding/removing entities and storing relationships (e.g parent/child). Relationships are resolved by UUID, which is the only component required by the core framework.
 
-To add a component:
-1. define it in sceneLayer/components/Compontents.h (or whereever you define your components)
+### Adding a new component
 
-2. To register it for undo/redo applicator (structural snapshots):
-    - add the type to the "AppComponentTypes" tuple found in Compoenents.h
-    - if it contains new field types that should be supported for field ops, add these in sceneLayer/types/Types.h (and add to the "AppFieldTypes" tuple)
+**1. Define it**
 
-3. To register it for serialization:
-    - add Serialize and Deserialize functions in components/ComponentSerialization.h. Basic fields will be automatically recognized and serialized, but you need to handle more complex types (such as std::vector) yourself. See the examples in ComponentSerialization.h for reference.
+Add your struct in `source/app/sceneLayer/components/Components.h` (or where your components live)
+
+**2. Register it for undo/redo**
+
+- Add the type to the `AppComponentTypes` tuple in `Components.h`.
+- If the component introduces new field types, add them to the `AppFieldTypes` tuple in `source/app/sceneLayer/types/Types.h`.
+
+**3. Register it for serialization**
+
+Add `Serialize` and `Deserialize` functions in `source/app/sceneLayer/components/ComponentSerialization.h`.
+Basic fields are recognized and serialized automatically. Complex types (e.g. `std::vector`) require manual handling — see the existing entries in that file for reference.
