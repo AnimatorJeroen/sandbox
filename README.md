@@ -11,7 +11,7 @@ Try it: [Live demo](https://animatorjeroen.github.io/3d-editor/)
 
 When prototyping animation and simulation tools, I kept running into the same problem: no lightweight framework that provides undo/redo and serialization out of the box without a lot of overhead. This project is the starting point I use for building bespoke editor applications.
 
-Everything outside of that core goal is intentionally kept minimal. The renderer is a bare-bones OpenGL implementation — you are expected to write or extend your own for anything beyond basic scene display.
+Everything outside of that core goal is intentionally kept minimal.
 
 ## Building
 
