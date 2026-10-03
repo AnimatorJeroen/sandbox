@@ -12,8 +12,8 @@ namespace Core {
     {
     public:
         struct RenderTargetSpecs {
-            uint32_t width;
-            uint32_t height;
+            uint32_t width  = 1280;
+            uint32_t height = 720;
         };
 
         virtual ~IRenderer() = default;

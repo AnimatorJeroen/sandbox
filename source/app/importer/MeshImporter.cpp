@@ -1,4 +1,5 @@
 #include "pch.h"
+#ifndef PLATFORM_WASM
 #include "MeshImporter.h"
 #include "app/sceneLayer/Scene.h"
 #include "app/sceneLayer/Entity.h"
@@ -457,3 +458,4 @@ std::vector<std::string> MeshImporter::GetSupportedExtensions()
 }
 
 } // namespace Core
+#endif // !PLATFORM_WASM

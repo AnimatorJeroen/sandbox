@@ -4,6 +4,7 @@
 #include <core/serializer/Serializer.h>
 #include <core/Logger.h>
 #include "core/event/eventBus.h"
+#include <core/Window.h>
 
 SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),

@@ -112,7 +112,12 @@ void Panel_ComponentView::RenderNameComponent(Entity entity)
     auto& name = entity.GetComponent<NameComponent>();
 
     char buffer[64];
+#ifdef _WIN32
     strncpy_s(buffer, name.name.data, sizeof(buffer) - 1);
+#else
+    strncpy(buffer, name.name.data, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+#endif
 
     if (ImGui::InputText("Name", buffer, sizeof(buffer)))
     {

@@ -167,7 +167,7 @@ namespace Core {
             }
 
             // Get the archive from clipboard (remains unchanged)
-            const auto* archive = _clipboard.GetEntitiesArchive<Cs...>();
+            const auto* archive = _clipboard.template GetEntitiesArchive<Cs...>();
             if (!archive || archive->entities.empty()) {
                 return; // Nothing to paste
             }

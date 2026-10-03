@@ -48,6 +48,14 @@ namespace Core
         virtual std::optional<std::string> SelectFolder(
             const std::string& title = "Select Folder",
             const std::string& defaultPath = "") = 0;
+
+        // Download a file to the browser (WASM-specific, no-op on other platforms)
+        // Returns true if download was triggered successfully
+        virtual bool DownloadFile(
+            const std::string& filename,
+            const void* data,
+            size_t dataSize,
+            const std::string& mimeType = "application/octet-stream") = 0;
     };
 
 #ifdef _WIN32
@@ -78,6 +86,12 @@ namespace Core
             const std::string& title = "Select Folder",
             const std::string& defaultPath = "") override;
 
+        bool DownloadFile(
+            const std::string& filename,
+            const void* data,
+            size_t dataSize,
+            const std::string& mimeType = "application/octet-stream") override;
+
     private:
         void* m_windowHandle; // HWND stored as void* to avoid including Windows.h in header
 
@@ -87,6 +101,37 @@ namespace Core
 
     // Convenience typedef for the platform-specific implementation
     using BrowserWindow = WindowsBrowserWindow;
+#elif defined(PLATFORM_WASM)
+    // WASM implementation using browser APIs for file operations
+    class WasmBrowserWindow : public IBrowserWindow
+    {
+    public:
+        WasmBrowserWindow(void* = nullptr) {}
+
+        // Open a file using browser file picker
+        std::optional<std::string> OpenFile(
+            const std::string& title = "Open File",
+            const std::vector<FileFilter>& filters = {},
+            const std::string& defaultPath = "") override;
+
+        std::vector<std::string>   OpenFiles(const std::string& = {}, const std::vector<FileFilter>& = {}, const std::string& = {}) override { return {}; }
+        std::optional<std::string> SaveFile(const std::string& = {}, const std::vector<FileFilter>& = {}, const std::string& = {}, const std::string& = {}) override { return std::nullopt; }
+        std::optional<std::string> SelectFolder(const std::string& = {}, const std::string& = {}) override { return std::nullopt; }
+
+        // Trigger a browser download for the given file data
+        bool DownloadFile(
+            const std::string& filename,
+            const void* data,
+            size_t dataSize,
+            const std::string& mimeType = "application/octet-stream") override;
+
+        // Set callback for when file is loaded (OpenFile)
+        static void SetFileLoadedCallback(std::function<void(const std::string&)> callback);
+
+        // Set callback for when file is saved - receives the actual filename chosen by the user
+        static void SetFileSavedCallback(std::function<void(const std::string&)> callback);
+    };
+    using BrowserWindow = WasmBrowserWindow;
 #else
     // For non-Windows platforms, you would implement other platform-specific versions here
     // e.g., LinuxBrowserWindow, MacBrowserWindow, etc.

@@ -338,8 +338,6 @@ Entity Scene::GetEntity(uint64_t uuid) const
 	return Entity::Null();
 }
 
-inline CameraComponent& Scene::GetActiveCamera() { return _registry.get<CameraComponent>(_activeCamera); }
-
 bool Scene::SaveToFile(const std::string& filepath) const
 {
 	try {

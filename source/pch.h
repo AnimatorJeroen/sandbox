@@ -25,7 +25,12 @@
 #include <imgui/imgui.h>
 #include <ImGuizmo/ImGuizmo.h>
 
+#ifdef PLATFORM_WASM
+#include <emscripten.h>
+#include <GLES3/gl3.h>
+#else
 #include <glew/glew.h>
+#endif
 #include <GLFW/glfw3.h>
 
 #include "core/Logger.h"
