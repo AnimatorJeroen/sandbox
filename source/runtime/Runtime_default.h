@@ -1,11 +1,11 @@
 #pragma once
-#include "ITestScene.h"
+#include "IRuntime.h"
 #include "app/sceneLayer/Scene.h"
 #include "app/sceneLayer/SceneManager.h"
 #include "core/renderer/Renderer_OpenGL.h"
 #include <memory>
 
-class TestScene1 : public ITestScene
+class Runtime_default : public IRuntime
 {
 private:
 	std::shared_ptr<SceneManager> _sceneManager;
@@ -49,7 +49,7 @@ private:
 	}
 
 public:
-	inline explicit TestScene1(std::shared_ptr<SceneManager> sceneManager) : _sceneManager(sceneManager)
+	inline explicit Runtime_default(std::shared_ptr<SceneManager> sceneManager) : _sceneManager(sceneManager)
 	{
 	}
 

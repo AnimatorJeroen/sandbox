@@ -7,10 +7,10 @@
 
 SceneApplicationLayer::SceneApplicationLayer(Core::LayerContext& ctx) : Core::IApplicationLayer(ctx),
 _sceneManager(ctx.Get<SceneManager>()),
-_testScene(ctx.Get<SceneManager>()),
+_runtime(ctx.Get<SceneManager>()),
 _eventBus(*ctx.Get<Core::EventBus>().get())
 {
-	_testScene.Setup();
+	_runtime.Setup();
 
     // Store scene pointer in entt registry context for ChangeApplicator direct scene fields
     _sceneManager->GetActiveScene()->GetRegistry().ctx().emplace<Scene*>(_sceneManager->GetActiveScene().get());
@@ -32,12 +32,12 @@ _eventBus(*ctx.Get<Core::EventBus>().get())
 
 void SceneApplicationLayer::OnUpdate(const float deltaTime)
 {
-	_testScene.Update(deltaTime);
+	_runtime.Update(deltaTime);
 }
 
 void SceneApplicationLayer::OnRender()
 {
-	_testScene.Render();
+	_runtime.Render();
 }
 
 bool SceneApplicationLayer::OnMouseDownEvent(const Core::MouseDownEvent& e)
@@ -78,10 +78,10 @@ bool SceneApplicationLayer::OnKeyUpEvent(const Core::KeyUpEvent& e)
 bool SceneApplicationLayer::OnWindowResizedEvent(const Core::WindowResizeEvent& e)
 {
 	//LOG_TRACE() << e.GetName() << " in Scene Layer: " << e.Width << "x" << e.Height;
-	auto specs = _testScene.GetRenderSpecs();
+	auto specs = _runtime.GetRenderSpecs();
 	specs.height = e.Height;
 	specs.width = e.Width;
-	_testScene.SetRenderSpecs(specs);
+	_runtime.SetRenderSpecs(specs);
 	return false;
 }
 

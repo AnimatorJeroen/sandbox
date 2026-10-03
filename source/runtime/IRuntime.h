@@ -1,7 +1,7 @@
 #pragma once
 #include "core/renderer/IRenderer.h"
 
-class ITestScene
+class IRuntime
 {
 public:
 	virtual void Setup() = 0;
@@ -10,5 +10,5 @@ public:
 	virtual void Render() = 0;
 	virtual void SetRenderSpecs(const Core::IRenderer::RenderTargetSpecs& specs) = 0;
 	virtual const Core::IRenderer::RenderTargetSpecs& GetRenderSpecs() const = 0;
-	virtual ~ITestScene() = default;
+	virtual ~IRuntime() = default;
 };

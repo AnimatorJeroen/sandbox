@@ -1,6 +1,6 @@
 #pragma once
 #include "core/IApplicationLayer.h"
-#include "tests/TestScene1.h"
+#include "runtime/Runtime_default.h"
 #include <core/event/MouseEvent.h>
 #include <core/event/KeyEvent.h>
 #include <core/event/ApplicationEvent.h>
@@ -32,5 +32,5 @@ class SceneApplicationLayer : public Core::IApplicationLayer
 	private:
 	Core::EventBus& _eventBus;
 	std::shared_ptr<SceneManager> _sceneManager;
-	TestScene1 _testScene;
+	Runtime_default _runtime;
 };
